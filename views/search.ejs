@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span>Tìm kiếm</span></nav>
+    <div class="section-heading">
+      <h1>Kết quả tìm kiếm cho "<%= q %>"</h1>
+    </div>
+
+    <% if (!q) { %>
+      <p class="empty-state">Vui lòng nhập từ khóa để tìm kiếm sản phẩm.</p>
+    <% } else if (products.length === 0) { %>
+      <p class="empty-state">Không tìm thấy sản phẩm phù hợp với "<%= q %>".</p>
+    <% } else { %>
+      <div class="product-grid">
+        <% products.forEach(function(product) { %>
+          <%- include('partials/product-card', { product: product }) %>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

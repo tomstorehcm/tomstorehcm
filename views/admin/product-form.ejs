@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1><%= isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm' %></h1>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form">
+    <div class="form-group">
+      <label for="name">Tên sản phẩm *</label>
+      <input type="text" id="name" name="name" value="<%= product.name || '' %>" required />
+    </div>
+    <div class="form-group">
+      <label for="categoryId">Danh mục *</label>
+      <select id="categoryId" name="categoryId" required>
+        <% categories.forEach(function(c) { %>
+          <option value="<%= c.id %>" <%= Number(product.category_id) === c.id ? 'selected' : '' %>><%= c.name %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="brand">Thương hiệu</label>
+      <input type="text" id="brand" name="brand" value="<%= product.brand || '' %>" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="price">Giá gốc (VND) *</label>
+        <input type="number" id="price" name="price" min="0" value="<%= product.price || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="salePrice">Giá khuyến mãi (VND)</label>
+        <input type="number" id="salePrice" name="salePrice" min="0" value="<%= product.sale_price || '' %>" />
+      </div>
+      <div class="form-group">
+        <label for="stock">Tồn kho *</label>
+        <input type="number" id="stock" name="stock" min="0" value="<%= typeof product.stock !== 'undefined' ? product.stock : 0 %>" required />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="imageUrl">URL hình ảnh</label>
+      <input type="text" id="imageUrl" name="imageUrl" value="<%= product.image_url || '' %>" placeholder="https://..." />
+      <small>Để trống sẽ dùng icon minh họa theo danh mục.</small>
+    </div>
+    <div class="form-group">
+      <label for="description">Mô tả</label>
+      <textarea id="description" name="description" rows="3"><%= product.description || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="specsText">Thông số kỹ thuật</label>
+      <textarea id="specsText" name="specsText" rows="6" placeholder="Màn hình: 6.7 inch OLED&#10;Chip: Apple A17 Pro"><%= specsText %></textarea>
+      <small>Mỗi dòng một thông số, định dạng "Tên: Giá trị".</small>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg"><%= isEdit ? 'Lưu thay đổi' : 'Thêm sản phẩm' %></button>
+  </form>
+</main>
+</body>
+</html>

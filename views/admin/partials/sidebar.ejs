@@ -1,0 +1,13 @@
+<aside class="admin-sidebar">
+  <div class="logo admin-logo">TOM<span>STORE</span></div>
+  <nav class="admin-nav">
+    <a href="/admin" class="<%= currentPath === '/admin' ? 'active' : '' %>">Bảng điều khiển</a>
+    <a href="/admin/san-pham" class="<%= currentPath.startsWith('/admin/san-pham') ? 'active' : '' %>">Sản phẩm</a>
+    <a href="/admin/hot-deal" class="<%= currentPath.startsWith('/admin/hot-deal') ? 'active' : '' %>">Hot Deal</a>
+    <a href="/admin/don-hang" class="<%= currentPath.startsWith('/admin/don-hang') ? 'active' : '' %>">Đơn hàng</a>
+    <a href="/" target="_blank">Xem website &rarr;</a>
+  </nav>
+  <form action="/admin/logout" method="post" class="admin-logout-form">
+    <button type="submit" class="btn btn-outline btn-block">Đăng xuất</button>
+  </form>
+</aside>

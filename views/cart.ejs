@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <div class="section-heading"><h1>Giỏ hàng</h1></div>
+
+    <% if (cart.items.length === 0) { %>
+      <p class="empty-state">Giỏ hàng của bạn đang trống. <a href="/">Tiếp tục mua sắm</a></p>
+    <% } else { %>
+      <div class="cart-layout">
+        <table class="cart-table">
+          <thead>
+            <tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% cart.items.forEach(function(item) { %>
+              <tr>
+                <td class="cart-product-cell">
+                  <a href="/san-pham/<%= item.product.slug %>"><%= item.product.name %></a>
+                </td>
+                <td><%= formatVND(item.unitPrice) %></td>
+                <td>
+                  <form action="/gio-hang/cap-nhat" method="post" class="qty-form">
+                    <input type="hidden" name="productId" value="<%= item.product.id %>" />
+                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.product.stock %>" onchange="this.form.submit()" aria-label="Số lượng" />
+                  </form>
+                </td>
+                <td><%= formatVND(item.lineTotal) %></td>
+                <td>
+                  <form action="/gio-hang/xoa" method="post">
+                    <input type="hidden" name="productId" value="<%= item.product.id %>" />
+                    <button type="submit" class="btn-remove" aria-label="Xóa sản phẩm">&times;</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+        <aside class="cart-summary">
+          <h2>Tổng cộng</h2>
+          <div class="cart-summary-row"><span>Tạm tính</span><strong><%= formatVND(cart.total) %></strong></div>
+          <a href="/thanh-toan" class="btn btn-primary btn-lg btn-block">Tiến hành thanh toán</a>
+          <a href="/" class="btn btn-outline btn-block">Tiếp tục mua sắm</a>
+        </aside>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

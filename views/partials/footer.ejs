@@ -1,0 +1,36 @@
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-col">
+      <div class="logo footer-logo">TOM<span>STORE</span></div>
+      <p>Hệ thống bán lẻ điện thoại, MacBook, máy tính bảng, tai nghe chính hãng. Cam kết giá tốt, bảo hành uy tín.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Danh mục</h4>
+      <ul>
+        <% categories.forEach(function(cat) { %>
+          <li><a href="/danh-muc/<%= cat.slug %>"><%= cat.name %></a></li>
+        <% }); %>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Chính sách</h4>
+      <ul>
+        <li>Bảo hành chính hãng 12 tháng</li>
+        <li>Đổi trả trong 7 ngày</li>
+        <li>Giao hàng toàn quốc</li>
+        <li>Thanh toán COD / Chuyển khoản</li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Liên hệ</h4>
+      <ul>
+        <li>Hotline: <%= hotline %></li>
+        <li>Email: cskh@tomstore.vn</li>
+        <li>Địa chỉ: 123 Đường Công Nghệ, TP. Hồ Chí Minh</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">&copy; <%= new Date().getFullYear() %> TOMSTORE. Tất cả các quyền được bảo lưu.</div>
+  </div>
+</footer>

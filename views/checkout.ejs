@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <div class="section-heading"><h1>Thanh toán</h1></div>
+
+    <% if (errors.length > 0) { %>
+      <div class="form-errors">
+        <ul>
+          <% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <div class="checkout-layout">
+      <form action="/thanh-toan" method="post" class="checkout-form">
+        <div class="form-group">
+          <label for="customerName">Họ và tên *</label>
+          <input type="text" id="customerName" name="customerName" value="<%= formData.customerName || '' %>" required />
+        </div>
+        <div class="form-group">
+          <label for="phone">Số điện thoại *</label>
+          <input type="tel" id="phone" name="phone" value="<%= formData.phone || '' %>" placeholder="09xxxxxxxx" required />
+        </div>
+        <div class="form-group">
+          <label for="address">Địa chỉ giao hàng *</label>
+          <textarea id="address" name="address" rows="3" required><%= formData.address || '' %></textarea>
+        </div>
+        <div class="form-group">
+          <label for="note">Ghi chú (không bắt buộc)</label>
+          <textarea id="note" name="note" rows="2"><%= formData.note || '' %></textarea>
+        </div>
+        <div class="form-group">
+          <label>Phương thức thanh toán *</label>
+          <% methods.forEach(function(m) { %>
+            <label class="radio-option">
+              <input type="radio" name="paymentMethod" value="<%= m.key %>" <%= (formData.paymentMethod === m.key || (!formData.paymentMethod && m.key === 'cod')) ? 'checked' : '' %> required />
+              <%= m.label %>
+            </label>
+          <% }); %>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Đặt hàng</button>
+      </form>
+
+      <aside class="cart-summary">
+        <h2>Đơn hàng của bạn</h2>
+        <ul class="summary-items">
+          <% cart.items.forEach(function(item) { %>
+            <li><span><%= item.product.name %> &times; <%= item.quantity %></span><span><%= formatVND(item.lineTotal) %></span></li>
+          <% }); %>
+        </ul>
+        <div class="cart-summary-row"><span>Tổng cộng</span><strong><%= formatVND(cart.total) %></strong></div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

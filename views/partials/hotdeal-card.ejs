@@ -1,0 +1,32 @@
+<%
+  var catSlug = categoriesById[product.category_id] ? categoriesById[product.category_id].slug : '';
+  var percent = discountPercent(product.price, product.sale_price);
+%>
+<article class="hotdeal-card" data-expires="<%= new Date(product.hot_deal_expires_at).toISOString() %>">
+  <a href="/san-pham/<%= product.slug %>" class="hotdeal-card-image">
+    <span class="badge-sale badge-sale-lg">-<%= percent %>%</span>
+    <% if (product.image_url) { %>
+      <img src="<%= product.image_url %>" alt="<%= product.name %>" loading="lazy" width="300" height="300" />
+    <% } else { %>
+      <span class="product-icon-placeholder"><%- categoryIcon(catSlug) %></span>
+    <% } %>
+  </a>
+  <div class="product-card-body">
+    <% if (product.brand) { %><span class="product-brand"><%= product.brand %></span><% } %>
+    <h3 class="product-name"><a href="/san-pham/<%= product.slug %>"><%= product.name %></a></h3>
+    <div class="product-price">
+      <span class="price-current"><%= formatVND(product.sale_price) %></span>
+      <span class="price-original"><%= formatVND(product.price) %></span>
+    </div>
+    <div class="hotdeal-timer" aria-live="polite">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="timer-text">--:--:--</span>
+    </div>
+    <form action="/gio-hang/them" method="post" class="add-to-cart-form">
+      <input type="hidden" name="productId" value="<%= product.id %>" />
+      <input type="hidden" name="quantity" value="1" />
+      <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
+      <button type="submit" class="btn btn-primary btn-block">Thêm vào giỏ</button>
+    </form>
+  </div>
+</article>

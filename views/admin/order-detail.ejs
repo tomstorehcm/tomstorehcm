@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <a href="/admin/don-hang" class="back-link">&larr; Quay lại danh sách đơn hàng</a>
+  <h1>Đơn hàng <%= order.order_code %></h1>
+
+  <div class="order-detail-grid">
+    <div class="order-detail-info">
+      <p><strong>Khách hàng:</strong> <%= order.customer_name %></p>
+      <p><strong>Số điện thoại:</strong> <%= order.phone %></p>
+      <p><strong>Địa chỉ:</strong> <%= order.address %></p>
+      <% if (order.note) { %><p><strong>Ghi chú:</strong> <%= order.note %></p><% } %>
+      <p><strong>Thanh toán:</strong> <%= order.payment_method === 'cod' ? 'COD' : 'Chuyển khoản' %></p>
+      <p><strong>Ngày đặt:</strong> <%= new Date(order.created_at).toLocaleString('vi-VN') %></p>
+    </div>
+
+    <form action="/admin/don-hang/<%= order.id %>/trang-thai" method="post" class="status-form">
+      <label for="status">Trạng thái đơn hàng</label>
+      <select id="status" name="status" onchange="this.form.submit()">
+        <% statuses.forEach(function(s) { %>
+          <option value="<%= s %>" <%= order.status === s ? 'selected' : '' %>><%= s %></option>
+        <% }); %>
+      </select>
+    </form>
+  </div>
+
+  <table class="admin-table">
+    <thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th></tr></thead>
+    <tbody>
+      <% items.forEach(function(item) { %>
+        <tr>
+          <td><%= item.product_name %></td>
+          <td><%= formatVND(item.price) %></td>
+          <td><%= item.quantity %></td>
+          <td><%= formatVND(item.price * item.quantity) %></td>
+        </tr>
+      <% }); %>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">Tổng cộng</td><td><%= formatVND(order.total) %></td></tr>
+    </tfoot>
+  </table>
+</main>
+</body>
+</html>

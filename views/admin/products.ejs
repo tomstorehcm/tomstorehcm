@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Sản phẩm</h1>
+    <a href="/admin/san-pham/moi" class="btn btn-primary">+ Thêm sản phẩm</a>
+  </div>
+
+  <table class="admin-table">
+    <thead><tr><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Hot Deal</th><th></th></tr></thead>
+    <tbody>
+      <% products.forEach(function(p) { %>
+        <tr>
+          <td><%= p.name %></td>
+          <td><%= p.category_name %></td>
+          <td>
+            <%= formatVND(p.price) %>
+            <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
+          </td>
+          <td><%= p.stock %></td>
+          <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
+          <td class="admin-actions">
+            <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>
+            <form action="/admin/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này?');">
+              <button type="submit" class="btn-link-danger">Xóa</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (products.length === 0) { %>
+        <tr><td colspan="6">Chưa có sản phẩm nào.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

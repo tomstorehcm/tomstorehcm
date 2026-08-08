@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Quản lý Hot Deal</h1>
+  <p class="admin-hint">Bật Hot Deal sẽ tự áp dụng trong 24 giờ kể từ lúc bật. Dùng "Gia hạn +24h" để kéo dài thêm.</p>
+
+  <table class="admin-table">
+    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Trạng thái</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
+    <tbody>
+      <% products.forEach(function(p) { %>
+        <% var isActive = p.is_hot_deal && p.hot_deal_expires_at && new Date(p.hot_deal_expires_at) > now; %>
+        <tr>
+          <td><%= p.name %></td>
+          <td><%= p.category_name %></td>
+          <td><%= formatVND(p.price) %></td>
+          <td><span class="status-badge <%= isActive ? 'status-active' : 'status-inactive' %>"><%= isActive ? 'Đang chạy' : 'Tắt' %></span></td>
+          <td><%= isActive ? new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') : '-' %></td>
+          <td class="admin-actions admin-actions-hotdeal">
+            <% if (isActive) { %>
+              <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
+              <form action="/admin/hot-deal/<%= p.id %>/tat" method="post"><button type="submit" class="btn btn-outline btn-sm">Tắt</button></form>
+            <% } else { %>
+              <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
+                <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
+                <button type="submit" class="btn btn-primary btn-sm">Bật 24h</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

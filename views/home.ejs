@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <h1>Công nghệ chính hãng<br />Giá tốt mỗi ngày</h1>
+        <p>Điện thoại, MacBook, máy tính bảng, tai nghe chính hãng - bảo hành 12 tháng, giao hàng toàn quốc.</p>
+        <a href="#hot-deal" class="btn btn-accent btn-lg">Xem Hot Deal hôm nay</a>
+      </div>
+    </div>
+  </section>
+
+  <% if (hotDeals.length > 0) { %>
+  <section id="hot-deal" class="hot-deal-section">
+    <div class="container">
+      <div class="section-heading section-heading-hotdeal">
+        <h2>🔥 Hot Deal Trong Ngày</h2>
+        <p>Ưu đãi có hạn - nhanh tay đặt hàng trước khi hết giờ</p>
+      </div>
+      <div class="product-grid hotdeal-grid">
+        <% hotDeals.forEach(function(product) { %>
+          <%- include('partials/hotdeal-card', { product: product }) %>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <% sections.forEach(function(section) { %>
+    <% if (section.products.length > 0) { %>
+    <section class="category-section">
+      <div class="container">
+        <div class="section-heading">
+          <h2><%= section.category.name %></h2>
+          <a href="/danh-muc/<%= section.category.slug %>" class="see-all-link">Xem tất cả &rarr;</a>
+        </div>
+        <div class="product-grid">
+          <% section.products.forEach(function(product) { %>
+            <%- include('partials/product-card', { product: product }) %>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+    <% } %>
+  <% }); %>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

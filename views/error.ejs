@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container error-page">
+    <h1><%= statusCode %></h1>
+    <p><%= message %></p>
+    <a href="/" class="btn btn-primary">Về trang chủ</a>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

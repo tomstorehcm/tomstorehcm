@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span><%= category.name %></span></nav>
+
+    <div class="section-heading">
+      <h1><%= category.name %></h1>
+      <form action="/danh-muc/<%= category.slug %>" method="get" class="sort-form">
+        <label for="sort">Sắp xếp:</label>
+        <select name="sort" id="sort" onchange="this.form.submit()">
+          <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Mới nhất</option>
+          <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Giá tăng dần</option>
+          <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Giá giảm dần</option>
+        </select>
+      </form>
+    </div>
+
+    <% if (products.length === 0) { %>
+      <p class="empty-state">Danh mục này hiện chưa có sản phẩm.</p>
+    <% } else { %>
+      <div class="product-grid">
+        <% products.forEach(function(product) { %>
+          <%- include('partials/product-card', { product: product }) %>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

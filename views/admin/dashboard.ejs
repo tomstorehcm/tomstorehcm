@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Bảng điều khiển</h1>
+  <div class="admin-stats-grid">
+    <div class="admin-stat-card">
+      <span class="stat-value"><%= stats.productCount %></span>
+      <span class="stat-label">Sản phẩm</span>
+    </div>
+    <div class="admin-stat-card">
+      <span class="stat-value"><%= stats.orderCount %></span>
+      <span class="stat-label">Tổng đơn hàng</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card-accent">
+      <span class="stat-value"><%= stats.pendingCount %></span>
+      <span class="stat-label">Đơn chờ xử lý</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card-hot">
+      <span class="stat-value"><%= stats.hotDealCount %></span>
+      <span class="stat-label">Hot Deal đang chạy</span>
+    </div>
+  </div>
+
+  <h2>Đơn hàng gần đây</h2>
+  <table class="admin-table">
+    <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      <% recentOrders.forEach(function(order) { %>
+        <tr>
+          <td><%= order.order_code %></td>
+          <td><%= order.customer_name %></td>
+          <td><%= formatVND(order.total) %></td>
+          <td><span class="status-badge status-<%= order.status %>"><%= order.status %></span></td>
+          <td><a href="/admin/don-hang/<%= order.id %>">Chi tiết</a></td>
+        </tr>
+      <% }); %>
+      <% if (recentOrders.length === 0) { %>
+        <tr><td colspan="5">Chưa có đơn hàng nào.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>
