@@ -19,8 +19,12 @@
           <td><%= p.name %></td>
           <td><%= p.category_name %></td>
           <td>
-            <%= formatVND(p.price) %>
-            <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
+            <% if (p.is_contact_price) { %>
+              <span class="status-badge status-active">Liên hệ</span>
+            <% } else { %>
+              <%= formatVND(p.price) %>
+              <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
+            <% } %>
           </td>
           <td><%= p.stock %></td>
           <td><%= p.is_hot_deal ? 'Có' : '-' %></td>

@@ -13,7 +13,7 @@
   </a>
   <div class="product-card-body">
     <% if (product.brand) { %><span class="product-brand"><%= product.brand %></span><% } %>
-    <h3 class="product-name"><a href="/san-pham/<%= product.slug %>"><%= product.name %></a></h3>
+    <h3 class="product-name"><a href="/san-pham/<%= product.slug %>" class="stretched-link"><%= product.name %></a></h3>
     <div class="product-price">
       <span class="price-current"><%= formatVND(product.sale_price) %></span>
       <span class="price-original"><%= formatVND(product.price) %></span>
@@ -22,7 +22,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span class="timer-text">--:--:--</span>
     </div>
-    <form action="/gio-hang/them" method="post" class="add-to-cart-form">
+    <form action="/gio-hang/them" method="post" class="add-to-cart-form product-card-cta">
       <input type="hidden" name="productId" value="<%= product.id %>" />
       <input type="hidden" name="quantity" value="1" />
       <input type="hidden" name="redirectTo" value="<%= currentPath %>" />

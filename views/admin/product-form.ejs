@@ -29,12 +29,18 @@
       <label for="brand">Thương hiệu</label>
       <input type="text" id="brand" name="brand" value="<%= product.brand || '' %>" />
     </div>
+    <div class="form-group form-group-checkbox">
+      <label class="checkbox-option">
+        <input type="checkbox" id="isContactPrice" name="isContactPrice" <%= product.is_contact_price ? 'checked' : '' %> />
+        Giá liên hệ (ẩn giá, khách bấm "Liên hệ" thay vì "Thêm vào giỏ")
+      </label>
+    </div>
     <div class="form-row">
-      <div class="form-group">
-        <label for="price">Giá gốc (VND) *</label>
-        <input type="number" id="price" name="price" min="0" value="<%= product.price || '' %>" required />
+      <div class="form-group" id="priceGroup">
+        <label for="price">Giá gốc (VND) <span id="priceRequiredMark">*</span></label>
+        <input type="number" id="price" name="price" min="0" value="<%= product.price || '' %>" <%= product.is_contact_price ? '' : 'required' %> />
       </div>
-      <div class="form-group">
+      <div class="form-group" id="salePriceGroup">
         <label for="salePrice">Giá khuyến mãi (VND)</label>
         <input type="number" id="salePrice" name="salePrice" min="0" value="<%= product.sale_price || '' %>" />
       </div>
@@ -104,5 +110,24 @@
     </section>
   <% } %>
 </main>
+<script>
+  (function () {
+    var checkbox = document.getElementById('isContactPrice');
+    var priceInput = document.getElementById('price');
+    var requiredMark = document.getElementById('priceRequiredMark');
+    var salePriceInput = document.getElementById('salePrice');
+
+    function sync() {
+      var isContact = checkbox.checked;
+      priceInput.required = !isContact;
+      requiredMark.style.display = isContact ? 'none' : '';
+      salePriceInput.disabled = isContact;
+      if (isContact) salePriceInput.value = '';
+    }
+
+    checkbox.addEventListener('change', sync);
+    sync();
+  })();
+</script>
 </body>
 </html>

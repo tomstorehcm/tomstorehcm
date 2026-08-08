@@ -47,6 +47,7 @@ router.get('/hot-deal', hotDealController.listHotDeals);
 router.post('/hot-deal/:id/bat', hotDealController.enableHotDeal);
 router.post('/hot-deal/:id/tat', hotDealController.disableHotDeal);
 router.post('/hot-deal/:id/gia-han', hotDealController.extendHotDeal);
+router.post('/hot-deal/:id/dat-gio', hotDealController.setHotDealExpiry);
 
 router.get('/don-hang', orderAdminController.listOrders);
 router.get('/don-hang/:id', orderAdminController.showOrder);

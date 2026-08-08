@@ -7,7 +7,16 @@
 <%- include('partials/sidebar') %>
 <main class="admin-main">
   <h1>Quản lý Hot Deal</h1>
-  <p class="admin-hint">Bật Hot Deal sẽ tự áp dụng trong 24 giờ kể từ lúc bật. Dùng "Gia hạn +24h" để kéo dài thêm.</p>
+  <p class="admin-hint">Chọn giờ kết thúc tùy ý khi bật Hot Deal, hoặc cập nhật lại giờ bất cứ lúc nào với deal đang chạy.</p>
+
+  <%
+    function toLocalInput(date) {
+      var d = new Date(date);
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    var defaultNewExpiry = toLocalInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  %>
 
   <table class="admin-table">
     <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Trạng thái</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
@@ -22,12 +31,17 @@
           <td><%= isActive ? new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') : '-' %></td>
           <td class="admin-actions admin-actions-hotdeal">
             <% if (isActive) { %>
+              <form action="/admin/hot-deal/<%= p.id %>/dat-gio" method="post" class="hotdeal-time-form">
+                <input type="datetime-local" name="expiresAt" value="<%= toLocalInput(p.hot_deal_expires_at) %>" required />
+                <button type="submit" class="btn btn-outline btn-sm">Đặt giờ</button>
+              </form>
               <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
               <form action="/admin/hot-deal/<%= p.id %>/tat" method="post"><button type="submit" class="btn btn-outline btn-sm">Tắt</button></form>
             <% } else { %>
               <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
                 <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
-                <button type="submit" class="btn btn-primary btn-sm">Bật 24h</button>
+                <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" required />
+                <button type="submit" class="btn btn-primary btn-sm">Bật Hot Deal</button>
               </form>
             <% } %>
           </td>

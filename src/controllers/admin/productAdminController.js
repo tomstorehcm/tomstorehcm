@@ -50,7 +50,9 @@ async function newProductForm(req, res, next) {
 const productValidators = [
   body('name').trim().notEmpty().withMessage('Vui lòng nhập tên sản phẩm'),
   body('categoryId').isInt().withMessage('Vui lòng chọn danh mục'),
-  body('price').isInt({ min: 0 }).withMessage('Giá phải là số nguyên >= 0'),
+  body('price')
+    .if((value, { req }) => req.body.isContactPrice !== 'on')
+    .isInt({ min: 0 }).withMessage('Giá phải là số nguyên >= 0'),
   body('salePrice').optional({ checkFalsy: true }).isInt({ min: 0 }).withMessage('Giá khuyến mãi không hợp lệ'),
   body('stock').isInt({ min: 0 }).withMessage('Tồn kho phải là số nguyên >= 0')
 ];
@@ -123,13 +125,16 @@ async function createProduct(req, res, next) {
       imageUrl = '/images/uploads/products/' + req.file.filename;
     }
 
+    const isContactPrice = req.body.isContactPrice === 'on';
+
     await db('products').insert({
       category_id: Number(req.body.categoryId),
       name: req.body.name,
       slug,
       brand: req.body.brand || null,
-      price: Number(req.body.price),
-      sale_price: req.body.salePrice ? Number(req.body.salePrice) : null,
+      price: isContactPrice ? (Number(req.body.price) || 0) : Number(req.body.price),
+      sale_price: isContactPrice ? null : (req.body.salePrice ? Number(req.body.salePrice) : null),
+      is_contact_price: isContactPrice,
       image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
@@ -210,12 +215,15 @@ async function updateProduct(req, res, next) {
       imageUrl = req.body.imageUrl || null;
     }
 
+    const isContactPrice = req.body.isContactPrice === 'on';
+
     await db('products').where('id', product.id).update({
       category_id: Number(req.body.categoryId),
       name: req.body.name,
       brand: req.body.brand || null,
-      price: Number(req.body.price),
-      sale_price: req.body.salePrice ? Number(req.body.salePrice) : null,
+      price: isContactPrice ? (Number(req.body.price) || 0) : Number(req.body.price),
+      sale_price: isContactPrice ? null : (req.body.salePrice ? Number(req.body.salePrice) : null),
+      is_contact_price: isContactPrice,
       image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),

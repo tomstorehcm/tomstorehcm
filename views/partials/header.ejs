@@ -31,7 +31,11 @@
   </div>
 
   <nav class="category-nav" id="categoryNav" aria-label="Danh mục sản phẩm">
+    <div class="category-nav-backdrop" id="navBackdrop"></div>
     <div class="container category-nav-inner">
+      <button type="button" class="nav-close-btn" id="navCloseBtn" aria-label="Đóng menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
       <a href="/#hot-deal" class="hot-deal-nav-link">🔥 Hot Deal Hôm Nay</a>
       <a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Trang chủ</a>
       <% categories.forEach(function(cat) { %>

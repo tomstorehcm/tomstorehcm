@@ -20,6 +20,13 @@ async function listHotDeals(req, res, next) {
   }
 }
 
+function parseExpiresAt(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime()) || date.getTime() <= Date.now()) return null;
+  return date;
+}
+
 async function enableHotDeal(req, res, next) {
   try {
     const product = await db('products').where('id', req.params.id).first();
@@ -30,10 +37,31 @@ async function enableHotDeal(req, res, next) {
       return res.redirect('/admin/hot-deal');
     }
 
+    const expiresAt = parseExpiresAt(req.body.expiresAt) || new Date(Date.now() + HOURS_24);
+
     await db('products').where('id', product.id).update({
       is_hot_deal: true,
       sale_price: salePrice,
-      hot_deal_expires_at: new Date(Date.now() + HOURS_24)
+      hot_deal_expires_at: expiresAt
+    });
+
+    res.redirect('/admin/hot-deal');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function setHotDealExpiry(req, res, next) {
+  try {
+    const product = await db('products').where('id', req.params.id).first();
+    if (!product) return res.redirect('/admin/hot-deal');
+
+    const expiresAt = parseExpiresAt(req.body.expiresAt);
+    if (!expiresAt) return res.redirect('/admin/hot-deal');
+
+    await db('products').where('id', product.id).update({
+      is_hot_deal: true,
+      hot_deal_expires_at: expiresAt
     });
 
     res.redirect('/admin/hot-deal');
@@ -73,4 +101,4 @@ async function extendHotDeal(req, res, next) {
   }
 }
 
-module.exports = { listHotDeals, enableHotDeal, disableHotDeal, extendHotDeal };
+module.exports = { listHotDeals, enableHotDeal, disableHotDeal, extendHotDeal, setHotDealExpiry };

@@ -14,16 +14,24 @@
   </a>
   <div class="product-card-body">
     <% if (product.brand) { %><span class="product-brand"><%= product.brand %></span><% } %>
-    <h3 class="product-name"><a href="/san-pham/<%= product.slug %>"><%= product.name %></a></h3>
+    <h3 class="product-name"><a href="/san-pham/<%= product.slug %>" class="stretched-link"><%= product.name %></a></h3>
     <div class="product-price">
-      <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>
-      <% if (hasSale) { %><span class="price-original"><%= formatVND(product.price) %></span><% } %>
+      <% if (product.is_contact_price) { %>
+        <span class="price-current price-contact">Liên hệ</span>
+      <% } else { %>
+        <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>
+        <% if (hasSale) { %><span class="price-original"><%= formatVND(product.price) %></span><% } %>
+      <% } %>
     </div>
-    <form action="/gio-hang/them" method="post" class="add-to-cart-form">
-      <input type="hidden" name="productId" value="<%= product.id %>" />
-      <input type="hidden" name="quantity" value="1" />
-      <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
-      <button type="submit" class="btn btn-primary btn-block">Thêm vào giỏ</button>
-    </form>
+    <% if (product.is_contact_price) { %>
+      <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-block product-card-cta">Liên hệ đặt mua</a>
+    <% } else { %>
+      <form action="/gio-hang/them" method="post" class="add-to-cart-form product-card-cta">
+        <input type="hidden" name="productId" value="<%= product.id %>" />
+        <input type="hidden" name="quantity" value="1" />
+        <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
+        <button type="submit" class="btn btn-primary btn-block">Thêm vào giỏ</button>
+      </form>
+    <% } %>
   </div>
 </article>

@@ -1,7 +1,7 @@
 const { Jimp } = require('jimp');
 
 const BANNER_SIZES = {
-  hero: { w: 1200, h: 320 },
+  hero: { w: 1800, h: 480 },
   featured: { w: 480, h: 840 },
   thumb: { w: 640, h: 640 },
   product: { w: 1000, h: 1000 }

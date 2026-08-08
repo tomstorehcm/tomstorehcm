@@ -19,7 +19,7 @@ async function addToCart(req, res, next) {
     const quantity = Math.max(1, Number(req.body.quantity) || 1);
 
     const product = await db('products').where('id', productId).first();
-    if (!product) {
+    if (!product || product.is_contact_price) {
       return res.status(404).redirect('/');
     }
 
