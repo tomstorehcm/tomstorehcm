@@ -10,7 +10,7 @@
   </div>
 
   <div class="container header-main">
-    <a href="/" class="logo">TOM<span>STORE</span></a>
+    <a href="/" class="logo"><img src="/images/logo/tom-logo.png" alt="TOMSTORE" /></a>
 
     <form action="/tim-kiem" method="get" class="search-form" role="search">
       <input type="text" name="q" placeholder="Tìm điện thoại, macbook, tai nghe..." value="<%= typeof q !== 'undefined' ? q : '' %>" aria-label="Tìm kiếm sản phẩm" />
@@ -32,11 +32,11 @@
 
   <nav class="category-nav" id="categoryNav" aria-label="Danh mục sản phẩm">
     <div class="container category-nav-inner">
+      <a href="/#hot-deal" class="hot-deal-nav-link">🔥 Hot Deal Hôm Nay</a>
       <a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Trang chủ</a>
       <% categories.forEach(function(cat) { %>
         <a href="/danh-muc/<%= cat.slug %>" class="<%= currentPath === '/danh-muc/' + cat.slug ? 'active' : '' %>"><%= cat.name %></a>
       <% }); %>
-      <a href="/#hot-deal" class="hot-deal-nav-link">Hot Deal Hôm Nay</a>
     </div>
   </nav>
 </header>

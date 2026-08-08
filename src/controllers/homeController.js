@@ -4,12 +4,19 @@ async function showHome(req, res, next) {
   try {
     const now = new Date();
 
+    const banners = await db('banners').where('is_active', true).orderBy('sort_order');
+
     const hotDeals = await db('products')
       .where('is_hot_deal', true)
       .andWhere('hot_deal_expires_at', '>', now)
       .orderBy('hot_deal_expires_at', 'asc');
 
     const categories = await db('categories').orderBy('sort_order');
+
+    let featuredProducts = await db('products').where('is_featured', true).limit(8);
+    if (featuredProducts.length === 0) {
+      featuredProducts = await db('products').orderBy('created_at', 'desc').limit(8);
+    }
 
     const sections = [];
     for (const cat of categories) {
@@ -21,8 +28,11 @@ async function showHome(req, res, next) {
     }
 
     res.render('home', {
-      title: 'TOMSTORE - Điện thoại, MacBook, Máy tính bảng, Tai nghe chính hãng',
+      title: 'TOMSTORE - Chuyên các sản phẩm Apple: iPhone, MacBook, iPad, AirPods chính hãng',
+      banners,
       hotDeals,
+      categories,
+      featuredProducts,
       sections
     });
   } catch (err) {

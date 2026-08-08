@@ -4,11 +4,15 @@ Website bán lẻ điện thoại, MacBook, máy tính bảng, tai nghe. Node.js
 
 ## Tính năng
 
-- Trang chủ với bảng **Hot Deal Trong Ngày** có đồng hồ đếm ngược.
+- Trang chủ: slide banner đầu trang (quản lý trong admin), bảng **Hot Deal Trong Ngày** trên nền gradient thương hiệu có đồng hồ đếm ngược, 4 ô danh mục (hover nổi lên), khối **Sản phẩm Hot** (banner trái + sản phẩm phải).
 - 4 danh mục: Điện thoại, MacBook, Máy tính bảng, Tai nghe.
 - Tìm kiếm sản phẩm, trang chi tiết sản phẩm với thông số kỹ thuật.
 - Giỏ hàng (session), đặt hàng COD hoặc chuyển khoản ngân hàng (chưa tích hợp cổng thanh toán online thật).
-- Trang quản trị `/admin`: đăng nhập, quản lý sản phẩm (CRUD), quản lý Hot Deal, quản lý đơn hàng.
+- Trang quản trị `/admin`: đăng nhập, quản lý sản phẩm (CRUD, upload ảnh trực tiếp, đánh dấu "Sản phẩm Hot"), quản lý Hot Deal, quản lý Banner trang chủ, quản lý đơn hàng.
+
+## Ảnh upload từ trang quản trị
+
+Ảnh banner và ảnh sản phẩm tải lên qua admin được lưu tại `public/images/uploads/`. Thư mục này **không nằm trong git** (xem `.gitignore`) vì là dữ liệu runtime, không phải source code. Khi deploy lên Hostinger, đây là dữ liệu cần **backup/giữ lại riêng** qua các lần cập nhật code — xem lưu ý trong [DEPLOY.md](DEPLOY.md).
 
 ## Cài đặt & chạy local
 

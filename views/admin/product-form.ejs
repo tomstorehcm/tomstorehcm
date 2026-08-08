@@ -12,7 +12,7 @@
     <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
   <% } %>
 
-  <form action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form">
+  <form action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" enctype="multipart/form-data">
     <div class="form-group">
       <label for="name">Tên sản phẩm *</label>
       <input type="text" id="name" name="name" value="<%= product.name || '' %>" required />
@@ -44,9 +44,23 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="imageUrl">URL hình ảnh</label>
-      <input type="text" id="imageUrl" name="imageUrl" value="<%= product.image_url || '' %>" placeholder="https://..." />
-      <small>Để trống sẽ dùng icon minh họa theo danh mục.</small>
+      <label for="imageFile">Hình ảnh sản phẩm</label>
+      <% if (product.image_url) { %>
+        <img src="<%= product.image_url %>" alt="" class="admin-image-preview" />
+      <% } %>
+      <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <small>Chọn ảnh để tải lên trực tiếp. Bỏ trống nếu muốn giữ ảnh hiện tại hoặc nhập URL bên dưới.</small>
+    </div>
+    <div class="form-group">
+      <label for="imageUrl">Hoặc dán URL hình ảnh</label>
+      <input type="text" id="imageUrl" name="imageUrl" value="<%= product.image_url && product.image_url.startsWith('/images/uploads/') ? '' : (product.image_url || '') %>" placeholder="https://..." />
+      <small>Để trống tất cả sẽ dùng icon minh họa theo danh mục.</small>
+    </div>
+    <div class="form-group form-group-checkbox">
+      <label class="checkbox-option">
+        <input type="checkbox" name="isFeatured" <%= product.is_featured ? 'checked' : '' %> />
+        Hiển thị trong mục "Sản phẩm Hot" ở trang chủ
+      </label>
     </div>
     <div class="form-group">
       <label for="description">Mô tả</label>

@@ -43,4 +43,48 @@
     updateTimers();
     setInterval(updateTimers, 1000);
   }
+
+  // Hero banner slider
+  var track = document.getElementById('heroSliderTrack');
+  if (track) {
+    var slides = track.children;
+    var dotsWrap = document.getElementById('heroDots');
+    var dots = dotsWrap ? dotsWrap.querySelectorAll('button') : [];
+    var prevBtn = document.getElementById('heroPrev');
+    var nextBtn = document.getElementById('heroNext');
+    var current = 0;
+    var autoplayTimer;
+
+    function goTo(index) {
+      current = (index + slides.length) % slides.length;
+      track.style.transform = 'translateX(-' + current * 100 + '%)';
+      dots.forEach(function (dot, i) {
+        dot.classList.toggle('active', i === current);
+      });
+    }
+
+    function startAutoplay() {
+      stopAutoplay();
+      autoplayTimer = setInterval(function () {
+        goTo(current + 1);
+      }, 5000);
+    }
+
+    function stopAutoplay() {
+      if (autoplayTimer) clearInterval(autoplayTimer);
+    }
+
+    if (nextBtn) nextBtn.addEventListener('click', function () { goTo(current + 1); startAutoplay(); });
+    if (prevBtn) prevBtn.addEventListener('click', function () { goTo(current - 1); startAutoplay(); });
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        goTo(Number(dot.getAttribute('data-index')));
+        startAutoplay();
+      });
+    });
+
+    if (slides.length > 1) {
+      startAutoplay();
+    }
+  }
 })();

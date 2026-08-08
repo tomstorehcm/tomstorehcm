@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Banner trang chủ</h1>
+  <p class="admin-hint">Slide banner hiển thị luân phiên trên cùng trang chủ. Kích thước ảnh khuyến nghị: <strong>1600 × 500px</strong> (tỉ lệ ~3.2:1), định dạng JPG/WEBP, dung lượng dưới 500KB để tải nhanh. Nội dung/chữ quan trọng nên nằm giữa ảnh, tránh sát mép trái/phải khoảng 15%.</p>
+
+  <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
+
+  <form action="/admin/banner/moi" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
+    <div class="form-group">
+      <label for="image">Chọn ảnh banner *</label>
+      <input type="file" id="image" name="image" accept="image/png,image/jpeg,image/webp,image/gif" required />
+    </div>
+    <div class="form-group">
+      <label for="linkUrl">Link khi bấm vào banner (không bắt buộc)</label>
+      <input type="text" id="linkUrl" name="linkUrl" placeholder="/danh-muc/dien-thoai" />
+    </div>
+    <button type="submit" class="btn btn-primary">+ Thêm banner</button>
+  </form>
+
+  <table class="admin-table">
+    <thead><tr><th>Ảnh</th><th>Link</th><th>Thứ tự</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>
+      <% banners.forEach(function(b) { %>
+        <tr>
+          <td><img src="<%= b.image_url %>" alt="Banner" class="admin-banner-thumb" /></td>
+          <td><%= b.link_url || '-' %></td>
+          <td>
+            <form action="/admin/banner/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
+              <input type="number" name="sortOrder" value="<%= b.sort_order %>" min="0" />
+              <button type="submit" class="btn btn-outline btn-sm">Lưu</button>
+            </form>
+          </td>
+          <td><span class="status-badge <%= b.is_active ? 'status-active' : 'status-inactive' %>"><%= b.is_active ? 'Đang hiện' : 'Đang ẩn' %></span></td>
+          <td class="admin-actions">
+            <form action="/admin/banner/<%= b.id %>/an-hien" method="post"><button type="submit" class="btn btn-outline btn-sm"><%= b.is_active ? 'Ẩn' : 'Hiện' %></button></form>
+            <form action="/admin/banner/<%= b.id %>/xoa" method="post" onsubmit="return confirm('Xóa banner này?');"><button type="submit" class="btn-link-danger">Xóa</button></form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (banners.length === 0) { %>
+        <tr><td colspan="5">Chưa có banner nào.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

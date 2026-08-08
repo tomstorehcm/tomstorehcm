@@ -33,6 +33,7 @@ const PRODUCTS_BY_CATEGORY = {
       name: 'iPhone 15 128GB',
       brand: 'Apple',
       price: 22990000,
+      featured: true,
       specs: { 'Màn hình': '6.1 inch OLED', 'Chip': 'Apple A16 Bionic', 'RAM': '6GB', 'Bộ nhớ': '128GB', 'Pin': '3349 mAh', 'Camera sau': '48MP + 12MP' }
     },
     {
@@ -81,12 +82,14 @@ const PRODUCTS_BY_CATEGORY = {
       name: 'MacBook Pro 14 M3 Pro 512GB',
       brand: 'Apple',
       price: 52990000,
+      featured: true,
       specs: { 'Màn hình': '14.2 inch Liquid Retina XDR', 'Chip': 'Apple M3 Pro 11-core', 'RAM': '18GB', 'Ổ cứng': '512GB SSD', 'Pin': 'Tới 18 giờ', 'Trọng lượng': '1.61 kg' }
     },
     {
       name: 'MacBook Pro 16 M3 Max 1TB',
       brand: 'Apple',
       price: 89990000,
+      featured: true,
       specs: { 'Màn hình': '16.2 inch Liquid Retina XDR', 'Chip': 'Apple M3 Max 14-core', 'RAM': '36GB', 'Ổ cứng': '1TB SSD', 'Pin': 'Tới 22 giờ', 'Trọng lượng': '2.16 kg' }
     },
     {
@@ -109,6 +112,7 @@ const PRODUCTS_BY_CATEGORY = {
       name: 'iPad Gen 10 64GB WiFi',
       brand: 'Apple',
       price: 10990000,
+      featured: true,
       specs: { 'Màn hình': '10.9 inch Liquid Retina', 'Chip': 'Apple A14 Bionic', 'Bộ nhớ': '64GB', 'Kết nối': 'WiFi', 'Pin': 'Tới 10 giờ' }
     },
     {
@@ -123,12 +127,14 @@ const PRODUCTS_BY_CATEGORY = {
       name: 'iPad Pro M4 11 inch 256GB',
       brand: 'Apple',
       price: 27990000,
+      featured: true,
       specs: { 'Màn hình': '11 inch Ultra Retina XDR', 'Chip': 'Apple M4', 'Bộ nhớ': '256GB', 'Kết nối': 'WiFi', 'Pin': 'Tới 10 giờ' }
     },
     {
       name: 'iPad Mini 6 64GB',
       brand: 'Apple',
       price: 12990000,
+      featured: true,
       specs: { 'Màn hình': '8.3 inch Liquid Retina', 'Chip': 'Apple A15 Bionic', 'Bộ nhớ': '64GB', 'Kết nối': 'WiFi', 'Pin': 'Tới 10 giờ' }
     },
     {
@@ -157,12 +163,14 @@ const PRODUCTS_BY_CATEGORY = {
       name: 'AirPods 4',
       brand: 'Apple',
       price: 3290000,
+      featured: true,
       specs: { 'Kiểu dáng': 'True Wireless, In-ear', 'Pin': 'Tới 5 giờ/lần sạc', 'Chống nước': 'IPX4', 'Kết nối': 'Bluetooth 5.3' }
     },
     {
       name: 'AirPods Max',
       brand: 'Apple',
       price: 12990000,
+      featured: true,
       specs: { 'Kiểu dáng': 'Over-ear', 'Chống ồn': 'Active Noise Cancellation', 'Pin': 'Tới 20 giờ', 'Kết nối': 'Bluetooth 5.0' }
     },
     {
@@ -194,6 +202,7 @@ exports.seed = async function (knex) {
   await knex('products').del();
   await knex('categories').del();
   await knex('admin_users').del();
+  await knex('banners').del();
 
   const categoryIds = {};
   for (const cat of CATEGORIES) {
@@ -216,10 +225,20 @@ exports.seed = async function (knex) {
         specs_json: JSON.stringify(p.specs),
         stock: 20,
         is_hot_deal: !!p.hotDeal,
-        hot_deal_expires_at: p.hotDeal ? new Date(now + HOURS_24) : null
+        hot_deal_expires_at: p.hotDeal ? new Date(now + HOURS_24) : null,
+        is_featured: !!p.featured
       });
     }
   }
+
+  await knex('banners').insert([
+    {
+      image_url: '/images/banners/len-doi-may-moi.jpg',
+      link_url: '/danh-muc/dien-thoai',
+      sort_order: 1,
+      is_active: true
+    }
+  ]);
 
   const passwordHash = bcrypt.hashSync(
     process.env.ADMIN_DEFAULT_PASSWORD || 'TomStore@2026',

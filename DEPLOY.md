@@ -82,6 +82,14 @@ Sau đó bấm **Restart** app trong hPanel.
 - Nếu mua domain ngay trên Hostinger: gán trực tiếp domain/subdomain cho Node.js App trong bước 4.
 - Bật SSL miễn phí (Let's Encrypt) trong hPanel → **SSL** cho domain đó.
 
+## 8b. Lưu ý ảnh upload từ trang quản trị
+
+Ảnh banner/sản phẩm upload qua `/admin` được lưu trực tiếp vào `public/images/uploads/` trên server — **không nằm trong Git**. Nếu deploy lại bằng cách `git pull`/`rebuild` mà xoá sạch thư mục cũ, ảnh đã upload sẽ mất. Để an toàn:
+
+- Không xoá toàn bộ thư mục project khi deploy lại, chỉ pull code mới đè lên (Git sẽ không đụng tới file không được track).
+- Định kỳ tải thư mục `public/images/uploads/` về máy để backup (qua File Manager hoặc SFTP trong hPanel).
+- Nếu sau này chuyển sang hosting khác hoặc cần độ tin cậy cao hơn, cân nhắc chuyển sang lưu ảnh ở dịch vụ ngoài (Cloudinary, S3...).
+
 ## 9. Sau khi deploy
 
 - Đăng nhập `/admin/login` bằng tài khoản admin thật đã đặt ở bước 6, đổi lại nếu cần.

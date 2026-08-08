@@ -1,6 +1,15 @@
+const fs = require('fs');
+const path = require('path');
 const { body, validationResult } = require('express-validator');
 const db = require('../../db');
 const { slugify } = require('../../utils/slug');
+
+function removeUploadedFile(imageUrl) {
+  if (imageUrl && imageUrl.startsWith('/images/uploads/')) {
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', imageUrl);
+    fs.unlink(filePath, () => {});
+  }
+}
 
 async function listProducts(req, res, next) {
   try {
@@ -71,6 +80,7 @@ async function createProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
 
     if (!errors.isEmpty()) {
+      if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
       return res.status(400).render('admin/product-form', {
         title: 'Thêm sản phẩm - TOMSTORE Admin',
         categories,
@@ -88,6 +98,8 @@ async function createProduct(req, res, next) {
       slug = `${slugBase}-${suffix++}`;
     }
 
+    const imageUrl = req.file ? '/images/uploads/products/' + req.file.filename : (req.body.imageUrl || null);
+
     await db('products').insert({
       category_id: Number(req.body.categoryId),
       name: req.body.name,
@@ -95,10 +107,11 @@ async function createProduct(req, res, next) {
       brand: req.body.brand || null,
       price: Number(req.body.price),
       sale_price: req.body.salePrice ? Number(req.body.salePrice) : null,
-      image_url: req.body.imageUrl || null,
+      image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      stock: Number(req.body.stock)
+      stock: Number(req.body.stock),
+      is_featured: req.body.isFeatured === 'on'
     });
 
     res.redirect('/admin/san-pham');
@@ -135,6 +148,7 @@ async function updateProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
 
     if (!errors.isEmpty()) {
+      if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
       return res.status(400).render('admin/product-form', {
         title: 'Sửa sản phẩm - TOMSTORE Admin',
         categories,
@@ -145,16 +159,25 @@ async function updateProduct(req, res, next) {
       });
     }
 
+    let imageUrl = product.image_url;
+    if (req.file) {
+      removeUploadedFile(product.image_url);
+      imageUrl = '/images/uploads/products/' + req.file.filename;
+    } else if (req.body.imageUrl !== undefined) {
+      imageUrl = req.body.imageUrl || null;
+    }
+
     await db('products').where('id', product.id).update({
       category_id: Number(req.body.categoryId),
       name: req.body.name,
       brand: req.body.brand || null,
       price: Number(req.body.price),
       sale_price: req.body.salePrice ? Number(req.body.salePrice) : null,
-      image_url: req.body.imageUrl || null,
+      image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      stock: Number(req.body.stock)
+      stock: Number(req.body.stock),
+      is_featured: req.body.isFeatured === 'on'
     });
 
     res.redirect('/admin/san-pham');
@@ -165,7 +188,9 @@ async function updateProduct(req, res, next) {
 
 async function deleteProduct(req, res, next) {
   try {
+    const product = await db('products').where('id', req.params.id).first();
     await db('products').where('id', req.params.id).del();
+    if (product) removeUploadedFile(product.image_url);
     res.redirect('/admin/san-pham');
   } catch (err) {
     next(err);
