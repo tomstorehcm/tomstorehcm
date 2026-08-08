@@ -4,7 +4,8 @@ async function showHome(req, res, next) {
   try {
     const now = new Date();
 
-    const banners = await db('banners').where('is_active', true).orderBy('sort_order');
+    const banners = await db('banners').where('is_active', true).where('type', 'hero').orderBy('sort_order');
+    const featuredBanner = await db('banners').where('type', 'featured').first();
 
     const hotDeals = await db('products')
       .where('is_hot_deal', true)
@@ -30,6 +31,7 @@ async function showHome(req, res, next) {
     res.render('home', {
       title: 'TOMSTORE - Chuyên các sản phẩm Apple: iPhone, MacBook, iPad, AirPods chính hãng',
       banners,
+      featuredBanner,
       hotDeals,
       categories,
       featuredProducts,

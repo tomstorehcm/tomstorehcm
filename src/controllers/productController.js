@@ -18,6 +18,14 @@ async function showProduct(req, res, next) {
       .andWhereNot('id', product.id)
       .limit(4);
 
+    const galleryImages = await db('product_images')
+      .where('product_id', product.id)
+      .orderBy('sort_order');
+
+    const images = [];
+    if (product.image_url) images.push(product.image_url);
+    galleryImages.forEach((img) => images.push(img.image_url));
+
     let specs = {};
     try {
       specs = product.specs_json ? JSON.parse(product.specs_json) : {};
@@ -30,7 +38,8 @@ async function showProduct(req, res, next) {
       product,
       category,
       related,
-      specs
+      specs,
+      images
     });
   } catch (err) {
     next(err);

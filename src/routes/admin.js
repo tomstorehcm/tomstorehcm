@@ -6,12 +6,14 @@ const { makeUploader } = require('../middleware/upload');
 const authController = require('../controllers/admin/authController');
 const dashboardController = require('../controllers/admin/dashboardController');
 const productAdminController = require('../controllers/admin/productAdminController');
+const productGalleryController = require('../controllers/admin/productGalleryController');
 const hotDealController = require('../controllers/admin/hotDealController');
 const orderAdminController = require('../controllers/admin/orderAdminController');
 const bannerController = require('../controllers/admin/bannerController');
 
 const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
+const uploadCategoryImage = makeUploader('categories');
 
 router.get('/login', redirectIfAdmin, authController.showLogin);
 router.post('/login', redirectIfAdmin, authController.login);
@@ -38,6 +40,9 @@ router.post(
 );
 router.post('/san-pham/:id/xoa', productAdminController.deleteProduct);
 
+router.post('/san-pham/:id/anh', uploadProductImage.array('images', 8), productGalleryController.uploadImages);
+router.post('/san-pham/:id/anh/:imageId/xoa', productGalleryController.deleteImage);
+
 router.get('/hot-deal', hotDealController.listHotDeals);
 router.post('/hot-deal/:id/bat', hotDealController.enableHotDeal);
 router.post('/hot-deal/:id/tat', hotDealController.disableHotDeal);
@@ -48,9 +53,11 @@ router.get('/don-hang/:id', orderAdminController.showOrder);
 router.post('/don-hang/:id/trang-thai', orderAdminController.updateStatus);
 
 router.get('/banner', bannerController.listBanners);
-router.post('/banner/moi', uploadBannerImage.single('image'), bannerController.createBanner);
-router.post('/banner/:id/an-hien', bannerController.toggleBanner);
-router.post('/banner/:id/thu-tu', bannerController.updateSortOrder);
-router.post('/banner/:id/xoa', bannerController.deleteBanner);
+router.post('/banner/chinh', uploadBannerImage.single('image'), bannerController.createHeroBanner);
+router.post('/banner/chinh/:id/an-hien', bannerController.toggleHeroBanner);
+router.post('/banner/chinh/:id/thu-tu', bannerController.updateHeroSortOrder);
+router.post('/banner/chinh/:id/xoa', bannerController.deleteHeroBanner);
+router.post('/banner/san-pham-hot', uploadBannerImage.single('image'), bannerController.uploadFeaturedBanner);
+router.post('/banner/danh-muc/:id', uploadCategoryImage.single('image'), bannerController.uploadCategoryThumb);
 
 module.exports = router;

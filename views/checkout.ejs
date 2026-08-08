@@ -56,6 +56,7 @@
           <% }); %>
         </ul>
         <div class="cart-summary-row"><span>Tổng cộng</span><strong><%= formatVND(cart.total) %></strong></div>
+        <%- include('partials/policy-list', { compact: true }) %>
       </aside>
     </div>
   </div>

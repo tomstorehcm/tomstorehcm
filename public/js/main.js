@@ -44,6 +44,19 @@
     setInterval(updateTimers, 1000);
   }
 
+  // Product gallery thumbnail swap
+  var galleryThumbs = document.querySelectorAll('.gallery-thumb');
+  var galleryMainImg = document.getElementById('galleryMainImg');
+  if (galleryThumbs.length > 0 && galleryMainImg) {
+    galleryThumbs.forEach(function (thumb) {
+      thumb.addEventListener('click', function () {
+        galleryMainImg.src = thumb.getAttribute('data-src');
+        galleryThumbs.forEach(function (t) { t.classList.remove('active'); });
+        thumb.classList.add('active');
+      });
+    });
+  }
+
   // Hero banner slider
   var track = document.getElementById('heroSliderTrack');
   if (track) {

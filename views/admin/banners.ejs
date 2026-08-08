@@ -6,48 +6,99 @@
 <body class="admin-body">
 <%- include('partials/sidebar') %>
 <main class="admin-main">
-  <h1>Banner trang chủ</h1>
-  <p class="admin-hint">Slide banner hiển thị luân phiên trên cùng trang chủ. Kích thước ảnh khuyến nghị: <strong>1600 × 500px</strong> (tỉ lệ ~3.2:1), định dạng JPG/WEBP, dung lượng dưới 500KB để tải nhanh. Nội dung/chữ quan trọng nên nằm giữa ảnh, tránh sát mép trái/phải khoảng 15%.</p>
+  <h1>Quản lý Banner</h1>
+  <p class="admin-hint">Mỗi loại banner có kích thước cố định — ảnh bạn tải lên (dù to/nhỏ/sai tỉ lệ) sẽ <strong>tự động được crop vừa khít</strong> kích thước đó, không cần chỉnh sửa trước. Chỉ nhận file JPG/PNG/GIF (chưa hỗ trợ WEBP).</p>
 
   <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
 
-  <form action="/admin/banner/moi" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
-    <div class="form-group">
-      <label for="image">Chọn ảnh banner *</label>
-      <input type="file" id="image" name="image" accept="image/png,image/jpeg,image/webp,image/gif" required />
-    </div>
-    <div class="form-group">
-      <label for="linkUrl">Link khi bấm vào banner (không bắt buộc)</label>
-      <input type="text" id="linkUrl" name="linkUrl" placeholder="/danh-muc/dien-thoai" />
-    </div>
-    <button type="submit" class="btn btn-primary">+ Thêm banner</button>
-  </form>
+  <!-- Banner chính -->
+  <section class="banner-section">
+    <h2>1. Banner chính (đầu trang chủ)</h2>
+    <p class="admin-hint">Kích thước cố định: <strong>1200 × 320px</strong>. Nhiều banner sẽ tự động chạy luân phiên.</p>
 
-  <table class="admin-table">
-    <thead><tr><th>Ảnh</th><th>Link</th><th>Thứ tự</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
-    <tbody>
-      <% banners.forEach(function(b) { %>
-        <tr>
-          <td><img src="<%= b.image_url %>" alt="Banner" class="admin-banner-thumb" /></td>
-          <td><%= b.link_url || '-' %></td>
-          <td>
-            <form action="/admin/banner/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
-              <input type="number" name="sortOrder" value="<%= b.sort_order %>" min="0" />
-              <button type="submit" class="btn btn-outline btn-sm">Lưu</button>
-            </form>
-          </td>
-          <td><span class="status-badge <%= b.is_active ? 'status-active' : 'status-inactive' %>"><%= b.is_active ? 'Đang hiện' : 'Đang ẩn' %></span></td>
-          <td class="admin-actions">
-            <form action="/admin/banner/<%= b.id %>/an-hien" method="post"><button type="submit" class="btn btn-outline btn-sm"><%= b.is_active ? 'Ẩn' : 'Hiện' %></button></form>
-            <form action="/admin/banner/<%= b.id %>/xoa" method="post" onsubmit="return confirm('Xóa banner này?');"><button type="submit" class="btn-link-danger">Xóa</button></form>
-          </td>
-        </tr>
-      <% }); %>
-      <% if (banners.length === 0) { %>
-        <tr><td colspan="5">Chưa có banner nào.</td></tr>
+    <form action="/admin/banner/chinh" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
+      <div class="form-group">
+        <label for="heroImage">Chọn ảnh *</label>
+        <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif" required />
+      </div>
+      <div class="form-group">
+        <label for="heroLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
+        <input type="text" id="heroLinkUrl" name="linkUrl" placeholder="/danh-muc/dien-thoai" />
+      </div>
+      <button type="submit" class="btn btn-primary">+ Thêm banner chính</button>
+    </form>
+
+    <table class="admin-table">
+      <thead><tr><th>Ảnh</th><th>Link</th><th>Thứ tự</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        <% heroBanners.forEach(function(b) { %>
+          <tr>
+            <td><img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" /></td>
+            <td><%= b.link_url || '-' %></td>
+            <td>
+              <form action="/admin/banner/chinh/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
+                <input type="number" name="sortOrder" value="<%= b.sort_order %>" min="0" />
+                <button type="submit" class="btn btn-outline btn-sm">Lưu</button>
+              </form>
+            </td>
+            <td><span class="status-badge <%= b.is_active ? 'status-active' : 'status-inactive' %>"><%= b.is_active ? 'Đang hiện' : 'Đang ẩn' %></span></td>
+            <td class="admin-actions">
+              <form action="/admin/banner/chinh/<%= b.id %>/an-hien" method="post"><button type="submit" class="btn btn-outline btn-sm"><%= b.is_active ? 'Ẩn' : 'Hiện' %></button></form>
+              <form action="/admin/banner/chinh/<%= b.id %>/xoa" method="post" onsubmit="return confirm('Xóa banner này?');"><button type="submit" class="btn-link-danger">Xóa</button></form>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (heroBanners.length === 0) { %>
+          <tr><td colspan="5">Chưa có banner chính nào.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Banner Sản phẩm Hot -->
+  <section class="banner-section">
+    <h2>2. Banner khối "Sản phẩm Hot"</h2>
+    <p class="admin-hint">Kích thước cố định: <strong>480 × 840px</strong>. Chỉ 1 ảnh — tải ảnh mới sẽ thay thế ảnh cũ.</p>
+
+    <div class="featured-banner-preview">
+      <% if (featuredBanner) { %>
+        <img src="<%= featuredBanner.image_url %>" alt="Banner Sản phẩm Hot" class="admin-featured-thumb" />
+      <% } else { %>
+        <p class="empty-state">Chưa có banner.</p>
       <% } %>
-    </tbody>
-  </table>
+    </div>
+
+    <form action="/admin/banner/san-pham-hot" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
+      <div class="form-group">
+        <label for="featuredImage">Chọn ảnh mới *</label>
+        <input type="file" id="featuredImage" name="image" accept="image/png,image/jpeg,image/gif" required />
+      </div>
+      <div class="form-group">
+        <label for="featuredLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
+        <input type="text" id="featuredLinkUrl" name="linkUrl" value="<%= featuredBanner ? (featuredBanner.link_url || '') : '' %>" placeholder="tel:0769696970" />
+      </div>
+      <button type="submit" class="btn btn-primary">Cập nhật banner</button>
+    </form>
+  </section>
+
+  <!-- Ảnh thumb danh mục -->
+  <section class="banner-section">
+    <h2>3. Ảnh thumb danh mục (trang chủ)</h2>
+    <p class="admin-hint">Kích thước cố định: <strong>640 × 640px</strong> (vuông). Mỗi danh mục 1 ảnh đại diện.</p>
+
+    <div class="category-thumb-grid">
+      <% categories.forEach(function(cat) { %>
+        <div class="category-thumb-card">
+          <img src="<%= cat.image_url %>" alt="<%= cat.name %>" class="admin-thumb-preview" />
+          <p><%= cat.name %></p>
+          <form action="/admin/banner/danh-muc/<%= cat.id %>" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/png,image/jpeg,image/gif" required />
+            <button type="submit" class="btn btn-outline btn-sm">Đổi ảnh</button>
+          </form>
+        </div>
+      <% }); %>
+    </div>
+  </section>
 </main>
 </body>
 </html>

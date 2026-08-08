@@ -3,6 +3,9 @@ const path = require('path');
 const { body, validationResult } = require('express-validator');
 const db = require('../../db');
 const { slugify } = require('../../utils/slug');
+const { cropToFixedSize } = require('../../utils/imageProcess');
+
+const IMAGE_ERROR_MESSAGE = 'Ảnh không hợp lệ hoặc bị lỗi khi xử lý. Vui lòng thử lại với file JPG/PNG/GIF khác.';
 
 function removeUploadedFile(imageUrl) {
   if (imageUrl && imageUrl.startsWith('/images/uploads/')) {
@@ -36,7 +39,8 @@ async function newProductForm(req, res, next) {
       product: {},
       specsText: '',
       errors: [],
-      isEdit: false
+      isEdit: false,
+      galleryImages: []
     });
   } catch (err) {
     next(err);
@@ -87,7 +91,8 @@ async function createProduct(req, res, next) {
         product: req.body,
         specsText: req.body.specsText || '',
         errors: errors.array(),
-        isEdit: false
+        isEdit: false,
+        galleryImages: []
       });
     }
 
@@ -98,7 +103,25 @@ async function createProduct(req, res, next) {
       slug = `${slugBase}-${suffix++}`;
     }
 
-    const imageUrl = req.file ? '/images/uploads/products/' + req.file.filename : (req.body.imageUrl || null);
+    let imageUrl = req.body.imageUrl || null;
+    if (req.file) {
+      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
+      try {
+        await cropToFixedSize(destPath, 'product');
+      } catch (imgErr) {
+        removeUploadedFile('/images/uploads/products/' + req.file.filename);
+        return res.status(400).render('admin/product-form', {
+          title: 'Thêm sản phẩm - TOMSTORE Admin',
+          categories,
+          product: req.body,
+          specsText: req.body.specsText || '',
+          errors: [{ msg: IMAGE_ERROR_MESSAGE }],
+          isEdit: false,
+          galleryImages: []
+        });
+      }
+      imageUrl = '/images/uploads/products/' + req.file.filename;
+    }
 
     await db('products').insert({
       category_id: Number(req.body.categoryId),
@@ -126,13 +149,15 @@ async function editProductForm(req, res, next) {
     if (!product) return res.redirect('/admin/san-pham');
 
     const categories = await db('categories').orderBy('sort_order');
+    const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
     res.render('admin/product-form', {
       title: 'Sửa sản phẩm - TOMSTORE Admin',
       categories,
       product,
       specsText: specsToText(product.specs_json),
       errors: [],
-      isEdit: true
+      isEdit: true,
+      galleryImages
     });
   } catch (err) {
     next(err);
@@ -149,18 +174,36 @@ async function updateProduct(req, res, next) {
 
     if (!errors.isEmpty()) {
       if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
+      const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
       return res.status(400).render('admin/product-form', {
         title: 'Sửa sản phẩm - TOMSTORE Admin',
         categories,
         product: { ...product, ...req.body, id: product.id },
         specsText: req.body.specsText || '',
         errors: errors.array(),
-        isEdit: true
+        isEdit: true,
+        galleryImages
       });
     }
 
     let imageUrl = product.image_url;
     if (req.file) {
+      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
+      try {
+        await cropToFixedSize(destPath, 'product');
+      } catch (imgErr) {
+        removeUploadedFile('/images/uploads/products/' + req.file.filename);
+        const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
+        return res.status(400).render('admin/product-form', {
+          title: 'Sửa sản phẩm - TOMSTORE Admin',
+          categories,
+          product: { ...product, ...req.body, id: product.id },
+          specsText: req.body.specsText || '',
+          errors: [{ msg: IMAGE_ERROR_MESSAGE }],
+          isEdit: true,
+          galleryImages
+        });
+      }
       removeUploadedFile(product.image_url);
       imageUrl = '/images/uploads/products/' + req.file.filename;
     } else if (req.body.imageUrl !== undefined) {

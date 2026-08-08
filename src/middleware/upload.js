@@ -16,10 +16,10 @@ function makeUploader(subfolder) {
   });
 
   const fileFilter = (req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    const allowed = ['.jpg', '.jpeg', '.png', '.gif'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (!allowed.includes(ext)) {
-      return cb(new Error('Chỉ chấp nhận file ảnh (jpg, png, webp, gif)'));
+      return cb(new Error('Chỉ chấp nhận file ảnh (jpg, png, gif) — chưa hỗ trợ webp'));
     }
     cb(null, true);
   };

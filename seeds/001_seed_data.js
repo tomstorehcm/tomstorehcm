@@ -13,10 +13,10 @@ function slugify(str) {
 const HOURS_24 = 24 * 60 * 60 * 1000;
 
 const CATEGORIES = [
-  { slug: 'dien-thoai', name: 'Điện thoại', sort_order: 1 },
-  { slug: 'macbook', name: 'MacBook', sort_order: 2 },
-  { slug: 'may-tinh-bang', name: 'Máy tính bảng', sort_order: 3 },
-  { slug: 'tai-nghe', name: 'Tai nghe', sort_order: 4 }
+  { slug: 'dien-thoai', name: 'Điện thoại', sort_order: 1, image_url: '/images/categories/dien-thoai.webp' },
+  { slug: 'macbook', name: 'MacBook', sort_order: 2, image_url: '/images/categories/macbook.webp' },
+  { slug: 'may-tinh-bang', name: 'Máy tính bảng', sort_order: 3, image_url: '/images/categories/may-tinh-bang.webp' },
+  { slug: 'tai-nghe', name: 'Tai nghe', sort_order: 4, image_url: '/images/categories/tai-nghe.webp' }
 ];
 
 const PRODUCTS_BY_CATEGORY = {
@@ -233,10 +233,25 @@ exports.seed = async function (knex) {
 
   await knex('banners').insert([
     {
-      image_url: '/images/banners/len-doi-may-moi.jpg',
-      link_url: '/danh-muc/dien-thoai',
+      image_url: '/images/banners/mainbanners/BANNER_1.jpg',
+      link_url: null,
       sort_order: 1,
-      is_active: true
+      is_active: true,
+      type: 'hero'
+    },
+    {
+      image_url: '/images/banners/mainbanners/BANNER_2.jpg',
+      link_url: '/danh-muc/dien-thoai',
+      sort_order: 2,
+      is_active: true,
+      type: 'hero'
+    },
+    {
+      image_url: '/images/banners/len-doi-may-moi.jpg',
+      link_url: null,
+      sort_order: 1,
+      is_active: true,
+      type: 'featured'
     }
   ]);
 

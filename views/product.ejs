@@ -13,11 +13,22 @@
     </nav>
 
     <div class="product-detail">
-      <div class="product-detail-image">
-        <% if (product.image_url) { %>
-          <img src="<%= product.image_url %>" alt="<%= product.name %>" loading="lazy" />
-        <% } else { %>
-          <span class="product-icon-placeholder product-icon-placeholder-lg"><%- categoryIcon(category.slug) %></span>
+      <div class="product-gallery">
+        <div class="product-gallery-main" id="galleryMain">
+          <% if (images.length > 0) { %>
+            <img src="<%= images[0] %>" alt="<%= product.name %>" id="galleryMainImg" />
+          <% } else { %>
+            <span class="product-icon-placeholder product-icon-placeholder-lg"><%- categoryIcon(category.slug) %></span>
+          <% } %>
+        </div>
+        <% if (images.length > 1) { %>
+          <div class="product-gallery-thumbs">
+            <% images.forEach(function(src, i) { %>
+              <button type="button" class="gallery-thumb <%= i === 0 ? 'active' : '' %>" data-src="<%= src %>">
+                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" loading="lazy" />
+              </button>
+            <% }); %>
+          </div>
         <% } %>
       </div>
 
@@ -43,6 +54,8 @@
           <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= Math.max(product.stock, 1) %>" />
           <button type="submit" class="btn btn-primary btn-lg" <%= product.stock <= 0 ? 'disabled' : '' %>>Thêm vào giỏ hàng</button>
         </form>
+
+        <%- include('partials/policy-list') %>
 
         <% if (product.description) { %>
           <div class="product-description">

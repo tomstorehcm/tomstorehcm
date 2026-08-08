@@ -8,28 +8,30 @@
 
 <main>
   <% if (banners.length > 0) { %>
-  <section class="hero-slider" id="heroSlider">
-    <div class="hero-slider-track" id="heroSliderTrack">
-      <% banners.forEach(function(banner) { %>
-        <div class="hero-slide">
-          <% if (banner.link_url) { %>
-            <a href="<%= banner.link_url %>"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></a>
-          <% } else { %>
-            <span class="hero-slide-img"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></span>
-          <% } %>
-        </div>
-      <% }); %>
-    </div>
-    <% if (banners.length > 1) { %>
-      <button type="button" class="hero-slider-arrow prev" id="heroPrev" aria-label="Ảnh trước">&larr;</button>
-      <button type="button" class="hero-slider-arrow next" id="heroNext" aria-label="Ảnh sau">&rarr;</button>
-      <div class="hero-slider-dots" id="heroDots">
-        <% banners.forEach(function(banner, i) { %>
-          <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Đến slide <%= i + 1 %>"></button>
+  <div class="hero-slider-wrap container">
+    <section class="hero-slider" id="heroSlider">
+      <div class="hero-slider-track" id="heroSliderTrack">
+        <% banners.forEach(function(banner) { %>
+          <div class="hero-slide">
+            <% if (banner.link_url) { %>
+              <a href="<%= banner.link_url %>"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></a>
+            <% } else { %>
+              <span class="hero-slide-img"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></span>
+            <% } %>
+          </div>
         <% }); %>
       </div>
-    <% } %>
-  </section>
+      <% if (banners.length > 1) { %>
+        <button type="button" class="hero-slider-arrow prev" id="heroPrev" aria-label="Ảnh trước">&larr;</button>
+        <button type="button" class="hero-slider-arrow next" id="heroNext" aria-label="Ảnh sau">&rarr;</button>
+        <div class="hero-slider-dots" id="heroDots">
+          <% banners.forEach(function(banner, i) { %>
+            <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Đến slide <%= i + 1 %>"></button>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </div>
   <% } else { %>
   <section class="hero-fallback">
     <div class="container">
@@ -42,14 +44,16 @@
   <% if (hotDeals.length > 0) { %>
   <section id="hot-deal" class="hot-deal-section">
     <div class="container">
-      <div class="section-heading-hotdeal">
-        <h2>Hot Deal Trong Ngày</h2>
-        <p>Ưu đãi có hạn - nhanh tay đặt hàng trước khi hết giờ</p>
-      </div>
-      <div class="product-grid hotdeal-grid">
-        <% hotDeals.forEach(function(product) { %>
-          <%- include('partials/hotdeal-card', { product: product }) %>
-        <% }); %>
+      <div class="hot-deal-card">
+        <div class="section-heading-hotdeal">
+          <h2>Hot Deal Trong Ngày</h2>
+          <p>Ưu đãi có hạn - nhanh tay đặt hàng trước khi hết giờ</p>
+        </div>
+        <div class="product-grid hotdeal-grid">
+          <% hotDeals.forEach(function(product) { %>
+            <%- include('partials/hotdeal-card', { product: product }) %>
+          <% }); %>
+        </div>
       </div>
     </div>
   </section>
@@ -59,7 +63,7 @@
     <div class="category-tiles">
       <% categories.forEach(function(cat) { %>
         <a href="/danh-muc/<%= cat.slug %>" class="category-tile">
-          <img src="/images/categories/<%= cat.slug %>.webp" alt="<%= cat.name %>" loading="lazy" />
+          <img src="<%= cat.image_url %>" alt="<%= cat.name %>" loading="lazy" />
           <span class="category-tile-label"><%= cat.name %></span>
         </a>
       <% }); %>
@@ -73,9 +77,11 @@
         <h2>Sản phẩm Hot</h2>
       </div>
       <div class="featured-layout">
-        <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="featured-banner">
-          <img src="/images/banners/len-doi-may-moi.jpg" alt="Lên đời máy mới - TOMSTORE" loading="lazy" />
-        </a>
+        <% if (featuredBanner) { %>
+          <a href="<%= featuredBanner.link_url || ('tel:' + hotline.replace(/\s/g, '')) %>" class="featured-banner">
+            <img src="<%= featuredBanner.image_url %>" alt="TOMSTORE" loading="lazy" />
+          </a>
+        <% } %>
         <div class="featured-products">
           <% featuredProducts.forEach(function(product) { %>
             <%- include('partials/product-card', { product: product }) %>

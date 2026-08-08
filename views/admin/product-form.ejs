@@ -44,11 +44,11 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="imageFile">Hình ảnh sản phẩm</label>
+      <label for="imageFile">Ảnh đại diện (hiển thị ở danh sách/giỏ hàng)</label>
       <% if (product.image_url) { %>
         <img src="<%= product.image_url %>" alt="" class="admin-image-preview" />
       <% } %>
-      <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif" />
       <small>Chọn ảnh để tải lên trực tiếp. Bỏ trống nếu muốn giữ ảnh hiện tại hoặc nhập URL bên dưới.</small>
     </div>
     <div class="form-group">
@@ -73,6 +73,36 @@
     </div>
     <button type="submit" class="btn btn-primary btn-lg"><%= isEdit ? 'Lưu thay đổi' : 'Thêm sản phẩm' %></button>
   </form>
+
+  <% if (isEdit) { %>
+    <section class="admin-form gallery-section">
+      <h2>Ảnh chi tiết sản phẩm (tối đa 8 ảnh)</h2>
+      <p class="admin-hint">Hiển thị trên trang chi tiết sản phẩm dưới dạng nhiều ảnh, khách bấm vào ảnh nhỏ để xem ảnh lớn. Ảnh đại diện ở trên luôn là ảnh đầu tiên.</p>
+
+      <% if (galleryImages.length > 0) { %>
+        <div class="gallery-manage-grid">
+          <% galleryImages.forEach(function(img) { %>
+            <div class="gallery-manage-item">
+              <img src="<%= img.image_url %>" alt="" />
+              <form action="/admin/san-pham/<%= product.id %>/anh/<%= img.id %>/xoa" method="post" onsubmit="return confirm('Xóa ảnh này?');">
+                <button type="submit" class="btn-remove">&times;</button>
+              </form>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <% if (galleryImages.length < 8) { %>
+        <form action="/admin/san-pham/<%= product.id %>/anh" method="post" enctype="multipart/form-data" class="gallery-upload-form">
+          <input type="file" name="images" accept="image/png,image/jpeg,image/gif" multiple required />
+          <small>Còn có thể thêm tối đa <%= 8 - galleryImages.length %> ảnh nữa. Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
+          <button type="submit" class="btn btn-outline">Tải ảnh lên</button>
+        </form>
+      <% } else { %>
+        <p class="empty-state">Đã đạt tối đa 8 ảnh. Xóa bớt ảnh cũ để thêm ảnh mới.</p>
+      <% } %>
+    </section>
+  <% } %>
 </main>
 </body>
 </html>
