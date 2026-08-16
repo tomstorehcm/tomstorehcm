@@ -12,6 +12,22 @@
     <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
   <% } %>
 
+  <%
+    var PRESET_COLORS = [
+      { hex: '#1d1d1f', name: 'Đen' },
+      { hex: '#f5f5f0', name: 'Trắng' },
+      { hex: '#e3e4e5', name: 'Bạc' },
+      { hex: '#8f8a81', name: 'Titan Tự Nhiên' },
+      { hex: '#3c4a5c', name: 'Titan Xanh' },
+      { hex: '#cbb994', name: 'Titan Sa Mạc' },
+      { hex: '#f0e2d0', name: 'Vàng' },
+      { hex: '#3f5a75', name: 'Xanh Dương' },
+      { hex: '#4c5c48', name: 'Xanh Lá' },
+      { hex: '#5f4b6e', name: 'Tím' },
+      { hex: '#a41e22', name: 'Đỏ' },
+      { hex: '#f0c6ce', name: 'Hồng' }
+    ];
+  %>
   <div class="product-edit-layout">
   <form id="productForm" action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" <%- isEdit ? '' : 'enctype="multipart/form-data"' %>>
     <div class="form-group">
@@ -99,9 +115,17 @@
       <div id="colorRows" class="color-rows">
         <% (colors || []).forEach(function(c) { %>
           <% var cInStock = typeof c.in_stock !== 'undefined' ? !!c.in_stock : (typeof c.inStock !== 'undefined' ? !!c.inStock : true); %>
+          <% var cHex = c.hex_code || c.hex || PRESET_COLORS[0].hex; %>
+          <% var cIsPreset = PRESET_COLORS.some(function(p) { return p.hex === cHex; }); %>
           <div class="color-row-group">
             <div class="color-row">
-              <input type="color" name="colorHex" value="<%= c.hex_code || c.hex || '#000000' %>" />
+              <span class="color-hex-swatch" style="background-color: <%= cHex %>;"></span>
+              <select name="colorHex" class="color-hex-select">
+                <% PRESET_COLORS.forEach(function(preset) { %>
+                  <option value="<%= preset.hex %>" <%= cHex === preset.hex ? 'selected' : '' %>><%= preset.name %></option>
+                <% }); %>
+                <% if (!cIsPreset) { %><option value="<%= cHex %>" selected>Màu đã lưu</option><% } %>
+              </select>
               <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
               <select name="colorInStock">
                 <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
@@ -288,15 +312,25 @@
       });
     }
 
-    // Màu sắc: thêm, xóa dòng động
+    // Màu sắc: thêm, xóa dòng động, chọn theo bảng màu định sẵn
+    var PRESET_COLORS = [
+      ['#1d1d1f', 'Đen'], ['#f5f5f0', 'Trắng'], ['#e3e4e5', 'Bạc'],
+      ['#8f8a81', 'Titan Tự Nhiên'], ['#3c4a5c', 'Titan Xanh'], ['#cbb994', 'Titan Sa Mạc'],
+      ['#f0e2d0', 'Vàng'], ['#3f5a75', 'Xanh Dương'], ['#4c5c48', 'Xanh Lá'],
+      ['#5f4b6e', 'Tím'], ['#a41e22', 'Đỏ'], ['#f0c6ce', 'Hồng']
+    ];
     var colorRows = document.getElementById('colorRows');
     var addColorRowBtn = document.getElementById('addColorRowBtn');
     if (colorRows && addColorRowBtn) {
       addColorRowBtn.addEventListener('click', function () {
+        var options = PRESET_COLORS.map(function (p) {
+          return '<option value="' + p[0] + '">' + p[1] + '</option>';
+        }).join('');
         var row = document.createElement('div');
         row.className = 'color-row';
         row.innerHTML =
-          '<input type="color" name="colorHex" value="#000000" />' +
+          '<span class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></span>' +
+          '<select name="colorHex" class="color-hex-select">' + options + '</select>' +
           '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
           '<select name="colorInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
           '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>';
@@ -304,7 +338,12 @@
       });
       colorRows.addEventListener('click', function (e) {
         if (!e.target.classList.contains('color-remove-btn')) return;
-        e.target.closest('.color-row').remove();
+        e.target.closest('.color-row-group, .color-row').remove();
+      });
+      colorRows.addEventListener('change', function (e) {
+        if (!e.target.classList.contains('color-hex-select')) return;
+        var swatch = e.target.closest('.color-row').querySelector('.color-hex-swatch');
+        if (swatch) swatch.style.backgroundColor = e.target.value;
       });
     }
 
