@@ -14,14 +14,23 @@
 
     <div class="product-detail">
       <div class="product-gallery">
+        <%
+          var colorImages = (colors || []).filter(function(c) { return c.image_url; });
+          var totalSlides = images.length + colorImages.length;
+        %>
         <div class="product-gallery-main" id="galleryMain">
-          <% if (images.length > 0) { %>
+          <% if (totalSlides > 0) { %>
             <% images.forEach(function(src, i) { %>
-              <div class="gallery-slide <%= i === 0 ? 'is-active' : '' %>" data-index="<%= i %>">
+              <div class="gallery-slide <%= i === 0 ? 'is-active' : '' %>">
                 <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="800" height="800" />
               </div>
             <% }); %>
-            <% if (images.length > 1) { %>
+            <% colorImages.forEach(function(c) { %>
+              <div class="gallery-slide" data-color-id="<%= c.id %>">
+                <img src="<%= c.image_url %>" alt="<%= product.name %> - màu <%= c.name %>" width="800" height="800" />
+              </div>
+            <% }); %>
+            <% if (totalSlides > 1) { %>
               <button type="button" class="hero-slider-arrow prev" id="galleryPrev" aria-label="Ảnh trước">&larr;</button>
               <button type="button" class="hero-slider-arrow next" id="galleryNext" aria-label="Ảnh sau">&rarr;</button>
             <% } %>
@@ -29,11 +38,16 @@
             <span class="product-icon-placeholder product-icon-placeholder-lg"><%- categoryIcon(category.slug) %></span>
           <% } %>
         </div>
-        <% if (images.length > 1) { %>
+        <% if (totalSlides > 1) { %>
           <div class="product-gallery-thumbs">
             <% images.forEach(function(src, i) { %>
               <button type="button" class="gallery-thumb <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>">
                 <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="64" height="64" loading="lazy" />
+              </button>
+            <% }); %>
+            <% colorImages.forEach(function(c, j) { %>
+              <button type="button" class="gallery-thumb" data-index="<%= images.length + j %>" data-color-id="<%= c.id %>">
+                <img src="<%= c.image_url %>" alt="<%= product.name %> - màu <%= c.name %>" width="64" height="64" loading="lazy" />
               </button>
             <% }); %>
           </div>
@@ -86,7 +100,7 @@
               <label>Màu sắc<span id="colorNameDisplay"><%= colors[0].name %></span></label>
               <div class="color-options">
                 <% colors.forEach(function(c, i) { %>
-                  <button type="button" class="color-option <%= i === 0 ? 'active' : '' %>" data-color-id="<%= c.id %>" data-color-name="<%= c.name %>" data-in-stock="<%= c.in_stock ? '1' : '0' %>" data-image="<%= c.image_url || '' %>" style="background-color: <%= c.hex_code %>;" title="<%= c.name %>" <%= c.in_stock ? '' : 'disabled' %>></button>
+                  <button type="button" class="color-option <%= i === 0 ? 'active' : '' %>" data-color-id="<%= c.id %>" data-color-name="<%= c.name %>" data-in-stock="<%= c.in_stock ? '1' : '0' %>" style="background-color: <%= c.hex_code %>;" title="<%= c.name %>" <%= c.in_stock ? '' : 'disabled' %>></button>
                 <% }); %>
               </div>
             </div>

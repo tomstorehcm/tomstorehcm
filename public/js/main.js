@@ -70,21 +70,23 @@
   // Product detail gallery: arrows + thumbnails, same crossfade/zoom style as the hero banner
   var galleryMain = document.getElementById('galleryMain');
   var gallerySlides = galleryMain ? galleryMain.querySelectorAll('.gallery-slide') : [];
+  var galleryThumbs = document.querySelectorAll('.gallery-thumb');
+  var galleryCurrent = 0;
+
+  function galleryGoTo(index) {
+    if (!gallerySlides.length) return;
+    galleryCurrent = (index + gallerySlides.length) % gallerySlides.length;
+    gallerySlides.forEach(function (slide, i) {
+      slide.classList.toggle('is-active', i === galleryCurrent);
+    });
+    galleryThumbs.forEach(function (thumb, i) {
+      thumb.classList.toggle('active', i === galleryCurrent);
+    });
+  }
+
   if (gallerySlides.length > 1) {
-    var galleryThumbs = document.querySelectorAll('.gallery-thumb');
     var galleryPrev = document.getElementById('galleryPrev');
     var galleryNext = document.getElementById('galleryNext');
-    var galleryCurrent = 0;
-
-    function galleryGoTo(index) {
-      galleryCurrent = (index + gallerySlides.length) % gallerySlides.length;
-      gallerySlides.forEach(function (slide, i) {
-        slide.classList.toggle('is-active', i === galleryCurrent);
-      });
-      galleryThumbs.forEach(function (thumb, i) {
-        thumb.classList.toggle('active', i === galleryCurrent);
-      });
-    }
 
     if (galleryNext) galleryNext.addEventListener('click', function () { galleryGoTo(galleryCurrent + 1); });
     if (galleryPrev) galleryPrev.addEventListener('click', function () { galleryGoTo(galleryCurrent - 1); });
@@ -171,21 +173,14 @@
         if (colorNameDisplay) colorNameDisplay.textContent = opt.getAttribute('data-color-name');
         updatePickerAvailability();
 
-        var colorImage = opt.getAttribute('data-image');
-        if (colorImage) {
-          var mainSlides = document.querySelectorAll('#galleryMain .gallery-slide');
-          var mainThumbs = document.querySelectorAll('.gallery-thumb');
-          if (mainSlides.length > 0) {
-            var firstSlideImg = mainSlides[0].querySelector('img');
-            if (firstSlideImg) firstSlideImg.src = colorImage;
-            mainSlides.forEach(function (s, i) { s.classList.toggle('is-active', i === 0); });
-            mainThumbs.forEach(function (t, i) {
-              t.classList.toggle('active', i === 0);
-              if (i === 0) {
-                var thumbImg = t.querySelector('img');
-                if (thumbImg) thumbImg.src = colorImage;
-              }
-            });
+        // Jump the gallery to this color's own slide (if it has a photo) without
+        // touching any other slide -- the rest of the gallery stays browsable.
+        if (galleryMain) {
+          var colorId = opt.getAttribute('data-color-id');
+          var targetSlide = galleryMain.querySelector('.gallery-slide[data-color-id="' + colorId + '"]');
+          if (targetSlide) {
+            var slideIndex = Array.prototype.indexOf.call(gallerySlides, targetSlide);
+            if (slideIndex > -1) galleryGoTo(slideIndex);
           }
         }
       });
