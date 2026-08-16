@@ -49,6 +49,11 @@ router.post(
   productGalleryController.uploadImages
 );
 router.post('/san-pham/:id/anh/:imageId/xoa', productGalleryController.deleteImage);
+router.post(
+  '/san-pham/:id/mau/:colorId/anh',
+  handleUploadErrors(uploadProductImage.single('imageFile')),
+  productAdminController.uploadColorImage
+);
 
 router.get('/hot-deal', hotDealController.listHotDeals);
 router.post('/hot-deal/:id/bat', hotDealController.enableHotDeal);

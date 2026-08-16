@@ -19,6 +19,7 @@ router.post('/gio-hang/them', cartController.addToCart);
 router.post('/gio-hang/cap-nhat', cartController.updateCart);
 router.post('/gio-hang/xoa', cartController.removeFromCart);
 
+router.post('/thanh-toan/mua-ngay', checkoutController.buyNow);
 router.get('/thanh-toan', checkoutController.showCheckout);
 router.post('/thanh-toan', checkoutController.checkoutValidators, checkoutController.submitOrder);
 router.get('/don-hang/:code', checkoutController.showConfirmation);

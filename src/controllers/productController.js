@@ -27,6 +27,10 @@ async function showProduct(req, res, next) {
       .where('product_id', product.id)
       .orderBy('sort_order');
 
+    const colors = await db('product_colors')
+      .where('product_id', product.id)
+      .orderBy('sort_order');
+
     const images = [];
     if (product.image_url) images.push(product.image_url);
     galleryImages.forEach((img) => images.push(img.image_url));
@@ -48,7 +52,8 @@ async function showProduct(req, res, next) {
       specs,
       images,
       policies,
-      variants
+      variants,
+      colors
     });
   } catch (err) {
     next(err);

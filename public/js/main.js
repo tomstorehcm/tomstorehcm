@@ -111,18 +111,37 @@
     }, { passive: true });
   }
 
-  // Product detail: storage/capacity variant picker
+  // Product detail: storage/capacity variant picker + color picker
   var variantOptions = document.querySelectorAll('.variant-option');
-  if (variantOptions.length) {
+  var colorOptions = document.querySelectorAll('.color-option');
+  if (variantOptions.length || colorOptions.length) {
     var variantIdInput = document.getElementById('variantIdInput');
     var variantPriceDisplay = document.getElementById('variantPriceDisplay');
-    var variantStockText = document.getElementById('productStockText');
-    var variantAddBtn = document.querySelector('.product-detail-cta-row button[value="add"]');
-    var variantCheckoutBtn = document.querySelector('.product-detail-cta-row button[value="checkout"]');
+    var colorIdInput = document.getElementById('colorIdInput');
+    var colorNameDisplay = document.getElementById('colorNameDisplay');
+    var pickerStockText = document.getElementById('productStockText');
+    var pickerAddBtn = document.querySelector('.product-detail-cta-row button[value="add"]');
+    var pickerCheckoutBtn = document.querySelector('.product-detail-cta-row button[value="checkout"]');
     var vndFormatter = window.Intl ? new Intl.NumberFormat('vi-VN') : null;
 
     function formatVNDClient(amount) {
       return (vndFormatter ? vndFormatter.format(amount) : String(amount)) + '₫';
+    }
+
+    var variantInStock = variantOptions.length ? variantOptions[0].getAttribute('data-in-stock') === '1' : true;
+    var colorInStock = colorOptions.length ? colorOptions[0].getAttribute('data-in-stock') === '1' : true;
+
+    function updatePickerAvailability() {
+      var inStock = variantInStock && colorInStock;
+      if (pickerStockText) {
+        pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+        pickerStockText.classList.toggle('product-stock-out', !inStock);
+      }
+      if (pickerAddBtn) {
+        pickerAddBtn.disabled = !inStock;
+        pickerAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+      }
+      if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
     }
 
     variantOptions.forEach(function (opt) {
@@ -132,19 +151,43 @@
         opt.classList.add('active');
 
         var price = Number(opt.getAttribute('data-price'));
-        var inStock = opt.getAttribute('data-in-stock') === '1';
+        variantInStock = opt.getAttribute('data-in-stock') === '1';
 
         if (variantIdInput) variantIdInput.value = opt.getAttribute('data-variant-id');
         if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
-        if (variantStockText) {
-          variantStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
-          variantStockText.classList.toggle('product-stock-out', !inStock);
+        updatePickerAvailability();
+      });
+    });
+
+    colorOptions.forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        if (opt.disabled) return;
+        colorOptions.forEach(function (o) { o.classList.remove('active'); });
+        opt.classList.add('active');
+
+        colorInStock = opt.getAttribute('data-in-stock') === '1';
+
+        if (colorIdInput) colorIdInput.value = opt.getAttribute('data-color-id');
+        if (colorNameDisplay) colorNameDisplay.textContent = opt.getAttribute('data-color-name');
+        updatePickerAvailability();
+
+        var colorImage = opt.getAttribute('data-image');
+        if (colorImage) {
+          var mainSlides = document.querySelectorAll('#galleryMain .gallery-slide');
+          var mainThumbs = document.querySelectorAll('.gallery-thumb');
+          if (mainSlides.length > 0) {
+            var firstSlideImg = mainSlides[0].querySelector('img');
+            if (firstSlideImg) firstSlideImg.src = colorImage;
+            mainSlides.forEach(function (s, i) { s.classList.toggle('is-active', i === 0); });
+            mainThumbs.forEach(function (t, i) {
+              t.classList.toggle('active', i === 0);
+              if (i === 0) {
+                var thumbImg = t.querySelector('img');
+                if (thumbImg) thumbImg.src = colorImage;
+              }
+            });
+          }
         }
-        if (variantAddBtn) {
-          variantAddBtn.disabled = !inStock;
-          variantAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-        }
-        if (variantCheckoutBtn) variantCheckoutBtn.disabled = !inStock;
       });
     });
   }
@@ -326,20 +369,19 @@
     });
   });
 
-  // Product detail page: "Thêm vào giỏ hàng" stays on page, "Thanh toán ngay" adds then goes to checkout
+  // Product detail page: "Thêm vào giỏ hàng" stays on page (AJAX). "Thanh toán ngay"
+  // is a real form submit (via formaction) straight to the buy-now checkout route,
+  // so it never touches the persistent cart.
   var productDetailCartForm = document.getElementById('productDetailCartForm');
   if (productDetailCartForm) {
     productDetailCartForm.addEventListener('submit', function (e) {
-      e.preventDefault();
       var isCheckout = e.submitter && e.submitter.value === 'checkout';
+      if (isCheckout) return;
+      e.preventDefault();
       postForm(productDetailCartForm.action, new FormData(productDetailCartForm)).then(function (data) {
         if (!data.success) return;
-        if (isCheckout) {
-          window.location.href = '/thanh-toan';
-        } else {
-          updateCartBadge(data.cartCount);
-          showCartToast('Đã thêm vào giỏ hàng');
-        }
+        updateCartBadge(data.cartCount);
+        showCartToast('Đã thêm vào giỏ hàng');
       });
     });
   }

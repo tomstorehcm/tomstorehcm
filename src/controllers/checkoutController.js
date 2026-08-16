@@ -4,10 +4,82 @@ const cartService = require('../services/cart');
 const paymentService = require('../services/payment');
 const { generateOrderCode } = require('../utils/format');
 const { getDefaultPolicies } = require('../services/policies');
+const { MAX_QTY_PER_ITEM } = require('../utils/constants');
+
+function buildOrderItemName(item) {
+  const parts = [];
+  if (item.variant) parts.push(item.variant.label);
+  if (item.color) parts.push(item.color.name);
+  return parts.length > 0 ? `${item.product.name} (${parts.join(', ')})` : item.product.name;
+}
+
+async function resolveBuyNowCart(buyNow) {
+  const product = await db('products').where('id', buyNow.productId).first();
+  if (!product) return null;
+
+  const variant = buyNow.variantId
+    ? await db('product_variants').where({ id: buyNow.variantId, product_id: buyNow.productId }).first()
+    : null;
+  if (buyNow.variantId && !variant) return null;
+
+  const color = buyNow.colorId
+    ? await db('product_colors').where({ id: buyNow.colorId, product_id: buyNow.productId }).first()
+    : null;
+  if (buyNow.colorId && !color) return null;
+
+  const unitPrice = variant ? variant.price : (product.sale_price || product.price);
+  const quantity = buyNow.quantity;
+  const lineTotal = unitPrice * quantity;
+
+  return {
+    items: [{ product, variant, color, quantity, unitPrice, lineTotal }],
+    total: lineTotal,
+    count: quantity
+  };
+}
+
+async function getActiveCart(req) {
+  if (req.session.buyNow) {
+    const buyNowCart = await resolveBuyNowCart(req.session.buyNow);
+    if (buyNowCart) return { cart: buyNowCart, isBuyNow: true };
+    delete req.session.buyNow;
+  }
+  const cart = await cartService.getCartDetails(req);
+  return { cart, isBuyNow: false };
+}
+
+async function buyNow(req, res, next) {
+  try {
+    const productId = Number(req.body.productId);
+    const variantId = req.body.variantId ? Number(req.body.variantId) : null;
+    const colorId = req.body.colorId ? Number(req.body.colorId) : null;
+    const quantity = Math.max(1, Math.min(MAX_QTY_PER_ITEM, Number(req.body.quantity) || 1));
+
+    const product = await db('products').where('id', productId).first();
+    if (!product || product.is_contact_price || !product.in_stock) {
+      return res.status(404).redirect('/');
+    }
+
+    if (variantId) {
+      const variant = await db('product_variants').where({ id: variantId, product_id: productId }).first();
+      if (!variant || !variant.in_stock) return res.status(404).redirect('/');
+    }
+
+    if (colorId) {
+      const color = await db('product_colors').where({ id: colorId, product_id: productId }).first();
+      if (!color || !color.in_stock) return res.status(404).redirect('/');
+    }
+
+    req.session.buyNow = { productId, variantId, colorId, quantity };
+    res.redirect('/thanh-toan');
+  } catch (err) {
+    next(err);
+  }
+}
 
 async function showCheckout(req, res, next) {
   try {
-    const cart = await cartService.getCartDetails(req);
+    const { cart } = await getActiveCart(req);
     if (cart.items.length === 0) {
       return res.redirect('/gio-hang');
     }
@@ -36,7 +108,7 @@ const checkoutValidators = [
 
 async function submitOrder(req, res, next) {
   try {
-    const cart = await cartService.getCartDetails(req);
+    const { cart, isBuyNow } = await getActiveCart(req);
     if (cart.items.length === 0) {
       return res.redirect('/gio-hang');
     }
@@ -73,13 +145,17 @@ async function submitOrder(req, res, next) {
       await db('order_items').insert({
         order_id: insertedOrderId,
         product_id: item.product.id,
-        product_name: item.variant ? `${item.product.name} (${item.variant.label})` : item.product.name,
+        product_name: buildOrderItemName(item),
         price: item.unitPrice,
         quantity: item.quantity
       });
     }
 
-    cartService.clearCart(req);
+    if (isBuyNow) {
+      delete req.session.buyNow;
+    } else {
+      cartService.clearCart(req);
+    }
     res.redirect(`/don-hang/${orderCode}`);
   } catch (err) {
     next(err);
@@ -111,4 +187,4 @@ async function showConfirmation(req, res, next) {
   }
 }
 
-module.exports = { showCheckout, checkoutValidators, submitOrder, showConfirmation };
+module.exports = { showCheckout, checkoutValidators, submitOrder, showConfirmation, buyNow };

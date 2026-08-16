@@ -45,8 +45,9 @@
         <h1><%= product.name %></h1>
 
         <% var hasVariants = variants && variants.length > 0; %>
-        <% var effectiveInStock = product.in_stock && (hasVariants ? variants[0].in_stock : true); %>
-        <% var MAX_QTY = 20; %>
+        <% var hasColors = colors && colors.length > 0; %>
+        <% var effectiveInStock = product.in_stock && (hasVariants ? variants[0].in_stock : true) && (hasColors ? colors[0].in_stock : true); %>
+        <% var MAX_QTY = 5; %>
 
         <div class="product-price product-price-lg" id="productPriceBlock">
           <% if (product.is_contact_price) { %>
@@ -80,6 +81,17 @@
             </div>
           <% } %>
 
+          <% if (hasColors) { %>
+            <div class="color-picker" id="colorPicker">
+              <label>Màu sắc<span id="colorNameDisplay"><%= colors[0].name %></span></label>
+              <div class="color-options">
+                <% colors.forEach(function(c, i) { %>
+                  <button type="button" class="color-option <%= i === 0 ? 'active' : '' %>" data-color-id="<%= c.id %>" data-color-name="<%= c.name %>" data-in-stock="<%= c.in_stock ? '1' : '0' %>" data-image="<%= c.image_url || '' %>" style="background-color: <%= c.hex_code %>;" title="<%= c.name %>" <%= c.in_stock ? '' : 'disabled' %>></button>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+
           <p class="product-stock" id="productStockText"><%= effectiveInStock ? 'Còn hàng' : 'Hết hàng' %></p>
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
@@ -87,11 +99,14 @@
             <% if (hasVariants) { %>
               <input type="hidden" name="variantId" id="variantIdInput" value="<%= variants[0].id %>" />
             <% } %>
+            <% if (hasColors) { %>
+              <input type="hidden" name="colorId" id="colorIdInput" value="<%= colors[0].id %>" />
+            <% } %>
             <label for="quantity">Số lượng</label>
             <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= MAX_QTY %>" />
             <div class="product-detail-cta-row">
               <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>><%= effectiveInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' %></button>
-              <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
+              <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
             </div>
           </form>
         <% } %>

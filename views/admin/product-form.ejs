@@ -95,6 +95,38 @@
       <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/trạng thái riêng của từng dòng thay cho giá gốc phía trên.</small>
     </div>
     <div class="form-group">
+      <label>Màu sắc (tùy chọn)</label>
+      <div id="colorRows" class="color-rows">
+        <% (colors || []).forEach(function(c) { %>
+          <% var cInStock = typeof c.in_stock !== 'undefined' ? !!c.in_stock : (typeof c.inStock !== 'undefined' ? !!c.inStock : true); %>
+          <div class="color-row-group">
+            <div class="color-row">
+              <input type="color" name="colorHex" value="<%= c.hex_code || c.hex || '#000000' %>" />
+              <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
+              <select name="colorInStock">
+                <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
+                <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
+              </select>
+              <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
+            </div>
+            <% if (c.id) { %>
+              <div class="color-image-row">
+                <img src="<%= c.image_url || '' %>" alt="" class="admin-color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
+                <form action="/admin/san-pham/<%= product.id %>/mau/<%= c.id %>/anh" method="post" enctype="multipart/form-data">
+                  <label class="btn btn-outline btn-sm gallery-pick-btn">
+                    <%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>
+                    <input type="file" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden onchange="this.form.requestSubmit()" />
+                  </label>
+                </form>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+      <button type="button" id="addColorRowBtn" class="btn btn-outline btn-sm">+ Thêm màu sắc</button>
+      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn màu. Màu không ảnh hưởng đến giá, chỉ để khách chọn khi thêm vào giỏ.</small>
+    </div>
+    <div class="form-group">
       <label for="policyGroupId">Nhóm chính sách bảo hành</label>
       <select id="policyGroupId" name="policyGroupId">
         <option value="">— Chọn riêng từng mục bên dưới —</option>
@@ -253,6 +285,26 @@
       variantRows.addEventListener('click', function (e) {
         if (!e.target.classList.contains('variant-remove-btn')) return;
         e.target.closest('.variant-row').remove();
+      });
+    }
+
+    // Màu sắc: thêm, xóa dòng động
+    var colorRows = document.getElementById('colorRows');
+    var addColorRowBtn = document.getElementById('addColorRowBtn');
+    if (colorRows && addColorRowBtn) {
+      addColorRowBtn.addEventListener('click', function () {
+        var row = document.createElement('div');
+        row.className = 'color-row';
+        row.innerHTML =
+          '<input type="color" name="colorHex" value="#000000" />' +
+          '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
+          '<select name="colorInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
+          '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>';
+        colorRows.appendChild(row);
+      });
+      colorRows.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('color-remove-btn')) return;
+        e.target.closest('.color-row').remove();
       });
     }
 
