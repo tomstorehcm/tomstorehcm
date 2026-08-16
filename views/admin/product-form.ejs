@@ -15,17 +15,29 @@
   <%
     var PRESET_COLORS = [
       { hex: '#1d1d1f', name: 'Đen' },
-      { hex: '#f5f5f0', name: 'Trắng' },
+      { hex: '#2b2b2d', name: 'Xám Đậm' },
+      { hex: '#4b4b4d', name: 'Xám' },
       { hex: '#e3e4e5', name: 'Bạc' },
+      { hex: '#f5f5f0', name: 'Trắng' },
       { hex: '#8f8a81', name: 'Titan Tự Nhiên' },
       { hex: '#3c4a5c', name: 'Titan Xanh' },
       { hex: '#cbb994', name: 'Titan Sa Mạc' },
       { hex: '#f0e2d0', name: 'Vàng' },
-      { hex: '#3f5a75', name: 'Xanh Dương' },
-      { hex: '#4c5c48', name: 'Xanh Lá' },
-      { hex: '#5f4b6e', name: 'Tím' },
+      { hex: '#f4c8bc', name: 'Vàng Hồng' },
+      { hex: '#e8d44d', name: 'Vàng Chanh' },
+      { hex: '#e8622c', name: 'Cam' },
       { hex: '#a41e22', name: 'Đỏ' },
-      { hex: '#f0c6ce', name: 'Hồng' }
+      { hex: '#f0c6ce', name: 'Hồng' },
+      { hex: '#5f4b6e', name: 'Tím' },
+      { hex: '#4b3c5e', name: 'Tím Đậm' },
+      { hex: '#3f5a75', name: 'Xanh Dương' },
+      { hex: '#2d2d6b', name: 'Xanh Navy' },
+      { hex: '#1c4966', name: 'Xanh Biển' },
+      { hex: '#4c5c48', name: 'Xanh Lá' },
+      { hex: '#2f6b5e', name: 'Xanh Ngọc' },
+      { hex: '#a8d8b9', name: 'Xanh Bạc Hà' },
+      { hex: '#d9cbb3', name: 'Be' },
+      { hex: '#6b4423', name: 'Nâu' }
     ];
   %>
   <div class="product-edit-layout">
@@ -310,10 +322,12 @@
 
     // Màu sắc: thêm, xóa dòng động, chọn theo bảng màu định sẵn
     var PRESET_COLORS = [
-      ['#1d1d1f', 'Đen'], ['#f5f5f0', 'Trắng'], ['#e3e4e5', 'Bạc'],
-      ['#8f8a81', 'Titan Tự Nhiên'], ['#3c4a5c', 'Titan Xanh'], ['#cbb994', 'Titan Sa Mạc'],
-      ['#f0e2d0', 'Vàng'], ['#3f5a75', 'Xanh Dương'], ['#4c5c48', 'Xanh Lá'],
-      ['#5f4b6e', 'Tím'], ['#a41e22', 'Đỏ'], ['#f0c6ce', 'Hồng']
+      ['#1d1d1f', 'Đen'], ['#2b2b2d', 'Xám Đậm'], ['#4b4b4d', 'Xám'], ['#e3e4e5', 'Bạc'],
+      ['#f5f5f0', 'Trắng'], ['#8f8a81', 'Titan Tự Nhiên'], ['#3c4a5c', 'Titan Xanh'], ['#cbb994', 'Titan Sa Mạc'],
+      ['#f0e2d0', 'Vàng'], ['#f4c8bc', 'Vàng Hồng'], ['#e8d44d', 'Vàng Chanh'], ['#e8622c', 'Cam'],
+      ['#a41e22', 'Đỏ'], ['#f0c6ce', 'Hồng'], ['#5f4b6e', 'Tím'], ['#4b3c5e', 'Tím Đậm'],
+      ['#3f5a75', 'Xanh Dương'], ['#2d2d6b', 'Xanh Navy'], ['#1c4966', 'Xanh Biển'], ['#4c5c48', 'Xanh Lá'],
+      ['#2f6b5e', 'Xanh Ngọc'], ['#a8d8b9', 'Xanh Bạc Hà'], ['#d9cbb3', 'Be'], ['#6b4423', 'Nâu']
     ];
     var colorRows = document.getElementById('colorRows');
     var addColorRowBtn = document.getElementById('addColorRowBtn');
