@@ -1,6 +1,10 @@
 require('dotenv').config();
 
 const path = require('path');
+
+const { ensurePersistentUploads } = require('./src/utils/ensurePersistentUploads');
+ensurePersistentUploads();
+
 const express = require('express');
 const session = require('express-session');
 const KnexSessionStore = require('connect-session-knex')(session);
