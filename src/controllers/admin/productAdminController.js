@@ -235,7 +235,7 @@ async function createProduct(req, res, next) {
       image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      in_stock: req.body.inStock === 'on',
+      in_stock: req.body.outOfStock !== 'on',
       is_featured: req.body.isFeatured === 'on'
     });
     const insertedId = insertedRaw && insertedRaw.id ? insertedRaw.id : insertedRaw;
@@ -317,7 +317,7 @@ async function updateProduct(req, res, next) {
       is_contact_price: isContactPrice,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      in_stock: req.body.inStock === 'on',
+      in_stock: req.body.outOfStock !== 'on',
       is_featured: req.body.isFeatured === 'on'
     });
 

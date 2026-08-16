@@ -45,7 +45,7 @@
         <h1><%= product.name %></h1>
 
         <% var hasVariants = variants && variants.length > 0; %>
-        <% var effectiveInStock = hasVariants ? variants[0].in_stock : product.in_stock; %>
+        <% var effectiveInStock = product.in_stock && (hasVariants ? variants[0].in_stock : true); %>
         <% var MAX_QTY = 20; %>
 
         <div class="product-price product-price-lg" id="productPriceBlock">
@@ -65,7 +65,7 @@
 
         <% if (product.is_contact_price) { %>
           <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-lg">Liên hệ đặt mua: <%= hotline %></a>
-        <% } else if (!hasVariants && !product.in_stock) { %>
+        <% } else if (!product.in_stock) { %>
           <p class="product-stock product-stock-out">Hết hàng</p>
           <button type="button" class="btn btn-outline btn-lg" disabled>Hết hàng</button>
         <% } else { %>
