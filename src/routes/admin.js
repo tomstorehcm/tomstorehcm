@@ -60,6 +60,8 @@ router.post('/hot-deal/:id/bat', hotDealController.enableHotDeal);
 router.post('/hot-deal/:id/tat', hotDealController.disableHotDeal);
 router.post('/hot-deal/:id/gia-han', hotDealController.extendHotDeal);
 router.post('/hot-deal/:id/dat-gio', hotDealController.setHotDealExpiry);
+router.post('/hot-deal/:id/len', hotDealController.moveHotDealUp);
+router.post('/hot-deal/:id/xuong', hotDealController.moveHotDealDown);
 router.post('/hot-deal/them-rieng', handleUploadErrors(uploadProductImage.single('imageFile')), hotDealController.createStandaloneHotDeal);
 
 router.get('/don-hang', orderAdminController.listOrders);

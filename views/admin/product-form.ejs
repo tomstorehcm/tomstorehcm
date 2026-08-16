@@ -201,6 +201,12 @@
           </label>
           <input type="file" id="mainImageInput" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
           <input type="text" id="imageUrlInput" name="imageUrl" value="<%= product.image_url && product.image_url.startsWith('/images/uploads/') ? '' : (product.image_url || '') %>" placeholder="Hoặc dán URL ảnh..." />
+          <% if (product.image_url) { %>
+            <button type="submit" name="removeImage" value="1" class="btn btn-outline gallery-delete-main-btn" formnovalidate onclick="return confirm('Xóa ảnh đại diện hiện tại?');">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Xóa ảnh đại diện
+            </button>
+          <% } %>
           <small>Chọn ảnh mới sẽ thay ảnh hiện tại. Bỏ trống cả hai để giữ nguyên.</small>
         </div>
 

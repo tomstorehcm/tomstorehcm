@@ -59,6 +59,9 @@ async function uploadImages(req, res, next) {
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/products/' + mainImageFile.filename);
       }
+    } else if (req.body.removeImage === '1') {
+      removeUploadedFile(product.image_url);
+      await db('products').where('id', product.id).update({ image_url: null });
     } else if (req.body.imageUrl !== undefined && req.body.imageUrl !== '') {
       await db('products').where('id', product.id).update({ image_url: req.body.imageUrl });
     }

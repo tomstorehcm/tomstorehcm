@@ -67,11 +67,20 @@
     <% if (activeProducts.length === 0) { %>
       <p class="empty-state">Chưa có Hot Deal nào đang chạy.</p>
     <% } else { %>
+      <p class="admin-hint">Dùng nút ▲▼ để chỉnh thứ tự hiển thị Hot Deal trên trang chủ (trên cùng hiển thị trước).</p>
       <table class="admin-table">
-        <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Giá KM</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
+        <thead><tr><th>Thứ tự</th><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Giá KM</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
         <tbody>
-          <% activeProducts.forEach(function(p) { %>
+          <% activeProducts.forEach(function(p, i) { %>
             <tr>
+              <td class="admin-actions-hotdeal-order">
+                <form action="/admin/hot-deal/<%= p.id %>/len" method="post" class="hotdeal-order-form">
+                  <button type="submit" class="btn btn-outline btn-sm" title="Đưa lên trên" <%= i === 0 ? 'disabled' : '' %>>&#9650;</button>
+                </form>
+                <form action="/admin/hot-deal/<%= p.id %>/xuong" method="post" class="hotdeal-order-form">
+                  <button type="submit" class="btn btn-outline btn-sm" title="Đưa xuống dưới" <%= i === activeProducts.length - 1 ? 'disabled' : '' %>>&#9660;</button>
+                </form>
+              </td>
               <td><%= p.name %></td>
               <td><%= p.category_name %></td>
               <td><%= formatVND(p.price) %></td>

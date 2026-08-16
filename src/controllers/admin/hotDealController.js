@@ -14,9 +14,9 @@ async function listHotDeals(req, res, next) {
       .select('products.*', 'categories.name as category_name')
       .orderBy('products.name');
 
-    const activeProducts = products.filter(
-      (p) => p.is_hot_deal && p.hot_deal_expires_at && new Date(p.hot_deal_expires_at) > now
-    );
+    const activeProducts = products
+      .filter((p) => p.is_hot_deal && p.hot_deal_expires_at && new Date(p.hot_deal_expires_at) > now)
+      .sort((a, b) => a.hot_deal_sort_order - b.hot_deal_sort_order || new Date(a.hot_deal_expires_at) - new Date(b.hot_deal_expires_at) || a.id - b.id);
     const inactiveProducts = products.filter((p) => !activeProducts.includes(p));
 
     const sections = categories.map((cat) => ({
@@ -184,11 +184,40 @@ async function createStandaloneHotDeal(req, res, next) {
   }
 }
 
+async function moveHotDeal(req, res, next, direction) {
+  try {
+    const now = new Date();
+    const active = await db('products')
+      .where('is_hot_deal', true)
+      .andWhere('hot_deal_expires_at', '>', now)
+      .orderBy([{ column: 'hot_deal_sort_order', order: 'asc' }, { column: 'hot_deal_expires_at', order: 'asc' }, { column: 'id', order: 'asc' }]);
+
+    const idx = active.findIndex((p) => p.id === Number(req.params.id));
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+
+    if (idx !== -1 && swapIdx >= 0 && swapIdx < active.length) {
+      // Re-normalize sort_order to the current display order first, so this
+      // works even if hot_deal_sort_order was never set (defaults to 0 for all).
+      const order = active.map((p) => p.id);
+      const tmp = order[idx];
+      order[idx] = order[swapIdx];
+      order[swapIdx] = tmp;
+      await Promise.all(order.map((id, i) => db('products').where('id', id).update({ hot_deal_sort_order: i })));
+    }
+
+    res.redirect('/admin/hot-deal');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listHotDeals,
   enableHotDeal,
   disableHotDeal,
   extendHotDeal,
   setHotDealExpiry,
-  createStandaloneHotDeal
+  createStandaloneHotDeal,
+  moveHotDealUp: (req, res, next) => moveHotDeal(req, res, next, 'up'),
+  moveHotDealDown: (req, res, next) => moveHotDeal(req, res, next, 'down')
 };
