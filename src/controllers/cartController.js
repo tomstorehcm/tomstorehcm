@@ -6,6 +6,10 @@ function wantsJson(req) {
   return req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1);
 }
 
+function parseVariantId(body) {
+  return body.variantId ? Number(body.variantId) : null;
+}
+
 async function showCart(req, res, next) {
   try {
     const cart = await cartService.getCartDetails(req);
@@ -21,6 +25,7 @@ async function showCart(req, res, next) {
 async function addToCart(req, res, next) {
   try {
     const productId = Number(req.body.productId);
+    const variantId = parseVariantId(req.body);
     const quantity = Math.max(1, Number(req.body.quantity) || 1);
 
     const product = await db('products').where('id', productId).first();
@@ -29,7 +34,15 @@ async function addToCart(req, res, next) {
       return res.status(404).redirect('/');
     }
 
-    cartService.addItem(req, productId, quantity);
+    if (variantId) {
+      const variant = await db('product_variants').where({ id: variantId, product_id: productId }).first();
+      if (!variant) {
+        if (wantsJson(req)) return res.status(404).json({ success: false });
+        return res.status(404).redirect('/');
+      }
+    }
+
+    cartService.addItem(req, productId, quantity, variantId);
 
     if (wantsJson(req)) {
       return res.json({ success: true, cartCount: cartService.cartCount(req) });
@@ -43,12 +56,15 @@ async function addToCart(req, res, next) {
 async function updateCart(req, res, next) {
   try {
     const productId = Number(req.body.productId);
+    const variantId = parseVariantId(req.body);
     const quantity = Number(req.body.quantity);
-    cartService.setQuantity(req, productId, quantity);
+    cartService.setQuantity(req, productId, quantity, variantId);
 
     if (wantsJson(req)) {
       const cart = await cartService.getCartDetails(req);
-      const item = cart.items.find((i) => i.product.id === productId);
+      const item = cart.items.find(
+        (i) => i.product.id === productId && (i.variant ? i.variant.id : null) === variantId
+      );
       return res.json({
         success: true,
         cartCount: cart.count,
@@ -68,7 +84,8 @@ async function updateCart(req, res, next) {
 async function removeFromCart(req, res, next) {
   try {
     const productId = Number(req.body.productId);
-    cartService.removeItem(req, productId);
+    const variantId = parseVariantId(req.body);
+    cartService.removeItem(req, productId, variantId);
 
     if (wantsJson(req)) {
       const cart = await cartService.getCartDetails(req);

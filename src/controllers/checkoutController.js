@@ -73,7 +73,7 @@ async function submitOrder(req, res, next) {
       await db('order_items').insert({
         order_id: insertedOrderId,
         product_id: item.product.id,
-        product_name: item.product.name,
+        product_name: item.variant ? `${item.product.name} (${item.variant.label})` : item.product.name,
         price: item.unitPrice,
         quantity: item.quantity
       });

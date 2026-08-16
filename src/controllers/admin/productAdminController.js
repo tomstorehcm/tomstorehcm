@@ -36,6 +36,39 @@ function parsePolicyIds(body) {
   return [].concat(body.policyIds || []).map(Number).filter((n) => !Number.isNaN(n));
 }
 
+function parseVariantRows(body) {
+  const labels = [].concat(body.variantLabel || []);
+  const prices = [].concat(body.variantPrice || []);
+  const stocks = [].concat(body.variantStock || []);
+  const rows = [];
+  for (let i = 0; i < labels.length; i++) {
+    const label = (labels[i] || '').trim();
+    const price = Number(String(prices[i] || '').replace(/\D/g, ''));
+    if (!label || Number.isNaN(price)) continue;
+    rows.push({
+      label,
+      price,
+      stock: Math.max(0, Number(stocks[i]) || 0)
+    });
+  }
+  return rows;
+}
+
+async function syncProductVariants(productId, variantRows) {
+  await db('product_variants').where('product_id', productId).del();
+  if (variantRows.length > 0) {
+    await db('product_variants').insert(
+      variantRows.map((v, i) => ({
+        product_id: productId,
+        label: v.label,
+        price: v.price,
+        stock: v.stock,
+        sort_order: i
+      }))
+    );
+  }
+}
+
 async function listProducts(req, res, next) {
   try {
     const categories = await db('categories').orderBy('sort_order');
@@ -77,7 +110,8 @@ async function newProductForm(req, res, next) {
       galleryImages: [],
       policyGroups,
       allPolicies,
-      selectedPolicyIds: []
+      selectedPolicyIds: [],
+      variants: []
     });
   } catch (err) {
     next(err);
@@ -123,6 +157,7 @@ async function createProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
+    const variantRows = parseVariantRows(req.body);
 
     if (req.fileUploadError) {
       return res.status(400).render('admin/product-form', {
@@ -135,7 +170,8 @@ async function createProduct(req, res, next) {
         galleryImages: [],
         policyGroups,
         allPolicies,
-        selectedPolicyIds
+        selectedPolicyIds,
+        variants: variantRows
       });
     }
 
@@ -151,7 +187,8 @@ async function createProduct(req, res, next) {
         galleryImages: [],
         policyGroups,
         allPolicies,
-        selectedPolicyIds
+        selectedPolicyIds,
+        variants: variantRows
       });
     }
 
@@ -179,7 +216,8 @@ async function createProduct(req, res, next) {
           galleryImages: [],
           policyGroups,
           allPolicies,
-          selectedPolicyIds
+          selectedPolicyIds,
+          variants: variantRows
         });
       }
       imageUrl = '/images/uploads/products/' + req.file.filename;
@@ -205,6 +243,7 @@ async function createProduct(req, res, next) {
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(insertedId, policyGroupId, selectedPolicyIds);
+    await syncProductVariants(insertedId, variantRows);
 
     res.redirect('/admin/san-pham');
   } catch (err) {
@@ -221,6 +260,7 @@ async function editProductForm(req, res, next) {
     const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = await getSelectedPolicyIds(product.id);
+    const variants = await db('product_variants').where('product_id', product.id).orderBy('sort_order');
     res.render('admin/product-form', {
       title: 'Sửa sản phẩm - TOMSTORE Admin',
       categories,
@@ -231,7 +271,8 @@ async function editProductForm(req, res, next) {
       galleryImages,
       policyGroups,
       allPolicies,
-      selectedPolicyIds
+      selectedPolicyIds,
+      variants
     });
   } catch (err) {
     next(err);
@@ -247,6 +288,7 @@ async function updateProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
+    const variantRows = parseVariantRows(req.body);
 
     if (!errors.isEmpty()) {
       const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
@@ -260,7 +302,8 @@ async function updateProduct(req, res, next) {
         galleryImages,
         policyGroups,
         allPolicies,
-        selectedPolicyIds
+        selectedPolicyIds,
+        variants: variantRows
       });
     }
 
@@ -281,6 +324,7 @@ async function updateProduct(req, res, next) {
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(product.id, policyGroupId, selectedPolicyIds);
+    await syncProductVariants(product.id, variantRows);
 
     res.redirect('/admin/san-pham/' + product.id + '/sua');
   } catch (err) {

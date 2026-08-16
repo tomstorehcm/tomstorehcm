@@ -52,7 +52,7 @@
         <h2>Đơn hàng của bạn</h2>
         <ul class="summary-items">
           <% cart.items.forEach(function(item) { %>
-            <li><span><%= item.product.name %> &times; <%= item.quantity %></span><span><%= formatVND(item.lineTotal) %></span></li>
+            <li><span><%= item.product.name %><% if (item.variant) { %> (<%= item.variant.label %>)<% } %> &times; <%= item.quantity %></span><span><%= formatVND(item.lineTotal) %></span></li>
           <% }); %>
         </ul>
         <div class="cart-summary-row"><span>Tổng cộng</span><strong><%= formatVND(cart.total) %></strong></div>

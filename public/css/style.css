@@ -497,6 +497,13 @@ table { border-collapse: collapse; width: 100%; }
 .policy-list-compact .policy-icon { width: 18px; height: 18px; }
 .policy-list-compact .policy-text strong { font-size: 13px; font-weight: 600; }
 .product-detail-info h1 { font-size: 26px; margin: var(--space-1) 0 var(--space-3); }
+.variant-picker { margin: var(--space-2) 0 var(--space-4); }
+.variant-picker label { display: block; font-size: 13px; font-weight: 700; color: var(--color-text-muted); margin-bottom: var(--space-2); }
+.variant-options { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.variant-option { min-height: 40px; padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1.5px solid var(--color-border); background: #fff; color: var(--color-ink); font-weight: 700; font-size: 14px; transition: border-color 0.15s ease, color 0.15s ease; }
+.variant-option:hover:not(:disabled) { border-color: var(--color-accent); }
+.variant-option.active { border-color: var(--color-accent); color: var(--color-accent); background: #fff0f5; }
+.variant-option:disabled { color: var(--color-text-muted); text-decoration: line-through; opacity: 0.5; cursor: not-allowed; }
 .product-stock { color: var(--color-success); font-weight: 700; font-size: 14px; }
 .add-to-cart-form-detail { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) 0 var(--space-5); flex-wrap: wrap; }
 .add-to-cart-form-detail input[type=number] { width: 72px; height: 44px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; }
@@ -518,6 +525,7 @@ table { border-collapse: collapse; width: 100%; }
 .cart-table tbody tr { transition: opacity 0.2s ease; }
 .cart-table tbody tr.cart-row-removing { opacity: 0; }
 .cart-product-cell a:hover { color: var(--color-accent); }
+.cart-item-variant { color: var(--color-text-muted); font-weight: 400; }
 .qty-form input { width: 60px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; }
 
 .cart-summary { background: var(--color-bg-alt); border-radius: var(--radius-lg); padding: var(--space-5); position: sticky; top: 90px; }
@@ -704,6 +712,10 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-policy-add-form input[name="title"] { min-width: 200px; }
 .admin-policy-add-form input[name="description"] { min-width: 220px; flex: 1 1 220px; }
 .policy-checkbox-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 240px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); }
+.variant-rows { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+.variant-row { display: grid; grid-template-columns: 1fr 1fr 100px 36px; gap: var(--space-2); align-items: center; }
+.variant-row input { height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
+.variant-row .btn-remove { height: 36px; }
 .policy-checkbox-option { display: flex; align-items: center; gap: var(--space-2); font-size: 14px; font-weight: 400; }
 #individualPoliciesGroup.is-disabled { opacity: 0.5; }
 

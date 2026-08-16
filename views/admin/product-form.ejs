@@ -73,6 +73,21 @@
       <small>Mỗi dòng một thông số, định dạng "Tên: Giá trị".</small>
     </div>
     <div class="form-group">
+      <label>Dung lượng / phiên bản (tùy chọn)</label>
+      <div id="variantRows" class="variant-rows">
+        <% (variants || []).forEach(function(v) { %>
+          <div class="variant-row">
+            <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label %>" />
+            <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price %>" />
+            <input type="number" name="variantStock" placeholder="Tồn kho" min="0" value="<%= v.stock %>" />
+            <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+          </div>
+        <% }); %>
+      </div>
+      <button type="button" id="addVariantRowBtn" class="btn btn-outline btn-sm">+ Thêm dung lượng</button>
+      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/tồn kho riêng của từng dòng thay cho giá gốc phía trên.</small>
+    </div>
+    <div class="form-group">
       <label for="policyGroupId">Nhóm chính sách bảo hành</label>
       <select id="policyGroupId" name="policyGroupId">
         <option value="">— Chọn riêng từng mục bên dưới —</option>
@@ -193,23 +208,46 @@
       return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
 
-    var priceInputs = document.querySelectorAll('.price-input');
-    priceInputs.forEach(function (input) {
+    function formatPriceInput(input) {
       input.value = formatWithDots(input.value);
-      input.addEventListener('input', function () {
-        var cursorFromEnd = input.value.length - input.selectionStart;
-        input.value = formatWithDots(input.value);
-        var pos = input.value.length - cursorFromEnd;
-        input.setSelectionRange(pos, pos);
-      });
-    });
+    }
+
+    document.querySelectorAll('.price-input').forEach(formatPriceInput);
 
     var productForm = document.getElementById('productForm');
+    productForm.addEventListener('input', function (e) {
+      if (!e.target.classList.contains('price-input')) return;
+      var input = e.target;
+      var cursorFromEnd = input.value.length - input.selectionStart;
+      input.value = formatWithDots(input.value);
+      var pos = input.value.length - cursorFromEnd;
+      input.setSelectionRange(pos, pos);
+    });
     productForm.addEventListener('submit', function () {
-      priceInputs.forEach(function (input) {
+      productForm.querySelectorAll('.price-input').forEach(function (input) {
         input.value = digitsOnly(input.value);
       });
     });
+
+    // Dung lượng / phiên bản: thêm, xóa dòng động
+    var variantRows = document.getElementById('variantRows');
+    var addVariantRowBtn = document.getElementById('addVariantRowBtn');
+    if (variantRows && addVariantRowBtn) {
+      addVariantRowBtn.addEventListener('click', function () {
+        var row = document.createElement('div');
+        row.className = 'variant-row';
+        row.innerHTML =
+          '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
+          '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
+          '<input type="number" name="variantStock" placeholder="Tồn kho" min="0" value="0" />' +
+          '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>';
+        variantRows.appendChild(row);
+      });
+      variantRows.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('variant-remove-btn')) return;
+        e.target.closest('.variant-row').remove();
+      });
+    }
 
     // Ảnh đại diện: xem trước ngay khi chọn file
     var mainImageInput = document.getElementById('mainImageInput');

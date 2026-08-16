@@ -7,26 +7,35 @@ function ensureCart(req) {
   return req.session.cart;
 }
 
-function addItem(req, productId, quantity) {
-  const cart = ensureCart(req);
-  const id = String(productId);
-  cart[id] = (cart[id] || 0) + quantity;
-  if (cart[id] < 1) delete cart[id];
+function cartKey(productId, variantId) {
+  return variantId ? `${productId}:${variantId}` : String(productId);
 }
 
-function setQuantity(req, productId, quantity) {
+function parseKey(key) {
+  const [productIdStr, variantIdStr] = key.split(':');
+  return { productId: Number(productIdStr), variantId: variantIdStr ? Number(variantIdStr) : null };
+}
+
+function addItem(req, productId, quantity, variantId) {
   const cart = ensureCart(req);
-  const id = String(productId);
+  const key = cartKey(productId, variantId);
+  cart[key] = (cart[key] || 0) + quantity;
+  if (cart[key] < 1) delete cart[key];
+}
+
+function setQuantity(req, productId, quantity, variantId) {
+  const cart = ensureCart(req);
+  const key = cartKey(productId, variantId);
   if (quantity <= 0) {
-    delete cart[id];
+    delete cart[key];
   } else {
-    cart[id] = quantity;
+    cart[key] = quantity;
   }
 }
 
-function removeItem(req, productId) {
+function removeItem(req, productId, variantId) {
   const cart = ensureCart(req);
-  delete cart[String(productId)];
+  delete cart[cartKey(productId, variantId)];
 }
 
 function clearCart(req) {
@@ -40,27 +49,39 @@ function cartCount(req) {
 
 async function getCartDetails(req) {
   const cart = ensureCart(req);
-  const ids = Object.keys(cart).map(Number).filter(Boolean);
-  if (ids.length === 0) {
+  const keys = Object.keys(cart);
+  if (keys.length === 0) {
     return { items: [], total: 0, count: 0 };
   }
 
-  const products = await db('products').whereIn('id', ids);
+  const parsed = keys.map((key) => ({ key, ...parseKey(key) }));
+  const productIds = [...new Set(parsed.map((p) => p.productId))].filter(Boolean);
+  const variantIds = [...new Set(parsed.filter((p) => p.variantId).map((p) => p.variantId))];
+
+  const products = await db('products').whereIn('id', productIds);
   const productMap = new Map(products.map((p) => [p.id, p]));
+
+  const variants = variantIds.length > 0 ? await db('product_variants').whereIn('id', variantIds) : [];
+  const variantMap = new Map(variants.map((v) => [v.id, v]));
 
   const items = [];
   let total = 0;
   let count = 0;
 
-  for (const [idStr, qty] of Object.entries(cart)) {
-    const product = productMap.get(Number(idStr));
+  for (const { key, productId, variantId } of parsed) {
+    const qty = cart[key];
+    const product = productMap.get(productId);
     if (!product) continue;
-    const unitPrice = product.sale_price || product.price;
+    const variant = variantId ? variantMap.get(variantId) : null;
+    if (variantId && !variant) continue;
+
+    const unitPrice = variant ? variant.price : (product.sale_price || product.price);
     const lineTotal = unitPrice * qty;
     total += lineTotal;
     count += qty;
     items.push({
       product,
+      variant,
       quantity: qty,
       unitPrice,
       lineTotal

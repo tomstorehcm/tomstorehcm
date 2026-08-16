@@ -44,9 +44,14 @@
         <% if (product.brand) { %><span class="product-brand"><%= product.brand %></span><% } %>
         <h1><%= product.name %></h1>
 
-        <div class="product-price product-price-lg">
+        <% var hasVariants = variants && variants.length > 0; %>
+        <% var effectiveStock = hasVariants ? variants[0].stock : product.stock; %>
+
+        <div class="product-price product-price-lg" id="productPriceBlock">
           <% if (product.is_contact_price) { %>
             <span class="price-current price-contact">Liên hệ</span>
+          <% } else if (hasVariants) { %>
+            <span class="price-current" id="variantPriceDisplay"><%= formatVND(variants[0].price) %></span>
           <% } else { %>
             <% var hasSale = product.sale_price && product.sale_price < product.price; %>
             <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>
@@ -60,15 +65,29 @@
         <% if (product.is_contact_price) { %>
           <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-lg">Liên hệ đặt mua: <%= hotline %></a>
         <% } else { %>
-          <p class="product-stock"><%= product.stock > 0 ? 'Còn hàng' : 'Tạm hết hàng' %></p>
+          <% if (hasVariants) { %>
+            <div class="variant-picker" id="variantPicker">
+              <label>Dung lượng</label>
+              <div class="variant-options">
+                <% variants.forEach(function(v, i) { %>
+                  <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-variant-id="<%= v.id %>" data-price="<%= v.price %>" data-stock="<%= v.stock %>" <%= v.stock <= 0 ? 'disabled' : '' %>><%= v.label %></button>
+                <% }); %>
+              </div>
+            </div>
+          <% } %>
+
+          <p class="product-stock" id="productStockText"><%= effectiveStock > 0 ? 'Còn hàng' : 'Tạm hết hàng' %></p>
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
             <input type="hidden" name="productId" value="<%= product.id %>" />
+            <% if (hasVariants) { %>
+              <input type="hidden" name="variantId" id="variantIdInput" value="<%= variants[0].id %>" />
+            <% } %>
             <label for="quantity">Số lượng</label>
-            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= Math.max(product.stock, 1) %>" />
+            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= Math.max(effectiveStock, 1) %>" />
             <div class="product-detail-cta-row">
-              <button type="submit" name="intent" value="add" class="btn btn-outline btn-lg" <%= product.stock <= 0 ? 'disabled' : '' %>>Thêm vào giỏ hàng</button>
-              <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= product.stock <= 0 ? 'disabled' : '' %>>Thanh toán ngay</button>
+              <button type="submit" name="intent" value="add" class="btn btn-outline btn-lg" <%= effectiveStock <= 0 ? 'disabled' : '' %>>Thêm vào giỏ hàng</button>
+              <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= effectiveStock <= 0 ? 'disabled' : '' %>>Thanh toán ngay</button>
             </div>
           </form>
         <% } %>

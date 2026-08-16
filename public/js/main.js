@@ -111,6 +111,44 @@
     }, { passive: true });
   }
 
+  // Product detail: storage/capacity variant picker
+  var variantOptions = document.querySelectorAll('.variant-option');
+  if (variantOptions.length) {
+    var variantIdInput = document.getElementById('variantIdInput');
+    var variantPriceDisplay = document.getElementById('variantPriceDisplay');
+    var variantQtyInput = document.getElementById('quantity');
+    var variantStockText = document.getElementById('productStockText');
+    var variantAddBtn = document.querySelector('.product-detail-cta-row button[value="add"]');
+    var variantCheckoutBtn = document.querySelector('.product-detail-cta-row button[value="checkout"]');
+    var vndFormatter = window.Intl ? new Intl.NumberFormat('vi-VN') : null;
+
+    function formatVNDClient(amount) {
+      return (vndFormatter ? vndFormatter.format(amount) : String(amount)) + '₫';
+    }
+
+    variantOptions.forEach(function (opt) {
+      opt.addEventListener('click', function () {
+        if (opt.disabled) return;
+        variantOptions.forEach(function (o) { o.classList.remove('active'); });
+        opt.classList.add('active');
+
+        var price = Number(opt.getAttribute('data-price'));
+        var stock = Number(opt.getAttribute('data-stock'));
+        var inStock = stock > 0;
+
+        if (variantIdInput) variantIdInput.value = opt.getAttribute('data-variant-id');
+        if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
+        if (variantQtyInput) {
+          variantQtyInput.max = Math.max(stock, 1);
+          if (Number(variantQtyInput.value) > stock) variantQtyInput.value = Math.max(stock, 1);
+        }
+        if (variantStockText) variantStockText.textContent = inStock ? 'Còn hàng' : 'Tạm hết hàng';
+        if (variantAddBtn) variantAddBtn.disabled = !inStock;
+        if (variantCheckoutBtn) variantCheckoutBtn.disabled = !inStock;
+      });
+    });
+  }
+
   // Hero banner slider
   var track = document.getElementById('heroSliderTrack');
   if (track) {
@@ -136,7 +174,7 @@
       stopAutoplay();
       autoplayTimer = setInterval(function () {
         goTo(current + 1);
-      }, 12000);
+      }, 6000);
     }
 
     function stopAutoplay() {
