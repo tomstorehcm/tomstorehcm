@@ -119,6 +119,22 @@
           <% var cIsPreset = PRESET_COLORS.some(function(p) { return p.hex === cHex; }); %>
           <div class="color-row-group">
             <div class="color-row">
+              <% if (c.id) { %>
+                <form action="/admin/san-pham/<%= product.id %>/mau/<%= c.id %>/anh" method="post" enctype="multipart/form-data" class="color-image-form">
+                  <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
+                    <% if (c.image_url) { %>
+                      <img src="<%= c.image_url %>" alt="" />
+                    <% } else { %>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <% } %>
+                    <input type="file" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden onchange="this.form.requestSubmit()" />
+                  </label>
+                </form>
+              <% } else { %>
+                <span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              <% } %>
               <span class="color-hex-swatch" style="background-color: <%= cHex %>;"></span>
               <select name="colorHex" class="color-hex-select">
                 <% PRESET_COLORS.forEach(function(preset) { %>
@@ -133,17 +149,6 @@
               </select>
               <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
             </div>
-            <% if (c.id) { %>
-              <div class="color-image-row">
-                <img src="<%= c.image_url || '' %>" alt="" class="admin-color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
-                <form action="/admin/san-pham/<%= product.id %>/mau/<%= c.id %>/anh" method="post" enctype="multipart/form-data">
-                  <label class="btn btn-outline btn-sm gallery-pick-btn">
-                    <%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>
-                    <input type="file" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden onchange="this.form.requestSubmit()" />
-                  </label>
-                </form>
-              </div>
-            <% } %>
           </div>
         <% }); %>
       </div>
@@ -326,9 +331,11 @@
         var options = PRESET_COLORS.map(function (p) {
           return '<option value="' + p[0] + '">' + p[1] + '</option>';
         }).join('');
+        var placeholderIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         var row = document.createElement('div');
         row.className = 'color-row';
         row.innerHTML =
+          '<span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">' + placeholderIcon + '</span>' +
           '<span class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></span>' +
           '<select name="colorHex" class="color-hex-select">' + options + '</select>' +
           '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
