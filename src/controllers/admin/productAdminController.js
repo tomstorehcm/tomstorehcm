@@ -69,19 +69,36 @@ async function syncProductVariants(productId, variantRows) {
   }
 }
 
-function parseColorRows(body) {
+async function parseColorRows(body, files) {
   const names = [].concat(body.colorName || []);
   const hexes = [].concat(body.colorHex || []);
   const inStocks = [].concat(body.colorInStock || []);
+  const imageUrls = [].concat(body.colorImageUrl || []);
   const rows = [];
   for (let i = 0; i < names.length; i++) {
     const name = (names[i] || '').trim();
-    const hex = /^#[0-9a-fA-F]{6}$/.test(hexes[i]) ? hexes[i] : '#000000';
     if (!name) continue;
+    const hex = /^#[0-9a-fA-F]{6}$/.test(hexes[i]) ? hexes[i] : '#000000';
+    let imageUrl = imageUrls[i] || null;
+
+    const fileArr = files && files['colorImage_' + i];
+    const file = fileArr && fileArr[0];
+    if (file) {
+      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', file.filename);
+      try {
+        await cropToFixedSize(destPath, 'product');
+        if (imageUrl) removeUploadedFile(imageUrl);
+        imageUrl = '/images/uploads/products/' + file.filename;
+      } catch (imgErr) {
+        removeUploadedFile('/images/uploads/products/' + file.filename);
+      }
+    }
+
     rows.push({
       name,
       hex,
-      inStock: inStocks[i] !== '0'
+      inStock: inStocks[i] !== '0',
+      imageUrl
     });
   }
   return rows;
@@ -96,6 +113,7 @@ async function syncProductColors(productId, colorRows) {
         name: c.name,
         hex_code: c.hex,
         in_stock: c.inStock,
+        image_url: c.imageUrl,
         sort_order: i
       }))
     );
@@ -191,7 +209,8 @@ async function createProduct(req, res, next) {
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
     const variantRows = parseVariantRows(req.body);
-    const colorRows = parseColorRows(req.body);
+    const colorRows = await parseColorRows(req.body, req.files);
+    const mainImageFile = req.files && req.files.imageFile && req.files.imageFile[0];
 
     if (req.fileUploadError) {
       return res.status(400).render('admin/product-form', {
@@ -211,7 +230,7 @@ async function createProduct(req, res, next) {
     }
 
     if (!errors.isEmpty()) {
-      if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
+      if (mainImageFile) removeUploadedFile('/images/uploads/products/' + mainImageFile.filename);
       return res.status(400).render('admin/product-form', {
         title: 'Thêm sản phẩm - TOMSTORE Admin',
         categories,
@@ -236,12 +255,12 @@ async function createProduct(req, res, next) {
     }
 
     let imageUrl = req.body.imageUrl || null;
-    if (req.file) {
-      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
+    if (mainImageFile) {
+      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', mainImageFile.filename);
       try {
         await cropToFixedSize(destPath, 'product');
       } catch (imgErr) {
-        removeUploadedFile('/images/uploads/products/' + req.file.filename);
+        removeUploadedFile('/images/uploads/products/' + mainImageFile.filename);
         return res.status(400).render('admin/product-form', {
           title: 'Thêm sản phẩm - TOMSTORE Admin',
           categories,
@@ -257,7 +276,7 @@ async function createProduct(req, res, next) {
           colors: colorRows
         });
       }
-      imageUrl = '/images/uploads/products/' + req.file.filename;
+      imageUrl = '/images/uploads/products/' + mainImageFile.filename;
     }
 
     const isContactPrice = req.body.isContactPrice === 'on';
@@ -329,7 +348,7 @@ async function updateProduct(req, res, next) {
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
     const variantRows = parseVariantRows(req.body);
-    const colorRows = parseColorRows(req.body);
+    const colorRows = await parseColorRows(req.body, req.files);
 
     if (!errors.isEmpty()) {
       const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
@@ -375,30 +394,6 @@ async function updateProduct(req, res, next) {
   }
 }
 
-async function uploadColorImage(req, res, next) {
-  try {
-    const color = await db('product_colors').where({ id: req.params.colorId, product_id: req.params.id }).first();
-    if (!color || req.fileUploadError || !req.file) {
-      return res.redirect('/admin/san-pham/' + req.params.id + '/sua');
-    }
-
-    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
-    try {
-      await cropToFixedSize(destPath, 'product');
-    } catch (imgErr) {
-      removeUploadedFile('/images/uploads/products/' + req.file.filename);
-      return res.redirect('/admin/san-pham/' + req.params.id + '/sua');
-    }
-
-    if (color.image_url) removeUploadedFile(color.image_url);
-    await db('product_colors').where('id', color.id).update({ image_url: '/images/uploads/products/' + req.file.filename });
-
-    res.redirect('/admin/san-pham/' + req.params.id + '/sua');
-  } catch (err) {
-    next(err);
-  }
-}
-
 async function deleteProduct(req, res, next) {
   try {
     const product = await db('products').where('id', req.params.id).first();
@@ -417,6 +412,5 @@ module.exports = {
   createProduct,
   editProductForm,
   updateProduct,
-  deleteProduct,
-  uploadColorImage
+  deleteProduct
 };

@@ -16,6 +16,10 @@ const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
 const uploadCategoryImage = makeUploader('categories');
 
+const MAX_COLOR_ROWS = 20;
+const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
+const uploadProductWithColors = uploadProductImage.fields([{ name: 'imageFile', maxCount: 1 }, ...colorImageFields]);
+
 router.get('/login', redirectIfAdmin, authController.showLogin);
 router.post('/login', redirectIfAdmin, authController.login);
 router.post('/logout', authController.logout);
@@ -31,13 +35,14 @@ router.get('/san-pham', productAdminController.listProducts);
 router.get('/san-pham/moi', productAdminController.newProductForm);
 router.post(
   '/san-pham/moi',
-  handleUploadErrors(uploadProductImage.single('imageFile')),
+  handleUploadErrors(uploadProductWithColors),
   productAdminController.productValidators,
   productAdminController.createProduct
 );
 router.get('/san-pham/:id/sua', productAdminController.editProductForm);
 router.post(
   '/san-pham/:id/sua',
+  handleUploadErrors(uploadProductWithColors),
   productAdminController.productValidators,
   productAdminController.updateProduct
 );
@@ -49,11 +54,6 @@ router.post(
   productGalleryController.uploadImages
 );
 router.post('/san-pham/:id/anh/:imageId/xoa', productGalleryController.deleteImage);
-router.post(
-  '/san-pham/:id/mau/:colorId/anh',
-  handleUploadErrors(uploadProductImage.single('imageFile')),
-  productAdminController.uploadColorImage
-);
 
 router.get('/hot-deal', hotDealController.listHotDeals);
 router.post('/hot-deal/:id/bat', hotDealController.enableHotDeal);

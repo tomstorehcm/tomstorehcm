@@ -29,7 +29,7 @@
     ];
   %>
   <div class="product-edit-layout">
-  <form id="productForm" action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" <%- isEdit ? '' : 'enctype="multipart/form-data"' %>>
+  <form id="productForm" action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" enctype="multipart/form-data">
     <div class="form-group">
       <label for="name">Tên sản phẩm *</label>
       <input type="text" id="name" name="name" value="<%= product.name || '' %>" required />
@@ -118,20 +118,12 @@
           <% var cHex = c.hex_code || c.hex || PRESET_COLORS[0].hex; %>
           <div class="color-row-group">
             <div class="color-row">
-              <% if (c.id) { %>
-                <label class="color-image-picker color-image-trigger" data-color-id="<%= c.id %>" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
-                  <% if (c.image_url) { %>
-                    <img src="<%= c.image_url %>" alt="" />
-                  <% } else { %>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <% } %>
-                  <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
-                </label>
-              <% } else { %>
-                <span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-              <% } %>
+              <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
+                <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
+                <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+              </label>
+              <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
               <details class="color-swatch-picker">
                 <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
                 <div class="color-swatch-grid">
@@ -233,9 +225,6 @@
   </div>
 </main>
 <form id="galleryDeleteForm" method="post" hidden></form>
-<form id="colorImageUploadForm" method="post" enctype="multipart/form-data" hidden>
-  <input type="file" name="imageFile" id="colorImageUploadInput" />
-</form>
 <script>
   (function () {
     var checkbox = document.getElementById('isContactPrice');
@@ -333,12 +322,17 @@
         var swatchButtons = PRESET_COLORS.map(function (p) {
           return '<button type="button" class="color-swatch-option" data-hex="' + p[0] + '" style="background-color: ' + p[0] + ';" title="' + p[1] + '"></button>';
         }).join('');
-        var placeholderIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        var placeholderIcon = '<svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         var group = document.createElement('div');
         group.className = 'color-row-group';
         group.innerHTML =
           '<div class="color-row">' +
-          '<span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">' + placeholderIcon + '</span>' +
+          '<label class="color-image-picker" title="Chọn ảnh cho màu này">' +
+          '<img class="color-image-preview" alt="" hidden />' +
+          placeholderIcon +
+          '<input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />' +
+          '</label>' +
+          '<input type="hidden" name="colorImageUrl" class="color-image-url-input" value="" />' +
           '<details class="color-swatch-picker">' +
           '<summary class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></summary>' +
           '<div class="color-swatch-grid">' + swatchButtons + '</div>' +
@@ -357,9 +351,8 @@
         }
         if (e.target.classList.contains('color-swatch-option')) {
           var picker = e.target.closest('.color-swatch-picker');
-          var row = e.target.closest('.color-row');
           var hex = e.target.getAttribute('data-hex');
-          row.querySelector('.color-hex-input').value = hex;
+          picker.closest('.color-row').querySelector('.color-hex-input').value = hex;
           picker.querySelector('summary').style.backgroundColor = hex;
           picker.querySelectorAll('.color-swatch-option').forEach(function (btn) {
             btn.classList.toggle('active', btn === e.target);
@@ -367,22 +360,28 @@
           picker.open = false;
         }
       });
+      colorRows.addEventListener('change', function (e) {
+        if (!e.target.classList.contains('color-image-input')) return;
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var row = e.target.closest('.color-row');
+        var preview = row.querySelector('.color-image-preview');
+        var placeholder = row.querySelector('.color-image-placeholder-icon');
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+        if (placeholder) placeholder.hidden = true;
+      });
     }
 
-    // Ảnh cho từng màu: dung form rieng nam ngoai form chinh (khong duoc long form
-    // trong form), gan file vua chon vao roi submit
-    colorRows.addEventListener('change', function (e) {
-      if (!e.target.classList.contains('color-image-input')) return;
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      var colorId = e.target.closest('.color-image-trigger').getAttribute('data-color-id');
-      var uploadForm = document.getElementById('colorImageUploadForm');
-      var uploadInput = document.getElementById('colorImageUploadInput');
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      uploadInput.files = dt.files;
-      uploadForm.action = '/admin/san-pham/<%= isEdit ? product.id : "" %>/mau/' + colorId + '/anh';
-      uploadForm.submit();
+    // Truoc khi luu: danh lai ten file anh theo mau (colorImage_0, colorImage_1, ...)
+    // dung vi tri hien tai trong danh sach, de server ghep dung anh voi dung dong.
+    productForm.addEventListener('submit', function () {
+      colorRows.querySelectorAll('.color-row').forEach(function (row, i) {
+        var fileInput = row.querySelector('.color-image-input');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          fileInput.name = 'colorImage_' + i;
+        }
+      });
     });
 
     // Ảnh đại diện: xem trước ngay khi chọn file
