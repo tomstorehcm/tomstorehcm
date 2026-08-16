@@ -3,6 +3,7 @@ const db = require('../db');
 const cartService = require('../services/cart');
 const paymentService = require('../services/payment');
 const { generateOrderCode } = require('../utils/format');
+const { getDefaultPolicies } = require('../services/policies');
 
 async function showCheckout(req, res, next) {
   try {
@@ -11,12 +12,15 @@ async function showCheckout(req, res, next) {
       return res.redirect('/gio-hang');
     }
 
+    const policies = await getDefaultPolicies();
+
     res.render('checkout', {
       title: 'Thanh toán - TOMSTORE',
       cart,
       methods: paymentService.listMethods(),
       errors: [],
-      formData: {}
+      formData: {},
+      policies
     });
   } catch (err) {
     next(err);
@@ -39,12 +43,14 @@ async function submitOrder(req, res, next) {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      const policies = await getDefaultPolicies();
       return res.status(400).render('checkout', {
         title: 'Thanh toán - TOMSTORE',
         cart,
         methods: paymentService.listMethods(),
         errors: errors.array(),
-        formData: req.body
+        formData: req.body,
+        policies
       });
     }
 

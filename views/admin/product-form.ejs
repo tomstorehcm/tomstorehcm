@@ -12,7 +12,8 @@
     <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
   <% } %>
 
-  <form action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" enctype="multipart/form-data">
+  <div class="product-edit-layout">
+  <form id="productForm" action="<%= isEdit ? '/admin/san-pham/' + product.id + '/sua' : '/admin/san-pham/moi' %>" method="post" class="admin-form" <%- isEdit ? '' : 'enctype="multipart/form-data"' %>>
     <div class="form-group">
       <label for="name">Tên sản phẩm *</label>
       <input type="text" id="name" name="name" value="<%= product.name || '' %>" required />
@@ -38,30 +39,24 @@
     <div class="form-row">
       <div class="form-group" id="priceGroup">
         <label for="price">Giá gốc (VND) <span id="priceRequiredMark">*</span></label>
-        <input type="number" id="price" name="price" min="0" value="<%= product.price || '' %>" <%= product.is_contact_price ? '' : 'required' %> />
+        <input type="text" inputmode="numeric" class="price-input" id="price" name="price" value="<%= product.price || '' %>" <%= product.is_contact_price ? '' : 'required' %> />
       </div>
       <div class="form-group" id="salePriceGroup">
         <label for="salePrice">Giá khuyến mãi (VND)</label>
-        <input type="number" id="salePrice" name="salePrice" min="0" value="<%= product.sale_price || '' %>" />
+        <input type="text" inputmode="numeric" class="price-input" id="salePrice" name="salePrice" value="<%= product.sale_price || '' %>" />
       </div>
       <div class="form-group">
         <label for="stock">Tồn kho *</label>
         <input type="number" id="stock" name="stock" min="0" value="<%= typeof product.stock !== 'undefined' ? product.stock : 0 %>" required />
       </div>
     </div>
-    <div class="form-group">
-      <label for="imageFile">Ảnh đại diện (hiển thị ở danh sách/giỏ hàng)</label>
-      <% if (product.image_url) { %>
-        <img src="<%= product.image_url %>" alt="" class="admin-image-preview" />
-      <% } %>
-      <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif" />
-      <small>Chọn ảnh để tải lên trực tiếp. Bỏ trống nếu muốn giữ ảnh hiện tại hoặc nhập URL bên dưới.</small>
-    </div>
-    <div class="form-group">
-      <label for="imageUrl">Hoặc dán URL hình ảnh</label>
-      <input type="text" id="imageUrl" name="imageUrl" value="<%= product.image_url && product.image_url.startsWith('/images/uploads/') ? '' : (product.image_url || '') %>" placeholder="https://..." />
-      <small>Để trống tất cả sẽ dùng icon minh họa theo danh mục.</small>
-    </div>
+    <% if (!isEdit) { %>
+      <div class="form-group">
+        <label for="imageFile">Ảnh đại diện</label>
+        <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" />
+        <small>Bỏ trống nếu muốn dùng icon minh họa theo danh mục. Có thể thêm ảnh chi tiết sau khi tạo sản phẩm.</small>
+      </div>
+    <% } %>
     <div class="form-group form-group-checkbox">
       <label class="checkbox-option">
         <input type="checkbox" name="isFeatured" <%= product.is_featured ? 'checked' : '' %> />
@@ -77,39 +72,85 @@
       <textarea id="specsText" name="specsText" rows="6" placeholder="Màn hình: 6.7 inch OLED&#10;Chip: Apple A17 Pro"><%= specsText %></textarea>
       <small>Mỗi dòng một thông số, định dạng "Tên: Giá trị".</small>
     </div>
+    <div class="form-group">
+      <label for="policyGroupId">Nhóm chính sách bảo hành</label>
+      <select id="policyGroupId" name="policyGroupId">
+        <option value="">— Chọn riêng từng mục bên dưới —</option>
+        <% policyGroups.forEach(function(g) { %>
+          <option value="<%= g.id %>" <%= Number(product.policy_group_id) === g.id ? 'selected' : '' %>><%= g.name %><%= g.is_default ? ' (mặc định)' : '' %></option>
+        <% }); %>
+      </select>
+      <small>Chọn 1 nhóm để dùng toàn bộ chính sách trong nhóm đó. Để trống nếu muốn chọn riêng từng mục bên dưới. Quản lý các mục này ở trang <a href="/admin/chinh-sach" target="_blank">Chính sách</a>.</small>
+    </div>
+    <div class="form-group" id="individualPoliciesGroup">
+      <label>Hoặc chọn riêng từng chính sách</label>
+      <% if (allPolicies.length === 0) { %>
+        <small>Chưa có chính sách nào. Vào trang <a href="/admin/chinh-sach" target="_blank">Chính sách</a> để thêm.</small>
+      <% } else { %>
+        <div class="policy-checkbox-list">
+          <% allPolicies.forEach(function(p) { %>
+            <label class="checkbox-option policy-checkbox-option">
+              <input type="checkbox" name="policyIds" value="<%= p.id %>" <%= selectedPolicyIds.includes(p.id) ? 'checked' : '' %> />
+              <%= p.title %>
+            </label>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
     <button type="submit" class="btn btn-primary btn-lg"><%= isEdit ? 'Lưu thay đổi' : 'Thêm sản phẩm' %></button>
   </form>
 
   <% if (isEdit) { %>
-    <section class="admin-form gallery-section">
-      <h2>Ảnh chi tiết sản phẩm (tối đa 8 ảnh)</h2>
-      <p class="admin-hint">Hiển thị trên trang chi tiết sản phẩm dưới dạng nhiều ảnh, khách bấm vào ảnh nhỏ để xem ảnh lớn. Ảnh đại diện ở trên luôn là ảnh đầu tiên.</p>
+    <section class="admin-form gallery-section image-management-col">
+      <h2>Ảnh sản phẩm</h2>
+      <p class="admin-hint">Chọn/đổi ảnh đại diện và ảnh chi tiết bên dưới, rồi bấm "Lưu ảnh" để tải lên toàn bộ cùng một lúc.</p>
 
-      <% if (galleryImages.length > 0) { %>
-        <div class="gallery-manage-grid">
-          <% galleryImages.forEach(function(img) { %>
-            <div class="gallery-manage-item">
-              <img src="<%= img.image_url %>" alt="" />
-              <form action="/admin/san-pham/<%= product.id %>/anh/<%= img.id %>/xoa" method="post" onsubmit="return confirm('Xóa ảnh này?');">
-                <button type="submit" class="btn-remove">&times;</button>
-              </form>
-            </div>
-          <% }); %>
+      <form action="/admin/san-pham/<%= product.id %>/anh" method="post" enctype="multipart/form-data" id="imageUploadForm">
+        <div class="form-group">
+          <label>Ảnh đại diện</label>
+          <img src="<%= product.image_url || '' %>" alt="" class="admin-image-preview" id="mainImagePreviewImg" <%= product.image_url ? '' : 'hidden' %> />
+          <label for="mainImageInput" class="btn btn-outline gallery-pick-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Chọn ảnh đại diện
+          </label>
+          <input type="file" id="mainImageInput" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+          <input type="text" id="imageUrlInput" name="imageUrl" value="<%= product.image_url && product.image_url.startsWith('/images/uploads/') ? '' : (product.image_url || '') %>" placeholder="Hoặc dán URL ảnh..." />
+          <small>Chọn ảnh mới sẽ thay ảnh hiện tại. Bỏ trống cả hai để giữ nguyên.</small>
         </div>
-      <% } %>
 
-      <% if (galleryImages.length < 8) { %>
-        <form action="/admin/san-pham/<%= product.id %>/anh" method="post" enctype="multipart/form-data" class="gallery-upload-form">
-          <input type="file" name="images" accept="image/png,image/jpeg,image/gif" multiple required />
-          <small>Còn có thể thêm tối đa <%= 8 - galleryImages.length %> ảnh nữa. Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
-          <button type="submit" class="btn btn-outline">Tải ảnh lên</button>
-        </form>
-      <% } else { %>
-        <p class="empty-state">Đã đạt tối đa 8 ảnh. Xóa bớt ảnh cũ để thêm ảnh mới.</p>
-      <% } %>
+        <div class="form-group">
+          <label>Ảnh chi tiết (tối đa 8 ảnh)</label>
+          <% if (galleryImages.length > 0) { %>
+            <div class="gallery-manage-grid">
+              <% galleryImages.forEach(function(img) { %>
+                <div class="gallery-manage-item">
+                  <img src="<%= img.image_url %>" alt="" />
+                  <button type="button" class="btn-remove gallery-delete-btn" data-delete-url="/admin/san-pham/<%= product.id %>/anh/<%= img.id %>/xoa">&times;</button>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <% if (galleryImages.length < 8) { %>
+            <label for="galleryFileInput" class="btn btn-outline gallery-pick-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Chọn ảnh chi tiết
+            </label>
+            <input type="file" id="galleryFileInput" name="images" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
+            <small>Còn có thể thêm tối đa <%= 8 - galleryImages.length %> ảnh nữa. Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
+            <ul class="gallery-staged-list" id="galleryStagedList"></ul>
+          <% } else { %>
+            <p class="empty-state">Đã đạt tối đa 8 ảnh. Xóa bớt ảnh cũ để thêm ảnh mới.</p>
+          <% } %>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Lưu ảnh</button>
+      </form>
     </section>
   <% } %>
+  </div>
 </main>
+<form id="galleryDeleteForm" method="post" hidden></form>
 <script>
   (function () {
     var checkbox = document.getElementById('isContactPrice');
@@ -127,6 +168,121 @@
 
     checkbox.addEventListener('change', sync);
     sync();
+
+    // Chọn nhóm chính sách -> làm mờ (không bắt buộc chọn) danh sách chọn riêng từng mục
+    var policyGroupSelect = document.getElementById('policyGroupId');
+    var individualPoliciesGroup = document.getElementById('individualPoliciesGroup');
+    if (policyGroupSelect && individualPoliciesGroup) {
+      function syncPolicyMode() {
+        var groupChosen = !!policyGroupSelect.value;
+        individualPoliciesGroup.classList.toggle('is-disabled', groupChosen);
+        individualPoliciesGroup.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+          cb.disabled = groupChosen;
+        });
+      }
+      policyGroupSelect.addEventListener('change', syncPolicyMode);
+      syncPolicyMode();
+    }
+
+    // Format price inputs with "." as thousand separator while typing
+    function digitsOnly(str) {
+      return (str || '').replace(/\D/g, '');
+    }
+    function formatWithDots(str) {
+      var digits = digitsOnly(str);
+      return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    var priceInputs = document.querySelectorAll('.price-input');
+    priceInputs.forEach(function (input) {
+      input.value = formatWithDots(input.value);
+      input.addEventListener('input', function () {
+        var cursorFromEnd = input.value.length - input.selectionStart;
+        input.value = formatWithDots(input.value);
+        var pos = input.value.length - cursorFromEnd;
+        input.setSelectionRange(pos, pos);
+      });
+    });
+
+    var productForm = document.getElementById('productForm');
+    productForm.addEventListener('submit', function () {
+      priceInputs.forEach(function (input) {
+        input.value = digitsOnly(input.value);
+      });
+    });
+
+    // Ảnh đại diện: xem trước ngay khi chọn file
+    var mainImageInput = document.getElementById('mainImageInput');
+    if (mainImageInput) {
+      var mainPreviewImg = document.getElementById('mainImagePreviewImg');
+      mainImageInput.addEventListener('change', function () {
+        if (mainImageInput.files && mainImageInput.files[0]) {
+          mainPreviewImg.src = URL.createObjectURL(mainImageInput.files[0]);
+          mainPreviewImg.hidden = false;
+        }
+      });
+    }
+
+    // Ảnh chi tiết: chọn nhiều ảnh -> hiện danh sách xem trước -> "Lưu ảnh" upload tất cả cùng lúc
+    var galleryInput = document.getElementById('galleryFileInput');
+    if (galleryInput) {
+      var stagedList = document.getElementById('galleryStagedList');
+      var stagedFiles = [];
+
+      function syncInputFiles() {
+        var dt = new DataTransfer();
+        stagedFiles.forEach(function (file) { dt.items.add(file); });
+        galleryInput.files = dt.files;
+      }
+
+      function renderStagedList() {
+        stagedList.innerHTML = '';
+        stagedFiles.forEach(function (file, index) {
+          var li = document.createElement('li');
+          li.className = 'gallery-staged-item';
+
+          var thumb = document.createElement('img');
+          thumb.src = URL.createObjectURL(file);
+          li.appendChild(thumb);
+
+          var name = document.createElement('span');
+          name.className = 'gallery-staged-name';
+          name.textContent = file.name;
+          li.appendChild(name);
+
+          var removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn-remove';
+          removeBtn.innerHTML = '&times;';
+          removeBtn.addEventListener('click', function () {
+            stagedFiles.splice(index, 1);
+            syncInputFiles();
+            renderStagedList();
+          });
+          li.appendChild(removeBtn);
+
+          stagedList.appendChild(li);
+        });
+      }
+
+      galleryInput.addEventListener('change', function () {
+        Array.prototype.forEach.call(galleryInput.files, function (file) {
+          stagedFiles.push(file);
+        });
+        syncInputFiles();
+        renderStagedList();
+      });
+    }
+
+    // Xóa 1 ảnh chi tiết đã lưu (form riêng, tách khỏi form Lưu chính)
+    var deleteForm = document.getElementById('galleryDeleteForm');
+    document.querySelectorAll('.gallery-delete-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('Xóa ảnh này?')) return;
+        deleteForm.action = btn.getAttribute('data-delete-url');
+        deleteForm.submit();
+      });
+    });
   })();
 </script>
 </body>

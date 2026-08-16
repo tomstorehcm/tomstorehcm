@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Chính sách bảo hành</h1>
+  </div>
+  <p class="admin-hint">Quản lý các mục chính sách bảo hành theo từng nhóm. Khi sửa sản phẩm, có thể chọn 1 nhóm chính sách hoặc chọn riêng từng mục cho sản phẩm đó. Nhóm "mặc định" sẽ được dùng cho sản phẩm chưa gán chính sách nào.</p>
+
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">+ Thêm nhóm chính sách mới</h2>
+    <form action="/admin/chinh-sach/nhom" method="post" class="admin-inline-form">
+      <input type="text" name="name" placeholder="Tên nhóm, ví dụ: Gói bảo hành cao cấp" required />
+      <button type="submit" class="btn btn-primary btn-sm">Thêm nhóm</button>
+    </form>
+  </section>
+
+  <% groupSections.forEach(function(section) { %>
+    <section class="admin-category-section">
+      <div class="admin-header-row">
+        <h2 class="admin-category-heading">
+          <%= section.group.name %>
+          <% if (section.group.is_default) { %><span class="status-badge status-active">Mặc định</span><% } %>
+        </h2>
+        <div class="admin-actions">
+          <form action="/admin/chinh-sach/nhom/<%= section.group.id %>/doi-ten" method="post" class="admin-inline-form">
+            <input type="text" name="name" value="<%= section.group.name %>" />
+            <button type="submit" class="btn btn-outline btn-sm">Đổi tên</button>
+          </form>
+          <% if (!section.group.is_default) { %>
+            <form action="/admin/chinh-sach/nhom/<%= section.group.id %>/mac-dinh" method="post">
+              <button type="submit" class="btn btn-outline btn-sm">Đặt làm mặc định</button>
+            </form>
+            <form action="/admin/chinh-sach/nhom/<%= section.group.id %>/xoa" method="post" onsubmit="return confirm('Xóa nhóm này? Các chính sách trong nhóm sẽ chuyển về mục chưa phân nhóm.');">
+              <button type="submit" class="btn-link-danger">Xóa nhóm</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (section.policies.length === 0) { %>
+        <p class="empty-state">Chưa có chính sách nào trong nhóm này.</p>
+      <% } else { %>
+        <table class="admin-table">
+          <thead><tr><th></th><th>Tiêu đề</th><th>Mô tả</th><th></th></tr></thead>
+          <tbody>
+            <% section.policies.forEach(function(p) { %>
+              <tr>
+                <td class="policy-icon-cell"><%- getPolicyIcon(p.icon) %></td>
+                <td><%= p.title %></td>
+                <td><%= p.description || '-' %></td>
+                <td class="admin-actions">
+                  <a href="/admin/chinh-sach/<%= p.id %>/sua">Sửa</a>
+                  <form action="/admin/chinh-sach/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa chính sách này?');">
+                    <button type="submit" class="btn-link-danger">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <form action="/admin/chinh-sach" method="post" class="admin-policy-add-form">
+        <input type="hidden" name="groupId" value="<%= section.group.id %>" />
+        <input type="text" name="title" placeholder="Tiêu đề chính sách" required />
+        <input type="text" name="description" placeholder="Mô tả (không bắt buộc)" />
+        <select name="icon">
+          <% Object.keys(iconLabels).forEach(function(key) { %>
+            <option value="<%= key %>"><%= iconLabels[key] %></option>
+          <% }); %>
+        </select>
+        <button type="submit" class="btn btn-outline btn-sm">+ Thêm vào nhóm này</button>
+      </form>
+    </section>
+  <% }); %>
+
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">Chính sách chưa phân nhóm</h2>
+    <% if (ungrouped.length === 0) { %>
+      <p class="empty-state">Không có chính sách nào ngoài nhóm.</p>
+    <% } else { %>
+      <table class="admin-table">
+        <thead><tr><th></th><th>Tiêu đề</th><th>Mô tả</th><th></th></tr></thead>
+        <tbody>
+          <% ungrouped.forEach(function(p) { %>
+            <tr>
+              <td class="policy-icon-cell"><%- getPolicyIcon(p.icon) %></td>
+              <td><%= p.title %></td>
+              <td><%= p.description || '-' %></td>
+              <td class="admin-actions">
+                <a href="/admin/chinh-sach/<%= p.id %>/sua">Sửa</a>
+                <form action="/admin/chinh-sach/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa chính sách này?');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+
+    <form action="/admin/chinh-sach" method="post" class="admin-policy-add-form">
+      <input type="hidden" name="groupId" value="" />
+      <input type="text" name="title" placeholder="Tiêu đề chính sách" required />
+      <input type="text" name="description" placeholder="Mô tả (không bắt buộc)" />
+      <select name="icon">
+        <% Object.keys(iconLabels).forEach(function(key) { %>
+          <option value="<%= key %>"><%= iconLabels[key] %></option>
+        <% }); %>
+      </select>
+      <button type="submit" class="btn btn-outline btn-sm">+ Thêm chính sách</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

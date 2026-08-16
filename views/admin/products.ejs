@@ -7,40 +7,79 @@
 <%- include('partials/sidebar') %>
 <main class="admin-main">
   <div class="admin-header-row">
-    <h1>Sản phẩm</h1>
+    <h1>Sản phẩm (<%= totalCount %>)</h1>
     <a href="/admin/san-pham/moi" class="btn btn-primary">+ Thêm sản phẩm</a>
   </div>
 
-  <table class="admin-table">
-    <thead><tr><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Hot Deal</th><th></th></tr></thead>
-    <tbody>
-      <% products.forEach(function(p) { %>
-        <tr>
-          <td><%= p.name %></td>
-          <td><%= p.category_name %></td>
-          <td>
-            <% if (p.is_contact_price) { %>
-              <span class="status-badge status-active">Liên hệ</span>
-            <% } else { %>
-              <%= formatVND(p.price) %>
-              <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
-            <% } %>
-          </td>
-          <td><%= p.stock %></td>
-          <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
-          <td class="admin-actions">
-            <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>
-            <form action="/admin/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này?');">
-              <button type="submit" class="btn-link-danger">Xóa</button>
-            </form>
-          </td>
-        </tr>
-      <% }); %>
-      <% if (products.length === 0) { %>
-        <tr><td colspan="6">Chưa có sản phẩm nào.</td></tr>
+  <% if (standaloneProducts.length > 0) { %>
+    <section class="admin-category-section">
+      <h2 class="admin-category-heading admin-category-heading-standalone">🏷️ Sản phẩm Hot Deal riêng (<%= standaloneProducts.length %>)</h2>
+      <p class="admin-hint">Tạo trực tiếp từ trang Hot Deal, không thuộc danh mục sản phẩm chính bên dưới.</p>
+      <table class="admin-table">
+        <thead><tr><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Hot Deal</th><th></th></tr></thead>
+        <tbody>
+          <% standaloneProducts.forEach(function(p) { %>
+            <tr>
+              <td><%= p.name %> <span class="status-badge status-standalone">Riêng</span></td>
+              <td><%= p.category_name %></td>
+              <td>
+                <% if (p.is_contact_price) { %>
+                  <span class="status-badge status-active">Liên hệ</span>
+                <% } else { %>
+                  <%= formatVND(p.price) %>
+                  <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
+                <% } %>
+              </td>
+              <td><%= p.stock %></td>
+              <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
+              <td class="admin-actions">
+                <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>
+                <form action="/admin/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này?');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+  <% } %>
+
+  <% sections.forEach(function(section) { %>
+    <section class="admin-category-section">
+      <h2 class="admin-category-heading"><%= section.category.name %> (<%= section.products.length %>)</h2>
+      <% if (section.products.length === 0) { %>
+        <p class="empty-state">Chưa có sản phẩm nào trong danh mục này.</p>
+      <% } else { %>
+        <table class="admin-table">
+          <thead><tr><th>Tên</th><th>Giá</th><th>Tồn kho</th><th>Hot Deal</th><th></th></tr></thead>
+          <tbody>
+            <% section.products.forEach(function(p) { %>
+              <tr>
+                <td><%= p.name %></td>
+                <td>
+                  <% if (p.is_contact_price) { %>
+                    <span class="status-badge status-active">Liên hệ</span>
+                  <% } else { %>
+                    <%= formatVND(p.price) %>
+                    <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
+                  <% } %>
+                </td>
+                <td><%= p.stock %></td>
+                <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
+                <td class="admin-actions">
+                  <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>
+                  <form action="/admin/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này?');">
+                    <button type="submit" class="btn-link-danger">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
       <% } %>
-    </tbody>
-  </table>
+    </section>
+  <% }); %>
 </main>
 </body>
 </html>

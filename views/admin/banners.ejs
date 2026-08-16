@@ -7,19 +7,27 @@
 <%- include('partials/sidebar') %>
 <main class="admin-main">
   <h1>Quản lý Banner</h1>
-  <p class="admin-hint">Mỗi loại banner có kích thước cố định — ảnh bạn tải lên (dù to/nhỏ/sai tỉ lệ) sẽ <strong>tự động được crop vừa khít</strong> kích thước đó, không cần chỉnh sửa trước. Chỉ nhận file JPG/PNG/GIF (chưa hỗ trợ WEBP).</p>
+  <p class="admin-hint">Mỗi loại banner có kích thước cố định — ảnh bạn tải lên (dù to/nhỏ/sai tỉ lệ) sẽ <strong>tự động được crop vừa khít</strong> kích thước đó, không cần chỉnh sửa trước. Chỉ nhận file JPG/PNG/GIF/WEBP.</p>
 
   <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
 
   <!-- Banner chính -->
   <section class="banner-section">
     <h2>1. Banner chính (đầu trang chủ)</h2>
-    <p class="admin-hint">Kích thước cố định: <strong>1800 × 480px</strong>. Nhiều banner sẽ tự động chạy luân phiên.</p>
+    <p class="admin-hint">Ảnh desktop (ngang) cố định <strong>1800 × 700px</strong>. Ảnh mobile (dọc, không bắt buộc) cố định <strong>1080 × 1350px</strong> — nếu bỏ trống, mobile sẽ tạm dùng ảnh desktop crop vào giữa (có thể mất chữ 2 bên), nên khuyến nghị luôn thêm ảnh mobile riêng. Nhiều banner sẽ tự động chạy luân phiên.</p>
 
     <form action="/admin/banner/chinh" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
-      <div class="form-group">
-        <label for="heroImage">Chọn ảnh *</label>
-        <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif" required />
+      <div class="form-row">
+        <div class="form-group">
+          <label for="heroImage">Ảnh desktop (ngang) *</label>
+          <img class="admin-image-preview" id="heroImagePreview" hidden />
+          <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="heroImagePreview" required />
+        </div>
+        <div class="form-group">
+          <label for="heroImageMobile">Ảnh mobile (dọc)</label>
+          <img class="admin-image-preview" id="heroImageMobilePreview" hidden />
+          <input type="file" id="heroImageMobile" name="imageMobile" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="heroImageMobilePreview" />
+        </div>
       </div>
       <div class="form-group">
         <label for="heroLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
@@ -29,11 +37,22 @@
     </form>
 
     <table class="admin-table">
-      <thead><tr><th>Ảnh</th><th>Link</th><th>Thứ tự</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+      <thead><tr><th>Ảnh desktop</th><th>Ảnh mobile</th><th>Link</th><th>Thứ tự</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
       <tbody>
         <% heroBanners.forEach(function(b) { %>
           <tr>
             <td><img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" /></td>
+            <td>
+              <% if (b.image_url_mobile) { %>
+                <img src="<%= b.image_url_mobile %>" alt="Banner mobile" class="admin-banner-thumb-mobile" />
+              <% } else { %>
+                <span class="status-badge status-inactive">Chưa có</span>
+              <% } %>
+              <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile" method="post" enctype="multipart/form-data" class="banner-mobile-form">
+                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" required />
+                <button type="submit" class="btn btn-outline btn-sm"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></button>
+              </form>
+            </td>
             <td><%= b.link_url || '-' %></td>
             <td>
               <form action="/admin/banner/chinh/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
@@ -49,7 +68,7 @@
           </tr>
         <% }); %>
         <% if (heroBanners.length === 0) { %>
-          <tr><td colspan="5">Chưa có banner chính nào.</td></tr>
+          <tr><td colspan="6">Chưa có banner chính nào.</td></tr>
         <% } %>
       </tbody>
     </table>
@@ -71,7 +90,8 @@
     <form action="/admin/banner/san-pham-hot" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
       <div class="form-group">
         <label for="featuredImage">Chọn ảnh mới *</label>
-        <input type="file" id="featuredImage" name="image" accept="image/png,image/jpeg,image/gif" required />
+        <img class="admin-image-preview" id="featuredImagePreview" hidden />
+        <input type="file" id="featuredImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="featuredImagePreview" required />
       </div>
       <div class="form-group">
         <label for="featuredLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
@@ -89,10 +109,10 @@
     <div class="category-thumb-grid">
       <% categories.forEach(function(cat) { %>
         <div class="category-thumb-card">
-          <img src="<%= cat.image_url %>" alt="<%= cat.name %>" class="admin-thumb-preview" />
+          <img src="<%= cat.image_url %>" alt="<%= cat.name %>" class="admin-thumb-preview" id="catThumbPreview<%= cat.id %>" />
           <p><%= cat.name %></p>
           <form action="/admin/banner/danh-muc/<%= cat.id %>" method="post" enctype="multipart/form-data">
-            <input type="file" name="image" accept="image/png,image/jpeg,image/gif" required />
+            <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="catThumbPreview<%= cat.id %>" required />
             <button type="submit" class="btn btn-outline btn-sm">Đổi ảnh</button>
           </form>
         </div>
@@ -100,5 +120,18 @@
     </div>
   </section>
 </main>
+<script>
+  (function () {
+    document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var target = document.getElementById(input.getAttribute('data-preview'));
+        if (target && input.files && input.files[0]) {
+          target.src = URL.createObjectURL(input.files[0]);
+          target.hidden = false;
+        }
+      });
+    });
+  })();
+</script>
 </body>
 </html>

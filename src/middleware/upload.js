@@ -16,10 +16,10 @@ function makeUploader(subfolder) {
   });
 
   const fileFilter = (req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.gif'];
+    const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (!allowed.includes(ext)) {
-      return cb(new Error('Chỉ chấp nhận file ảnh (jpg, png, gif) — chưa hỗ trợ webp'));
+      return cb(new Error('Chỉ chấp nhận file ảnh (jpg, png, gif, webp)'));
     }
     cb(null, true);
   };
@@ -31,4 +31,21 @@ function makeUploader(subfolder) {
   });
 }
 
-module.exports = { makeUploader };
+// Multer's fileFilter/limits errors normally throw before the route handler even
+// runs, so a try/catch inside the controller can never see them. This wraps a
+// multer middleware (single/array/fields) so those errors become a plain
+// `req.fileUploadError` string instead — the controller can then check it and
+// re-render the same friendly "invalid image" message it already uses for
+// crop failures, instead of the whole request crashing to a generic 500 page.
+function handleUploadErrors(multerMiddleware) {
+  return function (req, res, next) {
+    multerMiddleware(req, res, (err) => {
+      if (err) {
+        req.fileUploadError = err.message || 'Ảnh không hợp lệ hoặc bị lỗi khi tải lên.';
+      }
+      next();
+    });
+  };
+}
+
+module.exports = { makeUploader, handleUploadErrors };

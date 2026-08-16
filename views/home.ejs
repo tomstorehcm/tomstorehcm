@@ -8,19 +8,22 @@
 
 <main>
   <% if (banners.length > 0) { %>
-  <div class="hero-slider-wrap container">
+  <div class="hero-slider-wrap container" id="heroWrap">
+    <div class="hero-anim">
     <section class="hero-slider" id="heroSlider">
       <div class="hero-slider-track" id="heroSliderTrack">
         <% banners.forEach(function(banner) { %>
+          <% var bannerPicture = '<picture>' + (banner.image_url_mobile ? '<source media="(max-width: 767px)" srcset="' + banner.image_url_mobile + '">' : '') + '<img src="' + banner.image_url + '" alt="TOMSTORE banner" /></picture>'; %>
           <div class="hero-slide">
             <% if (banner.link_url) { %>
-              <a href="<%= banner.link_url %>"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></a>
+              <a href="<%= banner.link_url %>"><%- bannerPicture %></a>
             <% } else { %>
-              <span class="hero-slide-img"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></span>
+              <span class="hero-slide-img"><%- bannerPicture %></span>
             <% } %>
           </div>
         <% }); %>
       </div>
+      <div class="hero-slider-overlay" id="heroOverlay"></div>
       <% if (banners.length > 1) { %>
         <button type="button" class="hero-slider-arrow prev" id="heroPrev" aria-label="Ảnh trước">&larr;</button>
         <button type="button" class="hero-slider-arrow next" id="heroNext" aria-label="Ảnh sau">&rarr;</button>
@@ -31,6 +34,7 @@
         </div>
       <% } %>
     </section>
+    </div>
   </div>
   <% } else { %>
   <section class="hero-fallback">

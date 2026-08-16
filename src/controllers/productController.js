@@ -1,4 +1,5 @@
 const db = require('../db');
+const { getPoliciesForProduct } = require('../services/policies');
 
 async function showProduct(req, res, next) {
   try {
@@ -33,13 +34,16 @@ async function showProduct(req, res, next) {
       specs = {};
     }
 
+    const policies = await getPoliciesForProduct(product);
+
     res.render('product', {
       title: `${product.name} - TOMSTORE`,
       product,
       category,
       related,
       specs,
-      images
+      images,
+      policies
     });
   } catch (err) {
     next(err);

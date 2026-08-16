@@ -28,19 +28,29 @@
 
   <h2>Đơn hàng gần đây</h2>
   <table class="admin-table">
-    <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+    <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hoàn thành</th><th></th></tr></thead>
     <tbody>
       <% recentOrders.forEach(function(order) { %>
         <tr>
           <td><%= order.order_code %></td>
           <td><%= order.customer_name %></td>
+          <td><%= order.phone %></td>
           <td><%= formatVND(order.total) %></td>
           <td><span class="status-badge status-<%= order.status %>"><%= order.status %></span></td>
+          <td>
+            <form action="/admin/don-hang/<%= order.id %>/trang-thai" method="post" class="complete-toggle-form">
+              <input type="hidden" name="status" value="<%= order.status === 'completed' ? 'confirmed' : 'completed' %>" />
+              <input type="hidden" name="redirectTo" value="/admin" />
+              <button type="submit" class="complete-toggle <%= order.status === 'completed' ? 'is-checked' : '' %>" aria-label="<%= order.status === 'completed' ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành' %>" title="<%= order.status === 'completed' ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành' %>">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+          </td>
           <td><a href="/admin/don-hang/<%= order.id %>">Chi tiết</a></td>
         </tr>
       <% }); %>
       <% if (recentOrders.length === 0) { %>
-        <tr><td colspan="5">Chưa có đơn hàng nào.</td></tr>
+        <tr><td colspan="7">Chưa có đơn hàng nào.</td></tr>
       <% } %>
     </tbody>
   </table>

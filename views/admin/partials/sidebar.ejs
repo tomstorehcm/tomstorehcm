@@ -6,9 +6,11 @@
     <a href="/admin/hot-deal" class="<%= currentPath.startsWith('/admin/hot-deal') ? 'active' : '' %>">Hot Deal</a>
     <a href="/admin/banner" class="<%= currentPath.startsWith('/admin/banner') ? 'active' : '' %>">Banner trang chủ</a>
     <a href="/admin/don-hang" class="<%= currentPath.startsWith('/admin/don-hang') ? 'active' : '' %>">Đơn hàng</a>
+    <a href="/admin/chinh-sach" class="<%= currentPath.startsWith('/admin/chinh-sach') ? 'active' : '' %>">Chính sách</a>
+    <a href="/admin/doi-mat-khau" class="<%= currentPath === '/admin/doi-mat-khau' ? 'active' : '' %>">Đổi mật khẩu</a>
     <a href="/" target="_blank">Xem website &rarr;</a>
   </nav>
   <form action="/admin/logout" method="post" class="admin-logout-form">
-    <button type="submit" class="btn btn-outline btn-block">Đăng xuất</button>
+    <button type="submit" class="btn btn-logout btn-block">Đăng xuất</button>
   </form>
 </aside>

@@ -3,7 +3,7 @@ const path = require('path');
 const db = require('../../db');
 const { cropToFixedSize } = require('../../utils/imageProcess');
 
-const IMAGE_ERROR_MESSAGE = 'Ảnh không hợp lệ hoặc bị lỗi khi xử lý. Vui lòng thử lại với file JPG/PNG/GIF khác.';
+const IMAGE_ERROR_MESSAGE = 'Ảnh không hợp lệ hoặc bị lỗi khi xử lý. Vui lòng thử lại với file JPG/PNG/GIF/WEBP khác.';
 
 function removeUploadedFile(imageUrl) {
   if (imageUrl && imageUrl.startsWith('/images/uploads/')) {
@@ -46,25 +46,66 @@ async function listBanners(req, res, next) {
 
 async function createHeroBanner(req, res, next) {
   try {
-    if (!req.file) return res.redirect('/admin/banner');
+    if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
+    const desktopFile = req.files && req.files.image && req.files.image[0];
+    const mobileFile = req.files && req.files.imageMobile && req.files.imageMobile[0];
+    if (!desktopFile) return res.redirect('/admin/banner');
+
+    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', desktopFile.filename);
+    try {
+      await cropToFixedSize(destPath, 'hero');
+    } catch (imgErr) {
+      removeUploadedFile('/images/uploads/banners/' + desktopFile.filename);
+      if (mobileFile) removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
+      return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
+    }
+
+    let imageUrlMobile = null;
+    if (mobileFile) {
+      const mobileDestPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', mobileFile.filename);
+      try {
+        await cropToFixedSize(mobileDestPath, 'heroMobile');
+        imageUrlMobile = '/images/uploads/banners/' + mobileFile.filename;
+      } catch (imgErr) {
+        removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
+      }
+    }
+
+    const imageUrl = '/images/uploads/banners/' + desktopFile.filename;
+    const maxSort = await db('banners').where('type', 'hero').max('sort_order as max').first();
+
+    await db('banners').insert({
+      image_url: imageUrl,
+      image_url_mobile: imageUrlMobile,
+      link_url: req.body.linkUrl || null,
+      sort_order: (maxSort.max || 0) + 1,
+      is_active: true,
+      type: 'hero'
+    });
+
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateHeroBannerMobileImage(req, res, next) {
+  try {
+    if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
+    const banner = await db('banners').where('id', req.params.id).where('type', 'hero').first();
+    if (!banner || !req.file) return res.redirect('/admin/banner');
 
     const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
     try {
-      await cropToFixedSize(destPath, 'hero');
+      await cropToFixedSize(destPath, 'heroMobile');
     } catch (imgErr) {
       removeUploadedFile('/images/uploads/banners/' + req.file.filename);
       return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
     }
 
-    const imageUrl = '/images/uploads/banners/' + req.file.filename;
-    const maxSort = await db('banners').where('type', 'hero').max('sort_order as max').first();
-
-    await db('banners').insert({
-      image_url: imageUrl,
-      link_url: req.body.linkUrl || null,
-      sort_order: (maxSort.max || 0) + 1,
-      is_active: true,
-      type: 'hero'
+    if (banner.image_url_mobile) removeUploadedFile(banner.image_url_mobile);
+    await db('banners').where('id', banner.id).update({
+      image_url_mobile: '/images/uploads/banners/' + req.file.filename
     });
 
     res.redirect('/admin/banner');
@@ -101,6 +142,7 @@ async function deleteHeroBanner(req, res, next) {
     if (banner) {
       await db('banners').where('id', banner.id).del();
       removeUploadedFile(banner.image_url);
+      removeUploadedFile(banner.image_url_mobile);
     }
     res.redirect('/admin/banner');
   } catch (err) {
@@ -110,6 +152,7 @@ async function deleteHeroBanner(req, res, next) {
 
 async function uploadFeaturedBanner(req, res, next) {
   try {
+    if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
     const existing = await db('banners').where('type', 'featured').first();
 
     let imageUrl = existing ? existing.image_url : null;
@@ -150,6 +193,7 @@ async function uploadFeaturedBanner(req, res, next) {
 
 async function uploadCategoryThumb(req, res, next) {
   try {
+    if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
     const category = await db('categories').where('id', req.params.id).first();
     if (!category || !req.file) return res.redirect('/admin/banner');
 
@@ -177,6 +221,7 @@ async function uploadCategoryThumb(req, res, next) {
 module.exports = {
   listBanners,
   createHeroBanner,
+  updateHeroBannerMobileImage,
   toggleHeroBanner,
   updateHeroSortOrder,
   deleteHeroBanner,

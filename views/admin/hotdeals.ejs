@@ -18,37 +18,163 @@
     var defaultNewExpiry = toLocalInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
   %>
 
-  <table class="admin-table">
-    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Trạng thái</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
-    <tbody>
-      <% products.forEach(function(p) { %>
-        <% var isActive = p.is_hot_deal && p.hot_deal_expires_at && new Date(p.hot_deal_expires_at) > now; %>
-        <tr>
-          <td><%= p.name %></td>
-          <td><%= p.category_name %></td>
-          <td><%= formatVND(p.price) %></td>
-          <td><span class="status-badge <%= isActive ? 'status-active' : 'status-inactive' %>"><%= isActive ? 'Đang chạy' : 'Tắt' %></span></td>
-          <td><%= isActive ? new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') : '-' %></td>
-          <td class="admin-actions admin-actions-hotdeal">
-            <% if (isActive) { %>
-              <form action="/admin/hot-deal/<%= p.id %>/dat-gio" method="post" class="hotdeal-time-form">
-                <input type="datetime-local" name="expiresAt" value="<%= toLocalInput(p.hot_deal_expires_at) %>" required />
-                <button type="submit" class="btn btn-outline btn-sm">Đặt giờ</button>
-              </form>
-              <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
-              <form action="/admin/hot-deal/<%= p.id %>/tat" method="post"><button type="submit" class="btn btn-outline btn-sm">Tắt</button></form>
-            <% } else { %>
-              <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
-                <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
-                <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" required />
-                <button type="submit" class="btn btn-primary btn-sm">Bật Hot Deal</button>
-              </form>
-            <% } %>
-          </td>
-        </tr>
+  <!-- Thêm sản phẩm riêng cho Hot Deal -->
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">Thêm sản phẩm riêng cho Hot Deal</h2>
+    <p class="admin-hint">Dùng khi chỉ có 1 sản phẩm độc quyền/số lượng giới hạn, không cần thêm vào danh mục sản phẩm chính trước.</p>
+    <form action="/admin/hot-deal/them-rieng" method="post" enctype="multipart/form-data" class="admin-form hotdeal-standalone-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="standaloneName">Tên sản phẩm *</label>
+          <input type="text" id="standaloneName" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="standaloneCategory">Danh mục *</label>
+          <select id="standaloneCategory" name="categoryId" required>
+            <% categories.forEach(function(c) { %>
+              <option value="<%= c.id %>"><%= c.name %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="standalonePrice">Giá gốc (VND) *</label>
+          <input type="text" inputmode="numeric" class="price-input" id="standalonePrice" name="price" required />
+        </div>
+        <div class="form-group">
+          <label for="standaloneSalePrice">Giá khuyến mãi (VND) *</label>
+          <input type="text" inputmode="numeric" class="price-input" id="standaloneSalePrice" name="salePrice" required />
+        </div>
+        <div class="form-group">
+          <label for="standaloneExpiry">Giờ kết thúc *</label>
+          <input type="datetime-local" id="standaloneExpiry" name="expiresAt" value="<%= defaultNewExpiry %>" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="standaloneImage">Ảnh sản phẩm</label>
+        <img class="admin-image-preview" id="standaloneImagePreview" hidden />
+        <input type="file" id="standaloneImage" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="standaloneImagePreview" />
+        <small>Bỏ trống sẽ dùng icon minh họa theo danh mục.</small>
+      </div>
+      <button type="submit" class="btn btn-primary">+ Thêm vào Hot Deal</button>
+    </form>
+  </section>
+
+  <!-- Đang chạy -->
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">Đang chạy (<%= activeProducts.length %>)</h2>
+    <% if (activeProducts.length === 0) { %>
+      <p class="empty-state">Chưa có Hot Deal nào đang chạy.</p>
+    <% } else { %>
+      <table class="admin-table">
+        <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Giá KM</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
+        <tbody>
+          <% activeProducts.forEach(function(p) { %>
+            <tr>
+              <td><%= p.name %></td>
+              <td><%= p.category_name %></td>
+              <td><%= formatVND(p.price) %></td>
+              <td><span class="text-accent"><%= formatVND(p.sale_price) %></span></td>
+              <td><%= new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') %></td>
+              <td class="admin-actions admin-actions-hotdeal">
+                <form action="/admin/hot-deal/<%= p.id %>/dat-gio" method="post" class="hotdeal-time-form">
+                  <input type="datetime-local" name="expiresAt" value="<%= toLocalInput(p.hot_deal_expires_at) %>" required />
+                  <button type="submit" class="btn btn-outline btn-sm">Đặt giờ</button>
+                </form>
+                <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
+                <form action="/admin/hot-deal/<%= p.id %>/tat" method="post"><button type="submit" class="btn btn-outline btn-sm">Tắt</button></form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <!-- Thêm sản phẩm vào Hot Deal, theo danh mục -->
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">Thêm sản phẩm vào Hot Deal</h2>
+    <div class="hotdeal-category-tabs" id="hotdealCategoryTabs">
+      <% categories.forEach(function(cat, i) { %>
+        <button type="button" class="hotdeal-category-tab <%= i === 0 ? 'active' : '' %>" data-target="hotdeal-cat-<%= cat.id %>"><%= cat.name %></button>
       <% }); %>
-    </tbody>
-  </table>
+    </div>
+
+    <% sections.forEach(function(section, i) { %>
+      <div class="hotdeal-category-panel" id="hotdeal-cat-<%= section.category.id %>" <%= i === 0 ? '' : 'hidden' %>>
+        <% if (section.products.length === 0) { %>
+          <p class="empty-state">Danh mục này không còn sản phẩm nào để thêm Hot Deal.</p>
+        <% } else { %>
+          <table class="admin-table">
+            <thead><tr><th>Sản phẩm</th><th>Giá gốc</th><th>Thao tác</th></tr></thead>
+            <tbody>
+              <% section.products.forEach(function(p) { %>
+                <tr>
+                  <td><%= p.name %></td>
+                  <td><%= formatVND(p.price) %></td>
+                  <td>
+                    <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
+                      <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
+                      <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" required />
+                      <button type="submit" class="btn btn-primary btn-sm">Bật Hot Deal</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    <% }); %>
+  </section>
 </main>
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.hotdeal-category-tab');
+    var panels = document.querySelectorAll('.hotdeal-category-panel');
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var targetId = tab.getAttribute('data-target');
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        panels.forEach(function (p) { p.hidden = true; });
+        tab.classList.add('active');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+
+    // Format price inputs with "." as thousand separator
+    function digitsOnly(str) { return (str || '').replace(/\D/g, ''); }
+    function formatWithDots(str) {
+      return digitsOnly(str).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    var priceInputs = document.querySelectorAll('.price-input');
+    priceInputs.forEach(function (input) {
+      input.addEventListener('input', function () {
+        var cursorFromEnd = input.value.length - input.selectionStart;
+        input.value = formatWithDots(input.value);
+        var pos = input.value.length - cursorFromEnd;
+        input.setSelectionRange(pos, pos);
+      });
+    });
+    var standaloneForm = document.querySelector('.hotdeal-standalone-form');
+    if (standaloneForm) {
+      standaloneForm.addEventListener('submit', function () {
+        priceInputs.forEach(function (input) { input.value = digitsOnly(input.value); });
+      });
+    }
+
+    document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var target = document.getElementById(input.getAttribute('data-preview'));
+        if (target && input.files && input.files[0]) {
+          target.src = URL.createObjectURL(input.files[0]);
+          target.hidden = false;
+        }
+      });
+    });
+  })();
+</script>
 </body>
 </html>

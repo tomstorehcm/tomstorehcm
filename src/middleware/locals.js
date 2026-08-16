@@ -2,6 +2,7 @@ const db = require('../db');
 const cartService = require('../services/cart');
 const { formatVND, discountPercent } = require('../utils/format');
 const { categoryIcon } = require('../utils/icons');
+const { getIconSvg } = require('../utils/policyIcons');
 
 async function attachLocals(req, res, next) {
   try {
@@ -15,6 +16,7 @@ async function attachLocals(req, res, next) {
     res.locals.formatVND = formatVND;
     res.locals.discountPercent = discountPercent;
     res.locals.categoryIcon = categoryIcon;
+    res.locals.getPolicyIcon = getIconSvg;
     next();
   } catch (err) {
     next(err);

@@ -5,7 +5,7 @@ const db = require('../../db');
 const { slugify } = require('../../utils/slug');
 const { cropToFixedSize } = require('../../utils/imageProcess');
 
-const IMAGE_ERROR_MESSAGE = 'Ảnh không hợp lệ hoặc bị lỗi khi xử lý. Vui lòng thử lại với file JPG/PNG/GIF khác.';
+const IMAGE_ERROR_MESSAGE = 'Ảnh không hợp lệ hoặc bị lỗi khi xử lý. Vui lòng thử lại với file JPG/PNG/GIF/WEBP khác.';
 
 function removeUploadedFile(imageUrl) {
   if (imageUrl && imageUrl.startsWith('/images/uploads/')) {
@@ -14,16 +14,49 @@ function removeUploadedFile(imageUrl) {
   }
 }
 
+async function getPolicyFormData() {
+  const policyGroups = await db('policy_groups').orderBy('sort_order');
+  const allPolicies = await db('policies').orderBy('sort_order');
+  return { policyGroups, allPolicies };
+}
+
+async function getSelectedPolicyIds(productId) {
+  return db('product_policies').where('product_id', productId).pluck('policy_id');
+}
+
+async function syncProductPolicies(productId, policyGroupId, policyIds) {
+  await db('products').where('id', productId).update({ policy_group_id: policyGroupId });
+  await db('product_policies').where('product_id', productId).del();
+  if (!policyGroupId && policyIds.length > 0) {
+    await db('product_policies').insert(policyIds.map((policyId) => ({ product_id: productId, policy_id: policyId })));
+  }
+}
+
+function parsePolicyIds(body) {
+  return [].concat(body.policyIds || []).map(Number).filter((n) => !Number.isNaN(n));
+}
+
 async function listProducts(req, res, next) {
   try {
+    const categories = await db('categories').orderBy('sort_order');
     const products = await db('products')
       .join('categories', 'products.category_id', 'categories.id')
       .select('products.*', 'categories.name as category_name')
       .orderBy('products.created_at', 'desc');
 
+    const standaloneProducts = products.filter((p) => p.is_standalone_hotdeal);
+    const catalogProducts = products.filter((p) => !p.is_standalone_hotdeal);
+
+    const sections = categories.map((cat) => ({
+      category: cat,
+      products: catalogProducts.filter((p) => p.category_id === cat.id)
+    }));
+
     res.render('admin/products', {
       title: 'Quản lý sản phẩm - TOMSTORE Admin',
-      products
+      sections,
+      standaloneProducts,
+      totalCount: products.length
     });
   } catch (err) {
     next(err);
@@ -33,6 +66,7 @@ async function listProducts(req, res, next) {
 async function newProductForm(req, res, next) {
   try {
     const categories = await db('categories').orderBy('sort_order');
+    const { policyGroups, allPolicies } = await getPolicyFormData();
     res.render('admin/product-form', {
       title: 'Thêm sản phẩm - TOMSTORE Admin',
       categories,
@@ -40,7 +74,10 @@ async function newProductForm(req, res, next) {
       specsText: '',
       errors: [],
       isEdit: false,
-      galleryImages: []
+      galleryImages: [],
+      policyGroups,
+      allPolicies,
+      selectedPolicyIds: []
     });
   } catch (err) {
     next(err);
@@ -84,6 +121,23 @@ async function createProduct(req, res, next) {
   try {
     const errors = validationResult(req);
     const categories = await db('categories').orderBy('sort_order');
+    const { policyGroups, allPolicies } = await getPolicyFormData();
+    const selectedPolicyIds = parsePolicyIds(req.body);
+
+    if (req.fileUploadError) {
+      return res.status(400).render('admin/product-form', {
+        title: 'Thêm sản phẩm - TOMSTORE Admin',
+        categories,
+        product: req.body,
+        specsText: req.body.specsText || '',
+        errors: [{ msg: req.fileUploadError }],
+        isEdit: false,
+        galleryImages: [],
+        policyGroups,
+        allPolicies,
+        selectedPolicyIds
+      });
+    }
 
     if (!errors.isEmpty()) {
       if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
@@ -94,7 +148,10 @@ async function createProduct(req, res, next) {
         specsText: req.body.specsText || '',
         errors: errors.array(),
         isEdit: false,
-        galleryImages: []
+        galleryImages: [],
+        policyGroups,
+        allPolicies,
+        selectedPolicyIds
       });
     }
 
@@ -119,7 +176,10 @@ async function createProduct(req, res, next) {
           specsText: req.body.specsText || '',
           errors: [{ msg: IMAGE_ERROR_MESSAGE }],
           isEdit: false,
-          galleryImages: []
+          galleryImages: [],
+          policyGroups,
+          allPolicies,
+          selectedPolicyIds
         });
       }
       imageUrl = '/images/uploads/products/' + req.file.filename;
@@ -127,7 +187,7 @@ async function createProduct(req, res, next) {
 
     const isContactPrice = req.body.isContactPrice === 'on';
 
-    await db('products').insert({
+    const [insertedRaw] = await db('products').insert({
       category_id: Number(req.body.categoryId),
       name: req.body.name,
       slug,
@@ -141,6 +201,10 @@ async function createProduct(req, res, next) {
       stock: Number(req.body.stock),
       is_featured: req.body.isFeatured === 'on'
     });
+    const insertedId = insertedRaw && insertedRaw.id ? insertedRaw.id : insertedRaw;
+
+    const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
+    await syncProductPolicies(insertedId, policyGroupId, selectedPolicyIds);
 
     res.redirect('/admin/san-pham');
   } catch (err) {
@@ -155,6 +219,8 @@ async function editProductForm(req, res, next) {
 
     const categories = await db('categories').orderBy('sort_order');
     const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
+    const { policyGroups, allPolicies } = await getPolicyFormData();
+    const selectedPolicyIds = await getSelectedPolicyIds(product.id);
     res.render('admin/product-form', {
       title: 'Sửa sản phẩm - TOMSTORE Admin',
       categories,
@@ -162,7 +228,10 @@ async function editProductForm(req, res, next) {
       specsText: specsToText(product.specs_json),
       errors: [],
       isEdit: true,
-      galleryImages
+      galleryImages,
+      policyGroups,
+      allPolicies,
+      selectedPolicyIds
     });
   } catch (err) {
     next(err);
@@ -176,9 +245,10 @@ async function updateProduct(req, res, next) {
 
     const errors = validationResult(req);
     const categories = await db('categories').orderBy('sort_order');
+    const { policyGroups, allPolicies } = await getPolicyFormData();
+    const selectedPolicyIds = parsePolicyIds(req.body);
 
     if (!errors.isEmpty()) {
-      if (req.file) removeUploadedFile('/images/uploads/products/' + req.file.filename);
       const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
       return res.status(400).render('admin/product-form', {
         title: 'Sửa sản phẩm - TOMSTORE Admin',
@@ -187,32 +257,11 @@ async function updateProduct(req, res, next) {
         specsText: req.body.specsText || '',
         errors: errors.array(),
         isEdit: true,
-        galleryImages
+        galleryImages,
+        policyGroups,
+        allPolicies,
+        selectedPolicyIds
       });
-    }
-
-    let imageUrl = product.image_url;
-    if (req.file) {
-      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
-      try {
-        await cropToFixedSize(destPath, 'product');
-      } catch (imgErr) {
-        removeUploadedFile('/images/uploads/products/' + req.file.filename);
-        const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
-        return res.status(400).render('admin/product-form', {
-          title: 'Sửa sản phẩm - TOMSTORE Admin',
-          categories,
-          product: { ...product, ...req.body, id: product.id },
-          specsText: req.body.specsText || '',
-          errors: [{ msg: IMAGE_ERROR_MESSAGE }],
-          isEdit: true,
-          galleryImages
-        });
-      }
-      removeUploadedFile(product.image_url);
-      imageUrl = '/images/uploads/products/' + req.file.filename;
-    } else if (req.body.imageUrl !== undefined) {
-      imageUrl = req.body.imageUrl || null;
     }
 
     const isContactPrice = req.body.isContactPrice === 'on';
@@ -224,14 +273,16 @@ async function updateProduct(req, res, next) {
       price: isContactPrice ? (Number(req.body.price) || 0) : Number(req.body.price),
       sale_price: isContactPrice ? null : (req.body.salePrice ? Number(req.body.salePrice) : null),
       is_contact_price: isContactPrice,
-      image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
       stock: Number(req.body.stock),
       is_featured: req.body.isFeatured === 'on'
     });
 
-    res.redirect('/admin/san-pham');
+    const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
+    await syncProductPolicies(product.id, policyGroupId, selectedPolicyIds);
+
+    res.redirect('/admin/san-pham/' + product.id + '/sua');
   } catch (err) {
     next(err);
   }
