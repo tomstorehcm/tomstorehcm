@@ -116,32 +116,31 @@
         <% (colors || []).forEach(function(c) { %>
           <% var cInStock = typeof c.in_stock !== 'undefined' ? !!c.in_stock : (typeof c.inStock !== 'undefined' ? !!c.inStock : true); %>
           <% var cHex = c.hex_code || c.hex || PRESET_COLORS[0].hex; %>
-          <% var cIsPreset = PRESET_COLORS.some(function(p) { return p.hex === cHex; }); %>
           <div class="color-row-group">
             <div class="color-row">
               <% if (c.id) { %>
-                <form action="/admin/san-pham/<%= product.id %>/mau/<%= c.id %>/anh" method="post" enctype="multipart/form-data" class="color-image-form">
-                  <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
-                    <% if (c.image_url) { %>
-                      <img src="<%= c.image_url %>" alt="" />
-                    <% } else { %>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <% } %>
-                    <input type="file" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden onchange="this.form.requestSubmit()" />
-                  </label>
-                </form>
+                <label class="color-image-picker color-image-trigger" data-color-id="<%= c.id %>" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
+                  <% if (c.image_url) { %>
+                    <img src="<%= c.image_url %>" alt="" />
+                  <% } else { %>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <% } %>
+                  <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+                </label>
               <% } else { %>
                 <span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
               <% } %>
-              <span class="color-hex-swatch" style="background-color: <%= cHex %>;"></span>
-              <select name="colorHex" class="color-hex-select">
-                <% PRESET_COLORS.forEach(function(preset) { %>
-                  <option value="<%= preset.hex %>" <%= cHex === preset.hex ? 'selected' : '' %>><%= preset.name %></option>
-                <% }); %>
-                <% if (!cIsPreset) { %><option value="<%= cHex %>" selected>Màu đã lưu</option><% } %>
-              </select>
+              <details class="color-swatch-picker">
+                <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
+                <div class="color-swatch-grid">
+                  <% PRESET_COLORS.forEach(function(preset) { %>
+                    <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
+                  <% }); %>
+                </div>
+              </details>
+              <input type="hidden" name="colorHex" class="color-hex-input" value="<%= cHex %>" />
               <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
               <select name="colorInStock">
                 <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
@@ -234,6 +233,9 @@
   </div>
 </main>
 <form id="galleryDeleteForm" method="post" hidden></form>
+<form id="colorImageUploadForm" method="post" enctype="multipart/form-data" hidden>
+  <input type="file" name="imageFile" id="colorImageUploadInput" />
+</form>
 <script>
   (function () {
     var checkbox = document.getElementById('isContactPrice');
@@ -328,31 +330,60 @@
     var addColorRowBtn = document.getElementById('addColorRowBtn');
     if (colorRows && addColorRowBtn) {
       addColorRowBtn.addEventListener('click', function () {
-        var options = PRESET_COLORS.map(function (p) {
-          return '<option value="' + p[0] + '">' + p[1] + '</option>';
+        var swatchButtons = PRESET_COLORS.map(function (p) {
+          return '<button type="button" class="color-swatch-option" data-hex="' + p[0] + '" style="background-color: ' + p[0] + ';" title="' + p[1] + '"></button>';
         }).join('');
         var placeholderIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        var row = document.createElement('div');
-        row.className = 'color-row';
-        row.innerHTML =
+        var group = document.createElement('div');
+        group.className = 'color-row-group';
+        group.innerHTML =
+          '<div class="color-row">' +
           '<span class="color-image-picker color-image-picker-disabled" title="Lưu màu này trước để thêm ảnh">' + placeholderIcon + '</span>' +
-          '<span class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></span>' +
-          '<select name="colorHex" class="color-hex-select">' + options + '</select>' +
+          '<details class="color-swatch-picker">' +
+          '<summary class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></summary>' +
+          '<div class="color-swatch-grid">' + swatchButtons + '</div>' +
+          '</details>' +
+          '<input type="hidden" name="colorHex" class="color-hex-input" value="' + PRESET_COLORS[0][0] + '" />' +
           '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
           '<select name="colorInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
-          '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>';
-        colorRows.appendChild(row);
+          '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+          '</div>';
+        colorRows.appendChild(group);
       });
       colorRows.addEventListener('click', function (e) {
-        if (!e.target.classList.contains('color-remove-btn')) return;
-        e.target.closest('.color-row-group, .color-row').remove();
-      });
-      colorRows.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('color-hex-select')) return;
-        var swatch = e.target.closest('.color-row').querySelector('.color-hex-swatch');
-        if (swatch) swatch.style.backgroundColor = e.target.value;
+        if (e.target.classList.contains('color-remove-btn')) {
+          e.target.closest('.color-row-group').remove();
+          return;
+        }
+        if (e.target.classList.contains('color-swatch-option')) {
+          var picker = e.target.closest('.color-swatch-picker');
+          var row = e.target.closest('.color-row');
+          var hex = e.target.getAttribute('data-hex');
+          row.querySelector('.color-hex-input').value = hex;
+          picker.querySelector('summary').style.backgroundColor = hex;
+          picker.querySelectorAll('.color-swatch-option').forEach(function (btn) {
+            btn.classList.toggle('active', btn === e.target);
+          });
+          picker.open = false;
+        }
       });
     }
+
+    // Ảnh cho từng màu: dung form rieng nam ngoai form chinh (khong duoc long form
+    // trong form), gan file vua chon vao roi submit
+    colorRows.addEventListener('change', function (e) {
+      if (!e.target.classList.contains('color-image-input')) return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var colorId = e.target.closest('.color-image-trigger').getAttribute('data-color-id');
+      var uploadForm = document.getElementById('colorImageUploadForm');
+      var uploadInput = document.getElementById('colorImageUploadInput');
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      uploadInput.files = dt.files;
+      uploadForm.action = '/admin/san-pham/<%= isEdit ? product.id : "" %>/mau/' + colorId + '/anh';
+      uploadForm.submit();
+    });
 
     // Ảnh đại diện: xem trước ngay khi chọn file
     var mainImageInput = document.getElementById('mainImageInput');
