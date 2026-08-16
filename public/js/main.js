@@ -116,7 +116,6 @@
   if (variantOptions.length) {
     var variantIdInput = document.getElementById('variantIdInput');
     var variantPriceDisplay = document.getElementById('variantPriceDisplay');
-    var variantQtyInput = document.getElementById('quantity');
     var variantStockText = document.getElementById('productStockText');
     var variantAddBtn = document.querySelector('.product-detail-cta-row button[value="add"]');
     var variantCheckoutBtn = document.querySelector('.product-detail-cta-row button[value="checkout"]');
@@ -133,15 +132,10 @@
         opt.classList.add('active');
 
         var price = Number(opt.getAttribute('data-price'));
-        var stock = Number(opt.getAttribute('data-stock'));
-        var inStock = stock > 0;
+        var inStock = opt.getAttribute('data-in-stock') === '1';
 
         if (variantIdInput) variantIdInput.value = opt.getAttribute('data-variant-id');
         if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
-        if (variantQtyInput) {
-          variantQtyInput.max = Math.max(stock, 1);
-          if (Number(variantQtyInput.value) > stock) variantQtyInput.value = Math.max(stock, 1);
-        }
         if (variantStockText) {
           variantStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
           variantStockText.classList.toggle('product-stock-out', !inStock);

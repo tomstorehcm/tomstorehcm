@@ -39,7 +39,7 @@ function parsePolicyIds(body) {
 function parseVariantRows(body) {
   const labels = [].concat(body.variantLabel || []);
   const prices = [].concat(body.variantPrice || []);
-  const stocks = [].concat(body.variantStock || []);
+  const inStocks = [].concat(body.variantInStock || []);
   const rows = [];
   for (let i = 0; i < labels.length; i++) {
     const label = (labels[i] || '').trim();
@@ -48,7 +48,7 @@ function parseVariantRows(body) {
     rows.push({
       label,
       price,
-      stock: Math.max(0, Number(stocks[i]) || 0)
+      inStock: inStocks[i] !== '0'
     });
   }
   return rows;
@@ -62,7 +62,7 @@ async function syncProductVariants(productId, variantRows) {
         product_id: productId,
         label: v.label,
         price: v.price,
-        stock: v.stock,
+        in_stock: v.inStock,
         sort_order: i
       }))
     );

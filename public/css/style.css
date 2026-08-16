@@ -714,8 +714,8 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-policy-add-form input[name="description"] { min-width: 220px; flex: 1 1 220px; }
 .policy-checkbox-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 240px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); }
 .variant-rows { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
-.variant-row { display: grid; grid-template-columns: 1fr 1fr 100px 36px; gap: var(--space-2); align-items: center; }
-.variant-row input { height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
+.variant-row { display: grid; grid-template-columns: 1fr 1fr 120px 36px; gap: var(--space-2); align-items: center; }
+.variant-row input, .variant-row select { height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
 .variant-row .btn-remove { height: 36px; }
 .policy-checkbox-option { display: flex; align-items: center; gap: var(--space-2); font-size: 14px; font-weight: 400; }
 #individualPoliciesGroup.is-disabled { opacity: 0.5; }

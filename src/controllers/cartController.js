@@ -36,7 +36,7 @@ async function addToCart(req, res, next) {
 
     if (variantId) {
       const variant = await db('product_variants').where({ id: variantId, product_id: productId }).first();
-      if (!variant || variant.stock <= 0) {
+      if (!variant || !variant.in_stock) {
         if (wantsJson(req)) return res.status(404).json({ success: false });
         return res.status(404).redirect('/');
       }

@@ -78,16 +78,20 @@
       <label>Dung lượng / phiên bản (tùy chọn)</label>
       <div id="variantRows" class="variant-rows">
         <% (variants || []).forEach(function(v) { %>
+          <% var vInStock = typeof v.in_stock !== 'undefined' ? !!v.in_stock : (typeof v.inStock !== 'undefined' ? !!v.inStock : true); %>
           <div class="variant-row">
             <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label %>" />
             <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price %>" />
-            <input type="number" name="variantStock" placeholder="Tồn kho" min="0" value="<%= v.stock %>" />
+            <select name="variantInStock">
+              <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
+              <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
+            </select>
             <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
           </div>
         <% }); %>
       </div>
       <button type="button" id="addVariantRowBtn" class="btn btn-outline btn-sm">+ Thêm dung lượng</button>
-      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/tồn kho riêng của từng dòng thay cho giá gốc phía trên.</small>
+      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/trạng thái riêng của từng dòng thay cho giá gốc phía trên.</small>
     </div>
     <div class="form-group">
       <label for="policyGroupId">Nhóm chính sách bảo hành</label>
@@ -241,7 +245,7 @@
         row.innerHTML =
           '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
           '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
-          '<input type="number" name="variantStock" placeholder="Tồn kho" min="0" value="0" />' +
+          '<select name="variantInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
           '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>';
         variantRows.appendChild(row);
       });

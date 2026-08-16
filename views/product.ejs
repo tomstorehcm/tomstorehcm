@@ -45,7 +45,7 @@
         <h1><%= product.name %></h1>
 
         <% var hasVariants = variants && variants.length > 0; %>
-        <% var effectiveInStock = hasVariants ? variants[0].stock > 0 : product.in_stock; %>
+        <% var effectiveInStock = hasVariants ? variants[0].in_stock : product.in_stock; %>
         <% var MAX_QTY = 20; %>
 
         <div class="product-price product-price-lg" id="productPriceBlock">
@@ -74,7 +74,7 @@
               <label>Dung lượng</label>
               <div class="variant-options">
                 <% variants.forEach(function(v, i) { %>
-                  <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-variant-id="<%= v.id %>" data-price="<%= v.price %>" data-stock="<%= v.stock %>" <%= v.stock <= 0 ? 'disabled' : '' %>><%= v.label %></button>
+                  <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-variant-id="<%= v.id %>" data-price="<%= v.price %>" data-in-stock="<%= v.in_stock ? '1' : '0' %>" <%= v.in_stock ? '' : 'disabled' %>><%= v.label %></button>
                 <% }); %>
               </div>
             </div>
@@ -88,7 +88,7 @@
               <input type="hidden" name="variantId" id="variantIdInput" value="<%= variants[0].id %>" />
             <% } %>
             <label for="quantity">Số lượng</label>
-            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= hasVariants ? Math.max(variants[0].stock, 1) : MAX_QTY %>" />
+            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= MAX_QTY %>" />
             <div class="product-detail-cta-row">
               <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>><%= effectiveInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' %></button>
               <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
