@@ -142,8 +142,14 @@
           variantQtyInput.max = Math.max(stock, 1);
           if (Number(variantQtyInput.value) > stock) variantQtyInput.value = Math.max(stock, 1);
         }
-        if (variantStockText) variantStockText.textContent = inStock ? 'Còn hàng' : 'Tạm hết hàng';
-        if (variantAddBtn) variantAddBtn.disabled = !inStock;
+        if (variantStockText) {
+          variantStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+          variantStockText.classList.toggle('product-stock-out', !inStock);
+        }
+        if (variantAddBtn) {
+          variantAddBtn.disabled = !inStock;
+          variantAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+        }
         if (variantCheckoutBtn) variantCheckoutBtn.disabled = !inStock;
       });
     });

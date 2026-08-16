@@ -36,10 +36,13 @@ async function addToCart(req, res, next) {
 
     if (variantId) {
       const variant = await db('product_variants').where({ id: variantId, product_id: productId }).first();
-      if (!variant) {
+      if (!variant || variant.stock <= 0) {
         if (wantsJson(req)) return res.status(404).json({ success: false });
         return res.status(404).redirect('/');
       }
+    } else if (!product.in_stock) {
+      if (wantsJson(req)) return res.status(404).json({ success: false });
+      return res.status(404).redirect('/');
     }
 
     cartService.addItem(req, productId, quantity, variantId);

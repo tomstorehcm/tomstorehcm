@@ -171,7 +171,7 @@ async function createStandaloneHotDeal(req, res, next) {
       image_url: imageUrl,
       description: null,
       specs_json: '{}',
-      stock: 1,
+      in_stock: true,
       is_hot_deal: true,
       hot_deal_expires_at: expiry,
       is_featured: false,

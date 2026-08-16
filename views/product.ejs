@@ -45,7 +45,8 @@
         <h1><%= product.name %></h1>
 
         <% var hasVariants = variants && variants.length > 0; %>
-        <% var effectiveStock = hasVariants ? variants[0].stock : product.stock; %>
+        <% var effectiveInStock = hasVariants ? variants[0].stock > 0 : product.in_stock; %>
+        <% var MAX_QTY = 20; %>
 
         <div class="product-price product-price-lg" id="productPriceBlock">
           <% if (product.is_contact_price) { %>
@@ -64,6 +65,9 @@
 
         <% if (product.is_contact_price) { %>
           <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-lg">Liên hệ đặt mua: <%= hotline %></a>
+        <% } else if (!hasVariants && !product.in_stock) { %>
+          <p class="product-stock product-stock-out">Hết hàng</p>
+          <button type="button" class="btn btn-outline btn-lg" disabled>Hết hàng</button>
         <% } else { %>
           <% if (hasVariants) { %>
             <div class="variant-picker" id="variantPicker">
@@ -76,7 +80,7 @@
             </div>
           <% } %>
 
-          <p class="product-stock" id="productStockText"><%= effectiveStock > 0 ? 'Còn hàng' : 'Tạm hết hàng' %></p>
+          <p class="product-stock" id="productStockText"><%= effectiveInStock ? 'Còn hàng' : 'Hết hàng' %></p>
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
             <input type="hidden" name="productId" value="<%= product.id %>" />
@@ -84,10 +88,10 @@
               <input type="hidden" name="variantId" id="variantIdInput" value="<%= variants[0].id %>" />
             <% } %>
             <label for="quantity">Số lượng</label>
-            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= Math.max(effectiveStock, 1) %>" />
+            <input type="number" id="quantity" name="quantity" value="1" min="1" max="<%= hasVariants ? Math.max(variants[0].stock, 1) : MAX_QTY %>" />
             <div class="product-detail-cta-row">
-              <button type="submit" name="intent" value="add" class="btn btn-outline btn-lg" <%= effectiveStock <= 0 ? 'disabled' : '' %>>Thêm vào giỏ hàng</button>
-              <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= effectiveStock <= 0 ? 'disabled' : '' %>>Thanh toán ngay</button>
+              <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>><%= effectiveInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' %></button>
+              <button type="submit" name="intent" value="checkout" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
             </div>
           </form>
         <% } %>

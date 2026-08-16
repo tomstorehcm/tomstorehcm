@@ -124,8 +124,7 @@ const productValidators = [
   body('price')
     .if((value, { req }) => req.body.isContactPrice !== 'on')
     .isInt({ min: 0 }).withMessage('Giá phải là số nguyên >= 0'),
-  body('salePrice').optional({ checkFalsy: true }).isInt({ min: 0 }).withMessage('Giá khuyến mãi không hợp lệ'),
-  body('stock').isInt({ min: 0 }).withMessage('Tồn kho phải là số nguyên >= 0')
+  body('salePrice').optional({ checkFalsy: true }).isInt({ min: 0 }).withMessage('Giá khuyến mãi không hợp lệ')
 ];
 
 function parseSpecsText(text) {
@@ -236,7 +235,7 @@ async function createProduct(req, res, next) {
       image_url: imageUrl,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      stock: Number(req.body.stock),
+      in_stock: req.body.inStock === 'on',
       is_featured: req.body.isFeatured === 'on'
     });
     const insertedId = insertedRaw && insertedRaw.id ? insertedRaw.id : insertedRaw;
@@ -318,7 +317,7 @@ async function updateProduct(req, res, next) {
       is_contact_price: isContactPrice,
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
-      stock: Number(req.body.stock),
+      in_stock: req.body.inStock === 'on',
       is_featured: req.body.isFeatured === 'on'
     });
 

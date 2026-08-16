@@ -30,7 +30,7 @@
                   <form action="/gio-hang/cap-nhat" method="post" class="qty-form">
                     <input type="hidden" name="productId" value="<%= item.product.id %>" />
                     <% if (item.variant) { %><input type="hidden" name="variantId" value="<%= item.variant.id %>" /><% } %>
-                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.variant ? item.variant.stock : item.product.stock %>" onchange="this.form.submit()" aria-label="Số lượng" />
+                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.variant ? item.variant.stock : 20 %>" onchange="this.form.submit()" aria-label="Số lượng" />
                   </form>
                 </td>
                 <td class="cart-line-total"><%= formatVND(item.lineTotal) %></td>

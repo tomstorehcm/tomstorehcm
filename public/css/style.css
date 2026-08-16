@@ -505,6 +505,7 @@ table { border-collapse: collapse; width: 100%; }
 .variant-option.active { border-color: var(--color-accent); color: var(--color-accent); background: #fff0f5; }
 .variant-option:disabled { color: var(--color-text-muted); text-decoration: line-through; opacity: 0.5; cursor: not-allowed; }
 .product-stock { color: var(--color-success); font-weight: 700; font-size: 14px; }
+.product-stock-out { color: var(--color-sale); }
 .add-to-cart-form-detail { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) 0 var(--space-5); flex-wrap: wrap; }
 .add-to-cart-form-detail input[type=number] { width: 72px; height: 44px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; }
 .product-detail-cta-row { display: flex; gap: var(--space-3); flex-wrap: wrap; flex: 1 1 auto; }
