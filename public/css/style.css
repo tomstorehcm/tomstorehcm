@@ -37,7 +37,7 @@
 
 /* ===== Reset ===== */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
 body {
   margin: 0;
   font-family: var(--font-sans);
@@ -45,6 +45,7 @@ body {
   line-height: 1.5;
   color: var(--color-text);
   background: var(--color-bg);
+  overflow-x: hidden;
 }
 main { display: flow-root; }
 img { max-width: 100%; display: block; }

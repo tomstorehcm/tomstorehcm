@@ -18,7 +18,7 @@
           <% if (images.length > 0) { %>
             <% images.forEach(function(src, i) { %>
               <div class="gallery-slide <%= i === 0 ? 'is-active' : '' %>" data-index="<%= i %>">
-                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" />
+                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="800" height="800" />
               </div>
             <% }); %>
             <% if (images.length > 1) { %>
@@ -33,7 +33,7 @@
           <div class="product-gallery-thumbs">
             <% images.forEach(function(src, i) { %>
               <button type="button" class="gallery-thumb <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>">
-                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" loading="lazy" />
+                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="64" height="64" loading="lazy" />
               </button>
             <% }); %>
           </div>
