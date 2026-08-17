@@ -65,7 +65,7 @@
 
   <div class="container">
     <div class="category-tiles">
-      <% categories.forEach(function(cat) { %>
+      <% homeCategories.forEach(function(cat) { %>
         <a href="/danh-muc/<%= cat.slug %>" class="category-tile">
           <% if (cat.image_url) { %>
             <img src="<%= cat.image_url %>" alt="<%= cat.name %>" loading="lazy" />

@@ -22,6 +22,14 @@
       </form>
     </div>
 
+    <% if (relatedCategories.length > 0) { %>
+      <div class="related-category-links">
+        <% relatedCategories.forEach(function(rc) { %>
+          <a href="/danh-muc/<%= rc.slug %>" class="related-category-link"><%= rc.name %></a>
+        <% }); %>
+      </div>
+    <% } %>
+
     <% if (products.length === 0) { %>
       <p class="empty-state">Danh mục này hiện chưa có sản phẩm.</p>
     <% } else { %>

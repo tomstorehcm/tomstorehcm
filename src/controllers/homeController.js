@@ -13,6 +13,7 @@ async function showHome(req, res, next) {
       .orderBy([{ column: 'hot_deal_sort_order', order: 'asc' }, { column: 'hot_deal_expires_at', order: 'asc' }, { column: 'id', order: 'asc' }]);
 
     const categories = await db('categories').orderBy('sort_order');
+    const homeCategories = categories.filter((c) => c.show_on_homepage);
 
     let featuredProducts = await db('products').where('is_featured', true).limit(8);
     if (featuredProducts.length === 0) {
@@ -38,6 +39,7 @@ async function showHome(req, res, next) {
       featuredBanner,
       hotDeals,
       categories,
+      homeCategories,
       featuredProducts,
       sections
     });

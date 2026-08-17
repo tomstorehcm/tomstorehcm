@@ -30,11 +30,18 @@ async function showCategory(req, res, next) {
 
     const products = await query;
 
+    // "Điện thoại cũ 99%" and "Samsung" are hidden from the homepage tiles but
+    // should still be easy to find once a customer is browsing phones.
+    const relatedCategories = category.slug === 'dien-thoai'
+      ? await db('categories').where('show_on_homepage', false).orderBy('sort_order')
+      : [];
+
     res.render('category', {
       title: `${category.name} - TOMSTORE`,
       category,
       products,
-      sort
+      sort,
+      relatedCategories
     });
   } catch (err) {
     next(err);
