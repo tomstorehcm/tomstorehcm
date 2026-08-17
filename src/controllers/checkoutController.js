@@ -102,7 +102,7 @@ const checkoutValidators = [
   body('customerName').trim().notEmpty().withMessage('Vui lòng nhập họ tên').isLength({ max: 150 }),
   body('phone').trim().matches(/^(0\d{9}|\+84\d{9})$/).withMessage('Số điện thoại không hợp lệ'),
   body('address').trim().notEmpty().withMessage('Vui lòng nhập địa chỉ giao hàng').isLength({ max: 300 }),
-  body('paymentMethod').isIn(['cod', 'bank_transfer']).withMessage('Phương thức thanh toán không hợp lệ')
+  body('paymentMethod').isIn(['cod']).withMessage('Phương thức thanh toán không hợp lệ')
 ];
 
 async function submitOrder(req, res, next) {

@@ -10,7 +10,10 @@ const METHODS = {
 };
 
 function listMethods() {
-  return Object.values(METHODS);
+  // Bank transfer is no longer offered at checkout -- COD only, with staff
+  // following up by phone. getInstructions() below still handles bank_transfer
+  // for historical orders that were already placed that way.
+  return [METHODS.cod];
 }
 
 function getInstructions(order) {
@@ -28,10 +31,11 @@ function getInstructions(order) {
   }
 
   return {
-    title: 'Thanh toán khi nhận hàng',
+    title: 'Đặt hàng thành công',
     lines: [
-      'Vui lòng chuẩn bị đúng số tiền khi shipper giao hàng.',
-      `Mã đơn hàng: ${order.order_code}`
+      `Mã đơn hàng: ${order.order_code}`,
+      'Sẽ có nhân viên liên hệ tư vấn và hỗ trợ thêm cho quý khách.',
+      'Cảm ơn khách hàng đã đặt hàng!'
     ]
   };
 }
