@@ -1,19 +1,38 @@
 // Collapses the old 5-state order status (pending/confirmed/shipping/
 // completed/cancelled) into the 3 states the store actually uses day to day.
-// SQLite's ALTER TABLE can't replace an existing CHECK constraint (knex's
-// emulated enum .alter() just stacks a second one on top and the old values
-// keep failing), so on SQLite this rebuilds the table properly instead.
+//
+// This can't be a plain "UPDATE to new values, then ALTER the constraint"
+// migration: on MySQL, `status` is a native ENUM, and writing a value that
+// isn't in the *current* enum list gets silently coerced to '' instead of
+// erroring (in non-strict sql_mode) -- so mapping old string values to new
+// ones before the enum itself accepts them silently wipes the column. SQLite
+// has the mirror problem: its CHECK constraint is strict, so the same
+// premature UPDATE would throw outright. Both dialects are handled below by
+// never letting the column hold a value invalid for whatever constraint is
+// active at that moment -- the remapping happens inside the same statement
+// that changes the constraint, never before it.
 
-async function mapOldStatuses(knex) {
-  await knex('orders').where('status', 'pending').update({ status: 'moi' });
-  await knex('orders').whereIn('status', ['confirmed', 'shipping', 'cancelled']).update({ status: 'da_lien_he' });
-  await knex('orders').where('status', 'completed').update({ status: 'da_giao' });
-}
+// SQLite silently ignores "PRAGMA foreign_keys" changes while a transaction
+// is open, and knex wraps every migration in one by default -- disable that
+// wrapping so the pragma toggle below actually takes effect.
+exports.config = { transaction: false };
 
-async function mapNewStatuses(knex) {
-  await knex('orders').where('status', 'moi').update({ status: 'pending' });
-  await knex('orders').where('status', 'da_lien_he').update({ status: 'confirmed' });
-  await knex('orders').where('status', 'da_giao').update({ status: 'completed' });
+const OLD_TO_NEW = {
+  pending: 'moi',
+  confirmed: 'da_lien_he',
+  shipping: 'da_lien_he',
+  completed: 'da_giao',
+  cancelled: 'da_lien_he'
+};
+const NEW_TO_OLD = {
+  moi: 'pending',
+  da_lien_he: 'confirmed',
+  da_giao: 'completed'
+};
+
+function caseExpr(knex, mapping) {
+  const whens = Object.entries(mapping).map(([from, to]) => `WHEN '${from}' THEN '${to}'`).join(' ');
+  return knex.raw(`CASE status ${whens} ELSE status END`);
 }
 
 // SQLite silently rewrites other tables' FOREIGN KEY clauses to match a
@@ -39,43 +58,68 @@ async function fixOrderItemsForeignKey(knex) {
   await knex.schema.dropTable('order_items_fk_rebuild');
 }
 
+async function rebuildOrdersTable(knex, { fromTableName, statusValues, statusDefault, statusMapping }) {
+  await knex.schema.renameTable('orders', fromTableName);
+  // SQLite indexes are named independently of their table and don't get
+  // renamed along with it, so the old unique index has to go before the
+  // new "orders" table can claim the same index name.
+  await knex.raw('DROP INDEX IF EXISTS orders_order_code_unique');
+  await knex.schema.createTable('orders', (table) => {
+    table.increments('id').primary();
+    table.string('order_code', 20).notNullable().unique();
+    table.string('customer_name', 150).notNullable();
+    table.string('phone', 20).notNullable();
+    table.string('address', 300).notNullable();
+    table.text('note').nullable();
+    table.enu('payment_method', ['cod', 'bank_transfer'], {
+      useNative: false,
+      enumName: 'payment_method_check'
+    }).notNullable();
+    table.enu('status', statusValues, {
+      useNative: false,
+      enumName: 'order_status_check'
+    }).notNullable().defaultTo(statusDefault);
+    table.integer('total').unsigned().notNullable();
+    table.timestamp('created_at').defaultTo(knex.fn.now());
+    table.text('admin_note').nullable();
+  });
+
+  const statusSelect = caseExpr(knex, statusMapping).toString();
+  await knex.raw(`
+    INSERT INTO orders (id, order_code, customer_name, phone, address, note, payment_method, status, total, created_at, admin_note)
+    SELECT id, order_code, customer_name, phone, address, note, payment_method, ${statusSelect}, total, created_at, admin_note FROM ${fromTableName}
+  `);
+  await knex.schema.dropTable(fromTableName);
+  await fixOrderItemsForeignKey(knex);
+}
+
 exports.up = async function (knex) {
   const isSqlite = knex.client.config.client.includes('sqlite');
 
-  await mapOldStatuses(knex);
-
   if (isSqlite) {
-    await knex.schema.renameTable('orders', 'orders_old_status_migration');
-    // SQLite indexes are named independently of their table and don't get
-    // renamed along with it, so the old unique index has to go before the
-    // new "orders" table can claim the same index name.
-    await knex.raw('DROP INDEX IF EXISTS orders_order_code_unique');
-    await knex.schema.createTable('orders', (table) => {
-      table.increments('id').primary();
-      table.string('order_code', 20).notNullable().unique();
-      table.string('customer_name', 150).notNullable();
-      table.string('phone', 20).notNullable();
-      table.string('address', 300).notNullable();
-      table.text('note').nullable();
-      table.enu('payment_method', ['cod', 'bank_transfer'], {
-        useNative: false,
-        enumName: 'payment_method_check'
-      }).notNullable();
-      table.enu('status', ['moi', 'da_lien_he', 'da_giao'], {
-        useNative: false,
-        enumName: 'order_status_check'
-      }).notNullable().defaultTo('moi');
-      table.integer('total').unsigned().notNullable();
-      table.timestamp('created_at').defaultTo(knex.fn.now());
-      table.text('admin_note').nullable();
+    // Renaming/dropping tables mid-rebuild can trip FK-related side effects
+    // on the still-attached order_items table (observed: it lost its rows
+    // entirely partway through). Foreign keys aren't needed mid-migration --
+    // both tables are rebuilt correctly by the end -- so turn enforcement
+    // off for the duration.
+    await knex.raw('PRAGMA foreign_keys = OFF');
+    await rebuildOrdersTable(knex, {
+      fromTableName: 'orders_old_status_migration',
+      statusValues: ['moi', 'da_lien_he', 'da_giao'],
+      statusDefault: 'moi',
+      statusMapping: OLD_TO_NEW
     });
-    await knex.raw(`
-      INSERT INTO orders (id, order_code, customer_name, phone, address, note, payment_method, status, total, created_at, admin_note)
-      SELECT id, order_code, customer_name, phone, address, note, payment_method, status, total, created_at, admin_note FROM orders_old_status_migration
-    `);
-    await knex.schema.dropTable('orders_old_status_migration');
-    await fixOrderItemsForeignKey(knex);
+    await knex.raw('PRAGMA foreign_keys = ON');
   } else {
+    // Native MySQL ENUM: widen to accept both old and new values first, so
+    // the remap UPDATE is always valid, then narrow to just the new ones.
+    await knex.schema.alterTable('orders', (table) => {
+      table.enu('status', [
+        'pending', 'confirmed', 'shipping', 'completed', 'cancelled',
+        'moi', 'da_lien_he', 'da_giao'
+      ], { useNative: false, enumName: 'order_status_check' }).notNullable().defaultTo('moi').alter();
+    });
+    await knex('orders').update({ status: caseExpr(knex, OLD_TO_NEW) });
     await knex.schema.alterTable('orders', (table) => {
       table.enu('status', ['moi', 'da_lien_he', 'da_giao'], {
         useNative: false,
@@ -89,34 +133,22 @@ exports.down = async function (knex) {
   const isSqlite = knex.client.config.client.includes('sqlite');
 
   if (isSqlite) {
-    await knex.schema.renameTable('orders', 'orders_new_status_migration');
-    await knex.raw('DROP INDEX IF EXISTS orders_order_code_unique');
-    await knex.schema.createTable('orders', (table) => {
-      table.increments('id').primary();
-      table.string('order_code', 20).notNullable().unique();
-      table.string('customer_name', 150).notNullable();
-      table.string('phone', 20).notNullable();
-      table.string('address', 300).notNullable();
-      table.text('note').nullable();
-      table.enu('payment_method', ['cod', 'bank_transfer'], {
-        useNative: false,
-        enumName: 'payment_method_check'
-      }).notNullable();
-      table.enu('status', ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'], {
-        useNative: false,
-        enumName: 'order_status_check'
-      }).notNullable().defaultTo('pending');
-      table.integer('total').unsigned().notNullable();
-      table.timestamp('created_at').defaultTo(knex.fn.now());
-      table.text('admin_note').nullable();
+    await knex.raw('PRAGMA foreign_keys = OFF');
+    await rebuildOrdersTable(knex, {
+      fromTableName: 'orders_new_status_migration',
+      statusValues: ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'],
+      statusDefault: 'pending',
+      statusMapping: NEW_TO_OLD
     });
-    await knex.raw(`
-      INSERT INTO orders (id, order_code, customer_name, phone, address, note, payment_method, status, total, created_at, admin_note)
-      SELECT id, order_code, customer_name, phone, address, note, payment_method, status, total, created_at, admin_note FROM orders_new_status_migration
-    `);
-    await knex.schema.dropTable('orders_new_status_migration');
-    await fixOrderItemsForeignKey(knex);
+    await knex.raw('PRAGMA foreign_keys = ON');
   } else {
+    await knex.schema.alterTable('orders', (table) => {
+      table.enu('status', [
+        'pending', 'confirmed', 'shipping', 'completed', 'cancelled',
+        'moi', 'da_lien_he', 'da_giao'
+      ], { useNative: false, enumName: 'order_status_check' }).notNullable().defaultTo('pending').alter();
+    });
+    await knex('orders').update({ status: caseExpr(knex, NEW_TO_OLD) });
     await knex.schema.alterTable('orders', (table) => {
       table.enu('status', ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'], {
         useNative: false,
@@ -124,6 +156,4 @@ exports.down = async function (knex) {
       }).notNullable().defaultTo('pending').alter();
     });
   }
-
-  await mapNewStatuses(knex);
 };
