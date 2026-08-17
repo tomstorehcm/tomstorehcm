@@ -17,7 +17,6 @@ function parseColorId(body) {
 async function showCart(req, res, next) {
   try {
     delete req.session.buyNow;
-    res.set('Cache-Control', 'no-store');
     const cart = res.locals.cart || (await cartService.getCartDetails(req));
     res.render('cart', {
       title: 'Giỏ hàng - TOMSTORE',

@@ -386,7 +386,7 @@ table { border-collapse: collapse; width: 100%; }
 .featured-layout { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
 @media (min-width: 900px) { .featured-layout { grid-template-columns: 320px 1fr; } }
 @media (min-width: 1440px) { .featured-layout { grid-template-columns: 380px 1fr; gap: var(--space-5); } }
-.featured-banner { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); aspect-ratio: 480 / 840; align-self: start; }
+.featured-banner { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card); aspect-ratio: 4 / 5; align-self: start; }
 .featured-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .featured-products { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
 @media (min-width: 640px) { .featured-products { grid-template-columns: repeat(3, 1fr); } }
@@ -628,6 +628,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
   .footer-logo { display: flex; justify-content: center; }
   .footer-col ul { align-items: center; }
   .footer-bottom { text-align: center; }
+  .footer-col ul.footer-category-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); }
 }
 
 /* ===== Admin ===== */
@@ -708,12 +709,13 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .hotdeal-standalone-form { max-width: 720px; }
 
 .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: capitalize; background: #e5e7eb; color: #374151; }
-.status-pending { background: #fef3c7; color: #92400e; }
-.status-confirmed { background: #dbeafe; color: #1e40af; }
-.status-shipping { background: #ede9fe; color: #5b21b6; }
-.status-completed, .status-active { background: #dcfce7; color: #166534; }
+.status-moi { background: #fef3c7; color: #92400e; }
+.status-da_lien_he { background: #dbeafe; color: #1e40af; }
+.status-da_giao, .status-completed, .status-active { background: #dcfce7; color: #166534; }
 .status-cancelled, .status-inactive { background: #fee2e2; color: #991b1b; }
 .status-standalone { background: #ffedd5; color: #9a3412; margin-left: var(--space-2); }
+.status-select { border: 1px solid transparent; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; cursor: pointer; background-color: #e5e7eb; color: #374151; }
+.order-filter-form { margin-bottom: var(--space-5); }
 .admin-category-heading-standalone { background: #f97316; box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25); }
 
 .admin-form { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 640px; }

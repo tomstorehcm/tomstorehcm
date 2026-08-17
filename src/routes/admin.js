@@ -66,9 +66,9 @@ router.post('/hot-deal/:id/len', hotDealController.moveHotDealUp);
 router.post('/hot-deal/:id/xuong', hotDealController.moveHotDealDown);
 router.post('/hot-deal/them-rieng', handleUploadErrors(uploadProductImage.single('imageFile')), hotDealController.createStandaloneHotDeal);
 
-router.get('/don-hang', orderAdminController.listOrders);
 router.get('/don-hang/:id', orderAdminController.showOrder);
 router.post('/don-hang/:id/trang-thai', orderAdminController.updateStatus);
+router.post('/don-hang/:id/ghi-chu', orderAdminController.updateNote);
 
 router.get('/banner', bannerController.listBanners);
 router.post(

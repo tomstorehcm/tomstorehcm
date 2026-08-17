@@ -1,5 +1,6 @@
 const db = require('../db');
 const { getPoliciesForProduct } = require('../services/policies');
+const { attachFallbackImages } = require('../utils/productImages');
 
 async function showProduct(req, res, next) {
   try {
@@ -18,6 +19,7 @@ async function showProduct(req, res, next) {
       .where('category_id', product.category_id)
       .andWhereNot('id', product.id)
       .limit(4);
+    await attachFallbackImages(related);
 
     const galleryImages = await db('product_images')
       .where('product_id', product.id)
@@ -75,6 +77,7 @@ async function searchProducts(req, res, next) {
     let products = [];
     if (q) {
       products = await db('products').where('name', 'like', `%${q}%`).orderBy('created_at', 'desc');
+      await attachFallbackImages(products);
     }
 
     res.render('search', {

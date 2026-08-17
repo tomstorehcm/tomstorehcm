@@ -3,6 +3,7 @@ const db = require('../db');
 const cartService = require('../services/cart');
 const paymentService = require('../services/payment');
 const { generateOrderCode } = require('../utils/format');
+const { DEFAULT_STATUS } = require('../utils/orderStatus');
 const { getDefaultPolicies } = require('../services/policies');
 
 function buildOrderItemName(item) {
@@ -77,7 +78,6 @@ async function buyNow(req, res, next) {
 
 async function showCheckout(req, res, next) {
   try {
-    res.set('Cache-Control', 'no-store');
     const { cart } = await getActiveCart(req);
     if (cart.items.length === 0) {
       return res.redirect('/gio-hang');
@@ -134,7 +134,7 @@ async function submitOrder(req, res, next) {
       address: req.body.address,
       note: req.body.note || null,
       payment_method: req.body.paymentMethod,
-      status: 'pending',
+      status: DEFAULT_STATUS,
       total: cart.total
     });
 

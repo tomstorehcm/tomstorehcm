@@ -6,7 +6,7 @@
 <body class="admin-body">
 <%- include('partials/sidebar') %>
 <main class="admin-main">
-  <h1>Bảng điều khiển</h1>
+  <h1>Quản lý đơn hàng</h1>
   <div class="admin-stats-grid">
     <div class="admin-stat-card">
       <span class="stat-value"><%= stats.productCount %></span>
@@ -18,7 +18,7 @@
     </div>
     <div class="admin-stat-card admin-stat-card-accent">
       <span class="stat-value"><%= stats.pendingCount %></span>
-      <span class="stat-label">Đơn chờ xử lý</span>
+      <span class="stat-label">Đơn mới</span>
     </div>
     <div class="admin-stat-card admin-stat-card-hot">
       <span class="stat-value"><%= stats.hotDealCount %></span>
@@ -26,34 +26,59 @@
     </div>
   </div>
 
-  <h2>Đơn hàng gần đây</h2>
-  <table class="admin-table">
-    <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>Tổng tiền</th><th>Trạng thái</th><th>Hoàn thành</th><th></th></tr></thead>
-    <tbody>
-      <% recentOrders.forEach(function(order) { %>
-        <tr>
-          <td><%= order.order_code %></td>
-          <td><%= order.customer_name %></td>
-          <td><%= order.phone %></td>
-          <td><%= formatVND(order.total) %></td>
-          <td><span class="status-badge status-<%= order.status %>"><%= order.status %></span></td>
-          <td>
-            <form action="/admin/don-hang/<%= order.id %>/trang-thai" method="post" class="complete-toggle-form">
-              <input type="hidden" name="status" value="<%= order.status === 'completed' ? 'confirmed' : 'completed' %>" />
-              <input type="hidden" name="redirectTo" value="/admin" />
-              <button type="submit" class="complete-toggle <%= order.status === 'completed' ? 'is-checked' : '' %>" aria-label="<%= order.status === 'completed' ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành' %>" title="<%= order.status === 'completed' ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành' %>">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </form>
-          </td>
-          <td><a href="/admin/don-hang/<%= order.id %>">Chi tiết</a></td>
-        </tr>
+  <form action="/admin" method="get" class="sort-form order-filter-form">
+    <label for="year">Năm</label>
+    <select id="year" name="year" onchange="this.form.submit()">
+      <option value="">Tất cả</option>
+      <% years.forEach(function(y) { %>
+        <option value="<%= y %>" <%= selectedYear === y ? 'selected' : '' %>><%= y %></option>
       <% }); %>
-      <% if (recentOrders.length === 0) { %>
-        <tr><td colspan="7">Chưa có đơn hàng nào.</td></tr>
-      <% } %>
-    </tbody>
-  </table>
+    </select>
+    <label for="month">Tháng</label>
+    <select id="month" name="month" onchange="this.form.submit()">
+      <option value="">Tất cả</option>
+      <% months.forEach(function(m, i) { %>
+        <option value="<%= i + 1 %>" <%= selectedMonth === i + 1 ? 'selected' : '' %>><%= m %></option>
+      <% }); %>
+    </select>
+    <% if (selectedYear || selectedMonth) { %>
+      <a href="/admin" class="btn btn-outline btn-sm">Bỏ lọc</a>
+    <% } %>
+  </form>
+
+  <% if (groups.length === 0) { %>
+    <p class="empty-state">Chưa có đơn hàng nào<%= (selectedYear || selectedMonth) ? ' trong khoảng thời gian này.' : '.' %></p>
+  <% } else { %>
+    <% groups.forEach(function(group) { %>
+      <section class="admin-category-section">
+        <h2 class="admin-category-heading"><%= group.date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> (<%= group.orders.length %>)</h2>
+        <table class="admin-table">
+          <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <% group.orders.forEach(function(order) { %>
+              <tr>
+                <td><%= order.order_code %></td>
+                <td><%= order.customer_name %></td>
+                <td><%= order.phone %></td>
+                <td><%= formatVND(order.total) %></td>
+                <td>
+                  <form action="/admin/don-hang/<%= order.id %>/trang-thai" method="post" class="status-select-form">
+                    <input type="hidden" name="redirectTo" value="/admin" />
+                    <select name="status" class="status-select status-<%= order.status %>" onchange="this.className = 'status-select status-' + this.value; this.form.submit()">
+                      <% statuses.forEach(function(s) { %>
+                        <option value="<%= s.key %>" <%= order.status === s.key ? 'selected' : '' %>><%= s.label %></option>
+                      <% }); %>
+                    </select>
+                  </form>
+                </td>
+                <td><a href="/admin/don-hang/<%= order.id %>">Chi tiết</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </section>
+    <% }); %>
+  <% } %>
 </main>
 </body>
 </html>

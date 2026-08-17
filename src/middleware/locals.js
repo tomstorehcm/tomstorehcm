@@ -6,6 +6,9 @@ const { getIconSvg } = require('../utils/policyIcons');
 
 async function attachLocals(req, res, next) {
   try {
+    // Every page shows the cart badge, so any page could be served stale by
+    // the browser's back-forward cache after the cart changes elsewhere.
+    res.set('Cache-Control', 'no-store');
     const categories = await db('categories').orderBy('sort_order');
     res.locals.categories = categories;
     res.locals.categoriesById = Object.fromEntries(categories.map((c) => [c.id, c]));

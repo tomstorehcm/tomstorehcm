@@ -1,4 +1,5 @@
 const db = require('../db');
+const { attachFallbackImages } = require('../utils/productImages');
 
 async function showHome(req, res, next) {
   try {
@@ -32,6 +33,12 @@ async function showHome(req, res, next) {
         .limit(8);
       sections.push({ category: cat, products });
     }
+
+    await attachFallbackImages([
+      ...hotDeals,
+      ...featuredProducts,
+      ...sections.flatMap((s) => s.products)
+    ]);
 
     res.render('home', {
       title: 'TOMSTORE - Chuyên các sản phẩm Apple: iPhone, MacBook, iPad, AirPods chính hãng',

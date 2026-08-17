@@ -1,4 +1,5 @@
 const db = require('../db');
+const { attachFallbackImages } = require('../utils/productImages');
 
 async function productsForCategory(categoryId, sort) {
   let query = db('products').where('category_id', categoryId);
@@ -44,6 +45,8 @@ async function showCategory(req, res, next) {
         products: await productsForCategory(cat.id, sort)
       }))
     );
+
+    await attachFallbackImages(tabGroups.flatMap((g) => g.products));
 
     res.render('category', {
       title: `${category.name} - TOMSTORE`,

@@ -6,7 +6,7 @@
 <body class="admin-body">
 <%- include('partials/sidebar') %>
 <main class="admin-main">
-  <a href="/admin/don-hang" class="back-link">&larr; Quay lại danh sách đơn hàng</a>
+  <a href="/admin" class="back-link">&larr; Quay lại danh sách đơn hàng</a>
   <h1>Đơn hàng <%= order.order_code %></h1>
 
   <div class="order-detail-grid">
@@ -14,7 +14,7 @@
       <p><strong>Khách hàng:</strong> <%= order.customer_name %></p>
       <p><strong>Số điện thoại:</strong> <%= order.phone %></p>
       <p><strong>Địa chỉ:</strong> <%= order.address %></p>
-      <% if (order.note) { %><p><strong>Ghi chú:</strong> <%= order.note %></p><% } %>
+      <% if (order.note) { %><p><strong>Ghi chú của khách:</strong> <%= order.note %></p><% } %>
       <p><strong>Thanh toán:</strong> <%= order.payment_method === 'cod' ? 'COD' : 'Chuyển khoản' %></p>
       <p><strong>Ngày đặt:</strong> <%= new Date(order.created_at).toLocaleString('vi-VN') %></p>
     </div>
@@ -23,9 +23,17 @@
       <label for="status">Trạng thái đơn hàng</label>
       <select id="status" name="status" onchange="this.form.submit()">
         <% statuses.forEach(function(s) { %>
-          <option value="<%= s %>" <%= order.status === s ? 'selected' : '' %>><%= s %></option>
+          <option value="<%= s.key %>" <%= order.status === s.key ? 'selected' : '' %>><%= s.label %></option>
         <% }); %>
       </select>
+    </form>
+  </div>
+
+  <div class="form-group">
+    <form action="/admin/don-hang/<%= order.id %>/ghi-chu" method="post">
+      <label for="adminNote">Ghi chú nội bộ (chỉ admin thấy)</label>
+      <textarea id="adminNote" name="adminNote" rows="4" placeholder="Ghi chú bất cứ điều gì về đơn hàng này..."><%= order.admin_note || '' %></textarea>
+      <button type="submit" class="btn btn-outline btn-sm">Lưu ghi chú</button>
     </form>
   </div>
 

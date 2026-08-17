@@ -1,24 +1,10 @@
 const db = require('../../db');
-
-const STATUSES = ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'];
-
-async function listOrders(req, res, next) {
-  try {
-    const orders = await db('orders').orderBy('created_at', 'desc');
-    res.render('admin/orders', {
-      title: 'Quản lý đơn hàng - TOMSTORE Admin',
-      orders,
-      statuses: STATUSES
-    });
-  } catch (err) {
-    next(err);
-  }
-}
+const { STATUSES, STATUS_KEYS } = require('../../utils/orderStatus');
 
 async function showOrder(req, res, next) {
   try {
     const order = await db('orders').where('id', req.params.id).first();
-    if (!order) return res.redirect('/admin/don-hang');
+    if (!order) return res.redirect('/admin');
 
     const items = await db('order_items').where('order_id', order.id);
 
@@ -36,14 +22,23 @@ async function showOrder(req, res, next) {
 async function updateStatus(req, res, next) {
   try {
     const { status } = req.body;
-    if (!STATUSES.includes(status)) {
-      return res.redirect('/admin/don-hang');
+    if (!STATUS_KEYS.includes(status)) {
+      return res.redirect('/admin');
     }
     await db('orders').where('id', req.params.id).update({ status });
-    res.redirect(req.body.redirectTo || '/admin/don-hang');
+    res.redirect(req.body.redirectTo || '/admin');
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { listOrders, showOrder, updateStatus };
+async function updateNote(req, res, next) {
+  try {
+    await db('orders').where('id', req.params.id).update({ admin_note: req.body.adminNote || null });
+    res.redirect('/admin/don-hang/' + req.params.id);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { showOrder, updateStatus, updateNote };

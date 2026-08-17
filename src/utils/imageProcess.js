@@ -7,7 +7,9 @@ const { defaultFormats, defaultPlugins } = require('jimp');
 const BANNER_SIZES = {
   hero: { w: 1800, h: 700 },
   heroMobile: { w: 1080, h: 1350 },
-  featured: { w: 480, h: 840 },
+  // Same 1080x1350 (4:5) as heroMobile so admin can reuse one Instagram-ready
+  // image across both this banner and the mobile hero.
+  featured: { w: 1080, h: 1350 },
   thumb: { w: 640, h: 640 },
   product: { w: 1000, h: 1000 }
 };
