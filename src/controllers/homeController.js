@@ -23,7 +23,11 @@ async function showHome(req, res, next) {
     for (const cat of categories) {
       const products = await db('products')
         .where('category_id', cat.id)
-        .orderBy('created_at', 'desc')
+        .orderBy([
+          { column: 'category_sort_order', order: 'asc' },
+          { column: 'created_at', order: 'desc' },
+          { column: 'id', order: 'asc' }
+        ])
         .limit(8);
       sections.push({ category: cat, products });
     }

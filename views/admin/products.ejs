@@ -51,11 +51,20 @@
       <% if (section.products.length === 0) { %>
         <p class="empty-state">Chưa có sản phẩm nào trong danh mục này.</p>
       <% } else { %>
+        <p class="admin-hint">Dùng nút ▲▼ để chỉnh thứ tự hiển thị trong danh mục này.</p>
         <table class="admin-table">
-          <thead><tr><th>Tên</th><th>Giá</th><th>Tình trạng</th><th>Hot Deal</th><th></th></tr></thead>
+          <thead><tr><th>Thứ tự</th><th>Tên</th><th>Giá</th><th>Tình trạng</th><th>Hot Deal</th><th></th></tr></thead>
           <tbody>
-            <% section.products.forEach(function(p) { %>
+            <% section.products.forEach(function(p, i) { %>
               <tr>
+                <td class="admin-actions-hotdeal-order">
+                  <form action="/admin/san-pham/<%= p.id %>/len" method="post" class="hotdeal-order-form">
+                    <button type="submit" class="btn btn-outline btn-sm" title="Đưa lên trên" <%= i === 0 ? 'disabled' : '' %>>&#9650;</button>
+                  </form>
+                  <form action="/admin/san-pham/<%= p.id %>/xuong" method="post" class="hotdeal-order-form">
+                    <button type="submit" class="btn btn-outline btn-sm" title="Đưa xuống dưới" <%= i === section.products.length - 1 ? 'disabled' : '' %>>&#9660;</button>
+                  </form>
+                </td>
                 <td><%= p.name %></td>
                 <td>
                   <% if (p.is_contact_price) { %>

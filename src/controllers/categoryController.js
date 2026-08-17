@@ -21,7 +21,11 @@ async function showCategory(req, res, next) {
     } else if (sort === 'price_desc') {
       query = query.orderByRaw('COALESCE(sale_price, price) desc');
     } else {
-      query = query.orderBy('created_at', 'desc');
+      query = query.orderBy([
+        { column: 'category_sort_order', order: 'asc' },
+        { column: 'created_at', order: 'desc' },
+        { column: 'id', order: 'asc' }
+      ]);
     }
 
     const products = await query;

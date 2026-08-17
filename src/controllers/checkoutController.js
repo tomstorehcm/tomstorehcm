@@ -4,7 +4,6 @@ const cartService = require('../services/cart');
 const paymentService = require('../services/payment');
 const { generateOrderCode } = require('../utils/format');
 const { getDefaultPolicies } = require('../services/policies');
-const { MAX_QTY_PER_ITEM } = require('../utils/constants');
 
 function buildOrderItemName(item) {
   const parts = [];
@@ -53,7 +52,6 @@ async function buyNow(req, res, next) {
     const productId = Number(req.body.productId);
     const variantId = req.body.variantId ? Number(req.body.variantId) : null;
     const colorId = req.body.colorId ? Number(req.body.colorId) : null;
-    const quantity = Math.max(1, Math.min(MAX_QTY_PER_ITEM, Number(req.body.quantity) || 1));
 
     const product = await db('products').where('id', productId).first();
     if (!product || product.is_contact_price || !product.in_stock) {
@@ -70,7 +68,7 @@ async function buyNow(req, res, next) {
       if (!color || !color.in_stock) return res.status(404).redirect('/');
     }
 
-    req.session.buyNow = { productId, variantId, colorId, quantity };
+    req.session.buyNow = { productId, variantId, colorId, quantity: 1 };
     res.redirect('/thanh-toan');
   } catch (err) {
     next(err);
@@ -79,6 +77,7 @@ async function buyNow(req, res, next) {
 
 async function showCheckout(req, res, next) {
   try {
+    res.set('Cache-Control', 'no-store');
     const { cart } = await getActiveCart(req);
     if (cart.items.length === 0) {
       return res.redirect('/gio-hang');

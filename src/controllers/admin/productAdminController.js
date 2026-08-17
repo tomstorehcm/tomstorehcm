@@ -126,7 +126,11 @@ async function listProducts(req, res, next) {
     const products = await db('products')
       .join('categories', 'products.category_id', 'categories.id')
       .select('products.*', 'categories.name as category_name')
-      .orderBy('products.created_at', 'desc');
+      .orderBy([
+        { column: 'products.category_sort_order', order: 'asc' },
+        { column: 'products.created_at', order: 'desc' },
+        { column: 'products.id', order: 'asc' }
+      ]);
 
     const standaloneProducts = products.filter((p) => p.is_standalone_hotdeal);
     const catalogProducts = products.filter((p) => !p.is_standalone_hotdeal);
@@ -405,6 +409,39 @@ async function deleteProduct(req, res, next) {
   }
 }
 
+async function moveProductInCategory(req, res, next, direction) {
+  try {
+    const product = await db('products').where('id', req.params.id).first();
+    if (!product) return res.redirect('/admin/san-pham');
+
+    const siblings = await db('products')
+      .where('category_id', product.category_id)
+      .where('is_standalone_hotdeal', false)
+      .orderBy([
+        { column: 'category_sort_order', order: 'asc' },
+        { column: 'created_at', order: 'desc' },
+        { column: 'id', order: 'asc' }
+      ]);
+
+    const idx = siblings.findIndex((p) => p.id === product.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+
+    if (idx !== -1 && swapIdx >= 0 && swapIdx < siblings.length) {
+      // Re-normalize to the current display order first, so this works even
+      // if category_sort_order was never set (defaults to 0 for everyone).
+      const order = siblings.map((p) => p.id);
+      const tmp = order[idx];
+      order[idx] = order[swapIdx];
+      order[swapIdx] = tmp;
+      await Promise.all(order.map((id, i) => db('products').where('id', id).update({ category_sort_order: i })));
+    }
+
+    res.redirect('/admin/san-pham');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listProducts,
   newProductForm,
@@ -412,5 +449,7 @@ module.exports = {
   createProduct,
   editProductForm,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  moveProductUp: (req, res, next) => moveProductInCategory(req, res, next, 'up'),
+  moveProductDown: (req, res, next) => moveProductInCategory(req, res, next, 'down')
 };

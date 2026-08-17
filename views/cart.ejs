@@ -25,7 +25,7 @@
       <div class="cart-layout">
         <table class="cart-table">
           <thead>
-            <tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr>
+            <tr><th>Sản phẩm</th><th>Đơn giá</th><th></th></tr>
           </thead>
           <tbody>
             <% cart.items.forEach(function(item) { %>
@@ -33,16 +33,7 @@
                 <td class="cart-product-cell">
                   <a href="/san-pham/<%= item.product.slug %>"><%= item.product.name %><% var variantText = cartItemVariantText(item); %><% if (variantText) { %> <span class="cart-item-variant"><%= variantText %></span><% } %></a>
                 </td>
-                <td><%= formatVND(item.unitPrice) %></td>
-                <td>
-                  <form action="/gio-hang/cap-nhat" method="post" class="qty-form">
-                    <input type="hidden" name="productId" value="<%= item.product.id %>" />
-                    <% if (item.variant) { %><input type="hidden" name="variantId" value="<%= item.variant.id %>" /><% } %>
-                    <% if (item.color) { %><input type="hidden" name="colorId" value="<%= item.color.id %>" /><% } %>
-                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="5" onchange="this.form.submit()" aria-label="Số lượng" />
-                  </form>
-                </td>
-                <td class="cart-line-total"><%= formatVND(item.lineTotal) %></td>
+                <td class="cart-line-total"><%= formatVND(item.unitPrice) %></td>
                 <td>
                   <form action="/gio-hang/xoa" method="post" class="cart-remove-form">
                     <input type="hidden" name="productId" value="<%= item.product.id %>" />

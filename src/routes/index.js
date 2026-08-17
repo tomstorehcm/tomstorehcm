@@ -16,7 +16,6 @@ router.get('/san-pham/:slug', productController.showProduct);
 
 router.get('/gio-hang', cartController.showCart);
 router.post('/gio-hang/them', cartController.addToCart);
-router.post('/gio-hang/cap-nhat', cartController.updateCart);
 router.post('/gio-hang/xoa', cartController.removeFromCart);
 
 router.post('/thanh-toan/mua-ngay', checkoutController.buyNow);

@@ -47,6 +47,8 @@ router.post(
   productAdminController.updateProduct
 );
 router.post('/san-pham/:id/xoa', productAdminController.deleteProduct);
+router.post('/san-pham/:id/len', productAdminController.moveProductUp);
+router.post('/san-pham/:id/xuong', productAdminController.moveProductDown);
 
 router.post(
   '/san-pham/:id/anh',

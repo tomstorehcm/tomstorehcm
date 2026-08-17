@@ -20,23 +20,9 @@ function parseKey(key) {
   };
 }
 
-function addItem(req, productId, quantity, variantId, colorId, maxQty) {
+function addItem(req, productId, variantId, colorId) {
   const cart = ensureCart(req);
-  const key = cartKey(productId, variantId, colorId);
-  let next = (cart[key] || 0) + quantity;
-  if (typeof maxQty === 'number') next = Math.min(next, maxQty);
-  cart[key] = next;
-  if (cart[key] < 1) delete cart[key];
-}
-
-function setQuantity(req, productId, quantity, variantId, colorId) {
-  const cart = ensureCart(req);
-  const key = cartKey(productId, variantId, colorId);
-  if (quantity <= 0) {
-    delete cart[key];
-  } else {
-    cart[key] = quantity;
-  }
+  cart[cartKey(productId, variantId, colorId)] = 1;
 }
 
 function removeItem(req, productId, variantId, colorId) {
@@ -81,11 +67,11 @@ async function getCartDetails(req) {
   for (const { key, productId, variantId, colorId } of parsed) {
     const qty = cart[key];
     const product = productMap.get(productId);
-    if (!product) continue;
+    if (!product) { delete cart[key]; continue; }
     const variant = variantId ? variantMap.get(variantId) : null;
-    if (variantId && !variant) continue;
+    if (variantId && !variant) { delete cart[key]; continue; }
     const color = colorId ? colorMap.get(colorId) : null;
-    if (colorId && !color) continue;
+    if (colorId && !color) { delete cart[key]; continue; }
 
     const unitPrice = variant ? variant.price : (product.sale_price || product.price);
     const lineTotal = unitPrice * qty;
@@ -106,7 +92,6 @@ async function getCartDetails(req) {
 
 module.exports = {
   addItem,
-  setQuantity,
   removeItem,
   clearCart,
   cartCount,

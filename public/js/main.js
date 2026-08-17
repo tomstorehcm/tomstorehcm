@@ -394,23 +394,6 @@
     }, 220);
   }
 
-  var qtyForms = document.querySelectorAll('.qty-form');
-  qtyForms.forEach(function (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      postForm(form.action, new FormData(form)).then(function (data) {
-        if (!data.success) return;
-        if (data.isEmpty) { renderEmptyCart(); updateCartBadge(data.cartCount); return; }
-        var row = form.closest('tr');
-        var lineTotalCell = row ? row.querySelector('.cart-line-total') : null;
-        if (lineTotalCell) lineTotalCell.textContent = data.formattedLineTotal;
-        var summaryTotal = document.getElementById('cartSummaryTotal');
-        if (summaryTotal) summaryTotal.textContent = data.formattedTotal;
-        updateCartBadge(data.cartCount);
-      });
-    });
-  });
-
   document.querySelectorAll('.cart-remove-form').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();

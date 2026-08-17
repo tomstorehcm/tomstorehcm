@@ -9,7 +9,11 @@ async function attachLocals(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
     res.locals.categories = categories;
     res.locals.categoriesById = Object.fromEntries(categories.map((c) => [c.id, c]));
-    res.locals.cartCount = cartService.cartCount(req);
+    // getCartDetails self-heals stale session entries (e.g. products deleted
+    // since the item was added), so the badge never disagrees with the cart page.
+    const cart = await cartService.getCartDetails(req);
+    res.locals.cartCount = cart.count;
+    res.locals.cart = cart;
     res.locals.storeName = 'TOMSTORE';
     res.locals.hotline = process.env.STORE_HOTLINE || '';
     res.locals.currentPath = req.path;
