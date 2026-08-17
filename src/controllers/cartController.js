@@ -50,7 +50,7 @@ async function addToCart(req, res, next) {
 
     if (colorId) {
       const color = await db('product_colors').where({ id: colorId, product_id: productId }).first();
-      if (!color || !color.in_stock) {
+      if (!color || !color.in_stock || (color.variant_id && color.variant_id !== variantId)) {
         if (wantsJson(req)) return res.status(404).json({ success: false });
         return res.status(404).redirect('/');
       }

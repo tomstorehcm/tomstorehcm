@@ -31,6 +31,14 @@ async function showProduct(req, res, next) {
       .where('product_id', product.id)
       .orderBy('sort_order');
 
+    // Colors tied to a specific variant (capacity) get their own price and only
+    // show up when that capacity is selected; colors with no variant_id are
+    // "general" colors that apply regardless of capacity (no price of their own).
+    variants.forEach((v) => {
+      v.colors = colors.filter((c) => c.variant_id === v.id);
+    });
+    const generalColors = colors.filter((c) => !c.variant_id);
+
     const images = [];
     if (product.image_url) images.push(product.image_url);
     galleryImages.forEach((img) => images.push(img.image_url));
@@ -53,7 +61,8 @@ async function showProduct(req, res, next) {
       images,
       policies,
       variants,
-      colors
+      colors,
+      generalColors
     });
   } catch (err) {
     next(err);

@@ -103,31 +103,87 @@
       <textarea id="specsText" name="specsText" rows="6" placeholder="Màn hình: 6.7 inch OLED&#10;Chip: Apple A17 Pro"><%= specsText %></textarea>
       <small>Mỗi dòng một thông số, định dạng "Tên: Giá trị".</small>
     </div>
+    <%
+      function colorRowInStock(c) {
+        return typeof c.in_stock !== 'undefined' ? !!c.in_stock : (typeof c.inStock !== 'undefined' ? !!c.inStock : true);
+      }
+      function colorRowHex(c) {
+        return c.hex_code || c.hex || PRESET_COLORS[0].hex;
+      }
+      function colorsForVariant(allColors, variant, variantIndex) {
+        return (allColors || []).filter(function(c) {
+          if (typeof variant.id !== 'undefined') return c.variant_id === variant.id;
+          return c.variantIndex === variantIndex;
+        });
+      }
+      function generalColors(allColors) {
+        return (allColors || []).filter(function(c) {
+          if (typeof c.variant_id !== 'undefined') return !c.variant_id;
+          return c.variantIndex === null || typeof c.variantIndex === 'undefined';
+        });
+      }
+    %>
     <div class="form-group">
       <label>Dung lượng / phiên bản (tùy chọn)</label>
       <div id="variantRows" class="variant-rows">
-        <% (variants || []).forEach(function(v) { %>
-          <% var vInStock = typeof v.in_stock !== 'undefined' ? !!v.in_stock : (typeof v.inStock !== 'undefined' ? !!v.inStock : true); %>
-          <div class="variant-row">
-            <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label %>" />
-            <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price %>" />
-            <select name="variantInStock">
-              <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
-              <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
-            </select>
-            <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+        <% (variants || []).forEach(function(v, vi) { %>
+          <% var vInStock = colorRowInStock(v); %>
+          <div class="variant-row-group">
+            <div class="variant-row">
+              <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label %>" />
+              <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price %>" />
+              <select name="variantInStock">
+                <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
+                <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
+              </select>
+              <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+            </div>
+            <div class="variant-colors">
+              <div class="variant-colors-rows">
+                <% colorsForVariant(colors, v, vi).forEach(function(c) { %>
+                  <% var cInStock = colorRowInStock(c); var cHex = colorRowHex(c); %>
+                  <div class="color-row-group">
+                    <div class="color-row color-row-priced">
+                      <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
+                        <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
+                        <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+                      </label>
+                      <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
+                      <details class="color-swatch-picker">
+                        <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
+                        <div class="color-swatch-grid">
+                          <% PRESET_COLORS.forEach(function(preset) { %>
+                            <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
+                          <% }); %>
+                        </div>
+                      </details>
+                      <input type="hidden" name="colorHex" class="color-hex-input" value="<%= cHex %>" />
+                      <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
+                      <input type="text" inputmode="numeric" class="price-input color-price-input" name="colorPrice" placeholder="Giá riêng (để trống = dùng giá dung lượng)" value="<%= c.price || '' %>" />
+                      <select name="colorInStock">
+                        <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
+                        <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
+                      </select>
+                      <input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />
+                      <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>
+            </div>
           </div>
         <% }); %>
       </div>
       <button type="button" id="addVariantRowBtn" class="btn btn-outline btn-sm">+ Thêm dung lượng</button>
-      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/trạng thái riêng của từng dòng thay cho giá gốc phía trên.</small>
+      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn dung lượng. Khi có ít nhất 1 dòng, trang sản phẩm sẽ hiện nút chọn dung lượng và dùng giá/trạng thái riêng của từng dòng thay cho giá gốc phía trên. Mỗi dung lượng có thể có các màu riêng với giá riêng — để trống giá màu để dùng giá của dung lượng.</small>
     </div>
     <div class="form-group">
-      <label>Màu sắc (tùy chọn)</label>
+      <label>Màu sắc chung (không theo dung lượng)</label>
       <div id="colorRows" class="color-rows">
-        <% (colors || []).forEach(function(c) { %>
-          <% var cInStock = typeof c.in_stock !== 'undefined' ? !!c.in_stock : (typeof c.inStock !== 'undefined' ? !!c.inStock : true); %>
-          <% var cHex = c.hex_code || c.hex || PRESET_COLORS[0].hex; %>
+        <% generalColors(colors).forEach(function(c) { %>
+          <% var cInStock = colorRowInStock(c); var cHex = colorRowHex(c); %>
           <div class="color-row-group">
             <div class="color-row">
               <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
@@ -150,13 +206,14 @@
                 <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
                 <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
               </select>
+              <input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />
               <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
             </div>
           </div>
         <% }); %>
       </div>
       <button type="button" id="addColorRowBtn" class="btn btn-outline btn-sm">+ Thêm màu sắc</button>
-      <small>Bỏ trống nếu sản phẩm không có nhiều lựa chọn màu. Màu không ảnh hưởng đến giá, chỉ để khách chọn khi thêm vào giỏ.</small>
+      <small>Dùng mục này khi sản phẩm không có dung lượng nhưng vẫn có nhiều màu để chọn. Màu ở đây không ảnh hưởng đến giá.</small>
     </div>
     <div class="form-group">
       <label for="policyGroupId">Nhóm chính sách bảo hành</label>
@@ -306,27 +363,8 @@
       });
     });
 
-    // Dung lượng / phiên bản: thêm, xóa dòng động
-    var variantRows = document.getElementById('variantRows');
-    var addVariantRowBtn = document.getElementById('addVariantRowBtn');
-    if (variantRows && addVariantRowBtn) {
-      addVariantRowBtn.addEventListener('click', function () {
-        var row = document.createElement('div');
-        row.className = 'variant-row';
-        row.innerHTML =
-          '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
-          '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
-          '<select name="variantInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
-          '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>';
-        variantRows.appendChild(row);
-      });
-      variantRows.addEventListener('click', function (e) {
-        if (!e.target.classList.contains('variant-remove-btn')) return;
-        e.target.closest('.variant-row').remove();
-      });
-    }
-
-    // Màu sắc: thêm, xóa dòng động, chọn theo bảng màu định sẵn
+    // Màu sắc: bảng màu định sẵn + tạo dòng màu mới (dùng chung cho cả màu
+    // riêng theo dung lượng và màu chung không theo dung lượng)
     var PRESET_COLORS = [
       ['#1d1d1f', 'Đen'], ['#2b2b2d', 'Xám Đậm'], ['#4b4b4d', 'Xám'], ['#e3e4e5', 'Bạc'],
       ['#f5f5f0', 'Trắng'], ['#8f8a81', 'Titan Tự Nhiên'], ['#3c4a5c', 'Titan Xanh'], ['#cbb994', 'Titan Sa Mạc'],
@@ -335,68 +373,118 @@
       ['#3f5a75', 'Xanh Dương'], ['#2d2d6b', 'Xanh Navy'], ['#1c4966', 'Xanh Biển'], ['#4c5c48', 'Xanh Lá'],
       ['#2f6b5e', 'Xanh Ngọc'], ['#a8d8b9', 'Xanh Bạc Hà'], ['#d9cbb3', 'Be'], ['#6b4423', 'Nâu']
     ];
+
+    function buildColorRowGroup(withPrice) {
+      var swatchButtons = PRESET_COLORS.map(function (p) {
+        return '<button type="button" class="color-swatch-option" data-hex="' + p[0] + '" style="background-color: ' + p[0] + ';" title="' + p[1] + '"></button>';
+      }).join('');
+      var placeholderIcon = '<svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var group = document.createElement('div');
+      group.className = 'color-row-group';
+      group.innerHTML =
+        '<div class="color-row' + (withPrice ? ' color-row-priced' : '') + '">' +
+        '<label class="color-image-picker" title="Chọn ảnh cho màu này">' +
+        '<img class="color-image-preview" alt="" hidden />' +
+        placeholderIcon +
+        '<input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />' +
+        '</label>' +
+        '<input type="hidden" name="colorImageUrl" class="color-image-url-input" value="" />' +
+        '<details class="color-swatch-picker">' +
+        '<summary class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></summary>' +
+        '<div class="color-swatch-grid">' + swatchButtons + '</div>' +
+        '</details>' +
+        '<input type="hidden" name="colorHex" class="color-hex-input" value="' + PRESET_COLORS[0][0] + '" />' +
+        '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
+        (withPrice ? '<input type="text" inputmode="numeric" class="price-input color-price-input" name="colorPrice" placeholder="Giá riêng (để trống = dùng giá dung lượng)" />' : '') +
+        '<select name="colorInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
+        '<input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />' +
+        '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+        '</div>';
+      return group;
+    }
+
+    // Sự kiện cho mọi dòng màu, dù nằm trong danh sách chung hay lồng trong 1
+    // dòng dung lượng -- gắn 1 lần trên toàn form thay vì lặp lại cho từng nơi.
+    productForm.addEventListener('click', function (e) {
+      if (e.target.classList.contains('color-remove-btn')) {
+        e.target.closest('.color-row-group').remove();
+        return;
+      }
+      if (e.target.classList.contains('color-swatch-option')) {
+        var picker = e.target.closest('.color-swatch-picker');
+        var hex = e.target.getAttribute('data-hex');
+        picker.closest('.color-row').querySelector('.color-hex-input').value = hex;
+        picker.querySelector('summary').style.backgroundColor = hex;
+        picker.querySelectorAll('.color-swatch-option').forEach(function (btn) {
+          btn.classList.toggle('active', btn === e.target);
+        });
+        picker.open = false;
+      }
+    });
+    productForm.addEventListener('change', function (e) {
+      if (!e.target.classList.contains('color-image-input')) return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var row = e.target.closest('.color-row');
+      var preview = row.querySelector('.color-image-preview');
+      var placeholder = row.querySelector('.color-image-placeholder-icon');
+      preview.src = URL.createObjectURL(file);
+      preview.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+    });
+
+    // Dung lượng / phiên bản: thêm, xóa dòng động, mỗi dòng có khu màu riêng lồng bên trong
+    var variantRows = document.getElementById('variantRows');
+    var addVariantRowBtn = document.getElementById('addVariantRowBtn');
+    if (variantRows && addVariantRowBtn) {
+      addVariantRowBtn.addEventListener('click', function () {
+        var group = document.createElement('div');
+        group.className = 'variant-row-group';
+        group.innerHTML =
+          '<div class="variant-row">' +
+          '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
+          '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
+          '<select name="variantInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
+          '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+          '</div>' +
+          '<div class="variant-colors">' +
+          '<div class="variant-colors-rows"></div>' +
+          '<button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>' +
+          '</div>';
+        variantRows.appendChild(group);
+      });
+      variantRows.addEventListener('click', function (e) {
+        if (e.target.classList.contains('variant-remove-btn')) {
+          e.target.closest('.variant-row-group').remove();
+          return;
+        }
+        if (e.target.classList.contains('add-variant-color-btn')) {
+          var rowsContainer = e.target.closest('.variant-colors').querySelector('.variant-colors-rows');
+          rowsContainer.appendChild(buildColorRowGroup(true));
+        }
+      });
+    }
+
+    // Màu sắc chung (không theo dung lượng): thêm dòng động
     var colorRows = document.getElementById('colorRows');
     var addColorRowBtn = document.getElementById('addColorRowBtn');
     if (colorRows && addColorRowBtn) {
       addColorRowBtn.addEventListener('click', function () {
-        var swatchButtons = PRESET_COLORS.map(function (p) {
-          return '<button type="button" class="color-swatch-option" data-hex="' + p[0] + '" style="background-color: ' + p[0] + ';" title="' + p[1] + '"></button>';
-        }).join('');
-        var placeholderIcon = '<svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        var group = document.createElement('div');
-        group.className = 'color-row-group';
-        group.innerHTML =
-          '<div class="color-row">' +
-          '<label class="color-image-picker" title="Chọn ảnh cho màu này">' +
-          '<img class="color-image-preview" alt="" hidden />' +
-          placeholderIcon +
-          '<input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />' +
-          '</label>' +
-          '<input type="hidden" name="colorImageUrl" class="color-image-url-input" value="" />' +
-          '<details class="color-swatch-picker">' +
-          '<summary class="color-hex-swatch" style="background-color: ' + PRESET_COLORS[0][0] + ';"></summary>' +
-          '<div class="color-swatch-grid">' + swatchButtons + '</div>' +
-          '</details>' +
-          '<input type="hidden" name="colorHex" class="color-hex-input" value="' + PRESET_COLORS[0][0] + '" />' +
-          '<input type="text" name="colorName" placeholder="VD: Titan Xanh" />' +
-          '<select name="colorInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
-          '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>' +
-          '</div>';
-        colorRows.appendChild(group);
-      });
-      colorRows.addEventListener('click', function (e) {
-        if (e.target.classList.contains('color-remove-btn')) {
-          e.target.closest('.color-row-group').remove();
-          return;
-        }
-        if (e.target.classList.contains('color-swatch-option')) {
-          var picker = e.target.closest('.color-swatch-picker');
-          var hex = e.target.getAttribute('data-hex');
-          picker.closest('.color-row').querySelector('.color-hex-input').value = hex;
-          picker.querySelector('summary').style.backgroundColor = hex;
-          picker.querySelectorAll('.color-swatch-option').forEach(function (btn) {
-            btn.classList.toggle('active', btn === e.target);
-          });
-          picker.open = false;
-        }
-      });
-      colorRows.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('color-image-input')) return;
-        var file = e.target.files && e.target.files[0];
-        if (!file) return;
-        var row = e.target.closest('.color-row');
-        var preview = row.querySelector('.color-image-preview');
-        var placeholder = row.querySelector('.color-image-placeholder-icon');
-        preview.src = URL.createObjectURL(file);
-        preview.hidden = false;
-        if (placeholder) placeholder.hidden = true;
+        colorRows.appendChild(buildColorRowGroup(false));
       });
     }
 
-    // Truoc khi luu: danh lai ten file anh theo mau (colorImage_0, colorImage_1, ...)
-    // dung vi tri hien tai trong danh sach, de server ghep dung anh voi dung dong.
+    // Truoc khi luu: gan lai colorVariantIndex theo vi tri dong dung luong hien
+    // tai (mau nam ngoai moi dong dung luong thi giu nguyen = rong/chung), va
+    // danh lai ten file anh theo mau (colorImage_0, colorImage_1, ...) dung vi
+    // tri hien tai trong toan bo danh sach, de server ghep dung anh voi dung dong.
     productForm.addEventListener('submit', function () {
-      colorRows.querySelectorAll('.color-row').forEach(function (row, i) {
+      document.querySelectorAll('.variant-row-group').forEach(function (group, groupIndex) {
+        group.querySelectorAll('.color-variant-index-input').forEach(function (input) {
+          input.value = groupIndex;
+        });
+      });
+      document.querySelectorAll('.color-row').forEach(function (row, i) {
         var fileInput = row.querySelector('.color-image-input');
         if (fileInput && fileInput.files && fileInput.files[0]) {
           fileInput.name = 'colorImage_' + i;

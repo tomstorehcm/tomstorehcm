@@ -73,7 +73,7 @@ async function getCartDetails(req) {
     const color = colorId ? colorMap.get(colorId) : null;
     if (colorId && !color) { delete cart[key]; continue; }
 
-    const unitPrice = variant ? variant.price : (product.sale_price || product.price);
+    const unitPrice = (color && color.price != null) ? color.price : (variant ? variant.price : (product.sale_price || product.price));
     const lineTotal = unitPrice * qty;
     total += lineTotal;
     count += qty;

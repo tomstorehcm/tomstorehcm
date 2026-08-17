@@ -113,10 +113,14 @@
     }, { passive: true });
   }
 
-  // Product detail: storage/capacity variant picker + color picker
+  // Product detail: storage/capacity variant picker + color picker. Colors can
+  // be scoped to a specific variant (own price, only shown for that capacity)
+  // or "general" (apply to every capacity, no price of their own).
+  var variantColorDataEl = document.getElementById('variantColorData');
   var variantOptions = document.querySelectorAll('.variant-option');
-  var colorOptions = document.querySelectorAll('.color-option');
-  if (variantOptions.length || colorOptions.length) {
+  var colorPickerEl = document.getElementById('colorPicker');
+  var colorOptionsWrap = colorPickerEl ? colorPickerEl.querySelector('.color-options') : null;
+  if (variantColorDataEl || variantOptions.length || document.querySelectorAll('.color-option').length) {
     var variantIdInput = document.getElementById('variantIdInput');
     var variantPriceDisplay = document.getElementById('variantPriceDisplay');
     var colorIdInput = document.getElementById('colorIdInput');
@@ -130,61 +134,127 @@
       return (vndFormatter ? vndFormatter.format(amount) : String(amount)) + '₫';
     }
 
-    var variantInStock = variantOptions.length ? variantOptions[0].getAttribute('data-in-stock') === '1' : true;
-    var colorInStock = colorOptions.length ? colorOptions[0].getAttribute('data-in-stock') === '1' : true;
-
-    function updatePickerAvailability() {
-      var inStock = variantInStock && colorInStock;
-      if (pickerStockText) {
-        pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
-        pickerStockText.classList.toggle('product-stock-out', !inStock);
+    function jumpGalleryForColor(colorId) {
+      if (!galleryMain || !colorId) return;
+      var targetSlide = galleryMain.querySelector('.gallery-slide[data-color-id="' + colorId + '"]');
+      if (targetSlide) {
+        var slideIndex = Array.prototype.indexOf.call(gallerySlides, targetSlide);
+        if (slideIndex > -1) galleryGoTo(slideIndex);
       }
-      if (pickerAddBtn) {
-        pickerAddBtn.disabled = !inStock;
-        pickerAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-      }
-      if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
     }
 
-    variantOptions.forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        if (opt.disabled) return;
-        variantOptions.forEach(function (o) { o.classList.remove('active'); });
-        opt.classList.add('active');
+    if (variantColorDataEl) {
+      var data = JSON.parse(variantColorDataEl.textContent);
+      var activeVariantIndex = 0;
+      var activeColorId = null;
 
-        var price = Number(opt.getAttribute('data-price'));
-        variantInStock = opt.getAttribute('data-in-stock') === '1';
+      var colorsForVariant = function (variant) {
+        return (variant.colors && variant.colors.length > 0) ? variant.colors : data.generalColors;
+      };
 
-        if (variantIdInput) variantIdInput.value = opt.getAttribute('data-variant-id');
+      var updatePriceAndStock = function () {
+        var variant = data.variants[activeVariantIndex];
+        var colors = colorsForVariant(variant);
+        var color = activeColorId != null ? colors.filter(function (c) { return c.id === activeColorId; })[0] : null;
+        var price = (color && color.price != null) ? color.price : variant.price;
+        var inStock = variant.inStock && (color ? color.inStock : true);
+
         if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
-        updatePickerAvailability();
-      });
-    });
-
-    colorOptions.forEach(function (opt) {
-      opt.addEventListener('click', function () {
-        if (opt.disabled) return;
-        colorOptions.forEach(function (o) { o.classList.remove('active'); });
-        opt.classList.add('active');
-
-        colorInStock = opt.getAttribute('data-in-stock') === '1';
-
-        if (colorIdInput) colorIdInput.value = opt.getAttribute('data-color-id');
-        if (colorNameDisplay) colorNameDisplay.textContent = opt.getAttribute('data-color-name');
-        updatePickerAvailability();
-
-        // Jump the gallery to this color's own slide (if it has a photo) without
-        // touching any other slide -- the rest of the gallery stays browsable.
-        if (galleryMain) {
-          var colorId = opt.getAttribute('data-color-id');
-          var targetSlide = galleryMain.querySelector('.gallery-slide[data-color-id="' + colorId + '"]');
-          if (targetSlide) {
-            var slideIndex = Array.prototype.indexOf.call(gallerySlides, targetSlide);
-            if (slideIndex > -1) galleryGoTo(slideIndex);
-          }
+        if (pickerStockText) {
+          pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+          pickerStockText.classList.toggle('product-stock-out', !inStock);
         }
+        if (pickerAddBtn) {
+          pickerAddBtn.disabled = !inStock;
+          pickerAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+        }
+        if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
+      };
+
+      var renderColorOptions = function () {
+        var variant = data.variants[activeVariantIndex];
+        var colors = colorsForVariant(variant);
+        if (!colorOptionsWrap || !colorPickerEl) return;
+
+        colorOptionsWrap.innerHTML = '';
+        if (colors.length === 0) {
+          colorPickerEl.hidden = true;
+          activeColorId = null;
+          if (colorIdInput) colorIdInput.value = '';
+          return;
+        }
+
+        colorPickerEl.hidden = false;
+        colors.forEach(function (c, i) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'color-option' + (i === 0 ? ' active' : '');
+          btn.style.backgroundColor = c.hex;
+          btn.title = c.name;
+          btn.disabled = !c.inStock;
+          btn.addEventListener('click', function () {
+            if (btn.disabled) return;
+            colorOptionsWrap.querySelectorAll('.color-option').forEach(function (o) { o.classList.remove('active'); });
+            btn.classList.add('active');
+            activeColorId = c.id;
+            if (colorIdInput) colorIdInput.value = c.id;
+            if (colorNameDisplay) colorNameDisplay.textContent = c.name;
+            updatePriceAndStock();
+            jumpGalleryForColor(c.id);
+          });
+          colorOptionsWrap.appendChild(btn);
+        });
+
+        activeColorId = colors[0].id;
+        if (colorIdInput) colorIdInput.value = colors[0].id;
+        if (colorNameDisplay) colorNameDisplay.textContent = colors[0].name;
+      };
+
+      renderColorOptions();
+      updatePriceAndStock();
+
+      variantOptions.forEach(function (opt, i) {
+        opt.addEventListener('click', function () {
+          if (opt.disabled) return;
+          variantOptions.forEach(function (o) { o.classList.remove('active'); });
+          opt.classList.add('active');
+          activeVariantIndex = i;
+          if (variantIdInput) variantIdInput.value = data.variants[i].id;
+          renderColorOptions();
+          updatePriceAndStock();
+        });
       });
-    });
+    } else {
+      // No variants: at most a flat "general colors" picker with no price of
+      // its own.
+      var colorOptions = document.querySelectorAll('.color-option');
+      var colorInStock = colorOptions.length ? colorOptions[0].getAttribute('data-in-stock') === '1' : true;
+
+      var updateSimpleAvailability = function () {
+        if (pickerStockText) {
+          pickerStockText.textContent = colorInStock ? 'Còn hàng' : 'Hết hàng';
+          pickerStockText.classList.toggle('product-stock-out', !colorInStock);
+        }
+        if (pickerAddBtn) {
+          pickerAddBtn.disabled = !colorInStock;
+          pickerAddBtn.textContent = colorInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
+        }
+        if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !colorInStock;
+      };
+
+      colorOptions.forEach(function (opt) {
+        opt.addEventListener('click', function () {
+          if (opt.disabled) return;
+          colorOptions.forEach(function (o) { o.classList.remove('active'); });
+          opt.classList.add('active');
+          colorInStock = opt.getAttribute('data-in-stock') === '1';
+          if (colorIdInput) colorIdInput.value = opt.getAttribute('data-color-id');
+          if (colorNameDisplay) colorNameDisplay.textContent = opt.getAttribute('data-color-name');
+          updateSimpleAvailability();
+          jumpGalleryForColor(opt.getAttribute('data-color-id'));
+        });
+      });
+    }
   }
 
   // Hero banner slider

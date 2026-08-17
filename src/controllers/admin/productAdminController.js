@@ -56,17 +56,21 @@ function parseVariantRows(body) {
 
 async function syncProductVariants(productId, variantRows) {
   await db('product_variants').where('product_id', productId).del();
-  if (variantRows.length > 0) {
-    await db('product_variants').insert(
-      variantRows.map((v, i) => ({
-        product_id: productId,
-        label: v.label,
-        price: v.price,
-        in_stock: v.inStock,
-        sort_order: i
-      }))
-    );
-  }
+  if (variantRows.length === 0) return [];
+  await db('product_variants').insert(
+    variantRows.map((v, i) => ({
+      product_id: productId,
+      label: v.label,
+      price: v.price,
+      in_stock: v.inStock,
+      sort_order: i
+    }))
+  );
+  // Colors reference variants positionally (colorVariantIndex) since new variant
+  // ids aren't known until after this insert -- re-fetch in the same sort_order
+  // to map each position back to its real id.
+  const inserted = await db('product_variants').where('product_id', productId).orderBy('sort_order');
+  return inserted.map((v) => v.id);
 }
 
 async function parseColorRows(body, files) {
@@ -74,6 +78,8 @@ async function parseColorRows(body, files) {
   const hexes = [].concat(body.colorHex || []);
   const inStocks = [].concat(body.colorInStock || []);
   const imageUrls = [].concat(body.colorImageUrl || []);
+  const prices = [].concat(body.colorPrice || []);
+  const variantIndexes = [].concat(body.colorVariantIndex || []);
   const rows = [];
   for (let i = 0; i < names.length; i++) {
     const name = (names[i] || '').trim();
@@ -94,24 +100,31 @@ async function parseColorRows(body, files) {
       }
     }
 
+    const priceDigits = String(prices[i] || '').replace(/\D/g, '');
+    const variantIndex = variantIndexes[i] !== undefined && variantIndexes[i] !== '' ? Number(variantIndexes[i]) : null;
+
     rows.push({
       name,
       hex,
       inStock: inStocks[i] !== '0',
-      imageUrl
+      imageUrl,
+      price: priceDigits ? Number(priceDigits) : null,
+      variantIndex
     });
   }
   return rows;
 }
 
-async function syncProductColors(productId, colorRows) {
+async function syncProductColors(productId, colorRows, variantIds) {
   await db('product_colors').where('product_id', productId).del();
   if (colorRows.length > 0) {
     await db('product_colors').insert(
       colorRows.map((c, i) => ({
         product_id: productId,
+        variant_id: c.variantIndex !== null && variantIds[c.variantIndex] !== undefined ? variantIds[c.variantIndex] : null,
         name: c.name,
         hex_code: c.hex,
+        price: c.price,
         in_stock: c.inStock,
         image_url: c.imageUrl,
         sort_order: i
@@ -303,8 +316,8 @@ async function createProduct(req, res, next) {
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(insertedId, policyGroupId, selectedPolicyIds);
-    await syncProductVariants(insertedId, variantRows);
-    await syncProductColors(insertedId, colorRows);
+    const variantIds = await syncProductVariants(insertedId, variantRows);
+    await syncProductColors(insertedId, colorRows, variantIds);
 
     res.redirect('/admin/san-pham');
   } catch (err) {
@@ -389,8 +402,8 @@ async function updateProduct(req, res, next) {
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(product.id, policyGroupId, selectedPolicyIds);
-    await syncProductVariants(product.id, variantRows);
-    await syncProductColors(product.id, colorRows);
+    const variantIds = await syncProductVariants(product.id, variantRows);
+    await syncProductColors(product.id, colorRows, variantIds);
 
     res.redirect('/admin/san-pham/' + product.id + '/sua');
   } catch (err) {

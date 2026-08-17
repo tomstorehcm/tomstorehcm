@@ -26,7 +26,7 @@ async function resolveBuyNowCart(buyNow) {
     : null;
   if (buyNow.colorId && !color) return null;
 
-  const unitPrice = variant ? variant.price : (product.sale_price || product.price);
+  const unitPrice = (color && color.price != null) ? color.price : (variant ? variant.price : (product.sale_price || product.price));
   const quantity = buyNow.quantity;
   const lineTotal = unitPrice * quantity;
 
@@ -65,7 +65,7 @@ async function buyNow(req, res, next) {
 
     if (colorId) {
       const color = await db('product_colors').where({ id: colorId, product_id: productId }).first();
-      if (!color || !color.in_stock) return res.status(404).redirect('/');
+      if (!color || !color.in_stock || (color.variant_id && color.variant_id !== variantId)) return res.status(404).redirect('/');
     }
 
     req.session.buyNow = { productId, variantId, colorId, quantity: 1 };

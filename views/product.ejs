@@ -58,15 +58,38 @@
         <% if (product.brand) { %><span class="product-brand"><%= product.brand %></span><% } %>
         <h1><%= product.name %></h1>
 
-        <% var hasVariants = variants && variants.length > 0; %>
-        <% var hasColors = colors && colors.length > 0; %>
-        <% var effectiveInStock = product.in_stock && (hasVariants ? variants[0].in_stock : true) && (hasColors ? colors[0].in_stock : true); %>
+        <%
+          var hasVariants = variants && variants.length > 0;
+          function colorsForVariant(v) { return (v.colors && v.colors.length > 0) ? v.colors : generalColors; }
+          var activeVariant = hasVariants ? variants[0] : null;
+          var activeColors = hasVariants ? colorsForVariant(activeVariant) : generalColors;
+          var hasColors = activeColors && activeColors.length > 0;
+          var activeColor = hasColors ? activeColors[0] : null;
+          var activePrice = activeColor && activeColor.price != null ? activeColor.price : (activeVariant ? activeVariant.price : null);
+          var effectiveInStock = product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
+        %>
+
+        <% if (hasVariants) { %>
+          <script type="application/json" id="variantColorData"><%- JSON.stringify({
+            variants: variants.map(function(v) {
+              return {
+                id: v.id, label: v.label, price: v.price, inStock: !!v.in_stock,
+                colors: v.colors.map(function(c) {
+                  return { id: c.id, name: c.name, hex: c.hex_code, price: c.price, inStock: !!c.in_stock };
+                })
+              };
+            }),
+            generalColors: generalColors.map(function(c) {
+              return { id: c.id, name: c.name, hex: c.hex_code, price: null, inStock: !!c.in_stock };
+            })
+          }) %></script>
+        <% } %>
 
         <div class="product-price product-price-lg" id="productPriceBlock">
           <% if (product.is_contact_price) { %>
             <span class="price-current price-contact">Liên hệ</span>
           <% } else if (hasVariants) { %>
-            <span class="price-current" id="variantPriceDisplay"><%= formatVND(variants[0].price) %></span>
+            <span class="price-current" id="variantPriceDisplay"><%= formatVND(activePrice) %></span>
           <% } else { %>
             <% var hasSale = product.sale_price && product.sale_price < product.price; %>
             <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>
@@ -94,27 +117,23 @@
             </div>
           <% } %>
 
-          <% if (hasColors) { %>
-            <div class="color-picker" id="colorPicker">
-              <label>Màu sắc<span id="colorNameDisplay"><%= colors[0].name %></span></label>
-              <div class="color-options">
-                <% colors.forEach(function(c, i) { %>
-                  <button type="button" class="color-option <%= i === 0 ? 'active' : '' %>" data-color-id="<%= c.id %>" data-color-name="<%= c.name %>" data-in-stock="<%= c.in_stock ? '1' : '0' %>" style="background-color: <%= c.hex_code %>;" title="<%= c.name %>" <%= c.in_stock ? '' : 'disabled' %>></button>
-                <% }); %>
-              </div>
+          <div class="color-picker" id="colorPicker" <%= hasColors ? '' : 'hidden' %>>
+            <label>Màu sắc<span id="colorNameDisplay"><%= activeColor ? activeColor.name : '' %></span></label>
+            <div class="color-options">
+              <% activeColors.forEach(function(c, i) { %>
+                <button type="button" class="color-option <%= i === 0 ? 'active' : '' %>" data-color-id="<%= c.id %>" data-color-name="<%= c.name %>" data-in-stock="<%= c.in_stock ? '1' : '0' %>" style="background-color: <%= c.hex_code %>;" title="<%= c.name %>" <%= c.in_stock ? '' : 'disabled' %>></button>
+              <% }); %>
             </div>
-          <% } %>
+          </div>
 
           <p class="product-stock" id="productStockText"><%= effectiveInStock ? 'Còn hàng' : 'Hết hàng' %></p>
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
             <input type="hidden" name="productId" value="<%= product.id %>" />
             <% if (hasVariants) { %>
-              <input type="hidden" name="variantId" id="variantIdInput" value="<%= variants[0].id %>" />
+              <input type="hidden" name="variantId" id="variantIdInput" value="<%= activeVariant.id %>" />
             <% } %>
-            <% if (hasColors) { %>
-              <input type="hidden" name="colorId" id="colorIdInput" value="<%= colors[0].id %>" />
-            <% } %>
+            <input type="hidden" name="colorId" id="colorIdInput" value="<%= activeColor ? activeColor.id : '' %>" />
             <div class="product-detail-cta-row">
               <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>><%= effectiveInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' %></button>
               <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
