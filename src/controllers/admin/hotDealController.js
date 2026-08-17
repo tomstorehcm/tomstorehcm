@@ -155,8 +155,8 @@ async function createStandaloneHotDeal(req, res, next) {
     if (req.file) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', req.file.filename);
       try {
-        await cropToFixedSize(destPath, 'product');
-        imageUrl = '/images/uploads/products/' + req.file.filename;
+        const finalFilename = await cropToFixedSize(destPath, 'product');
+        imageUrl = '/images/uploads/products/' + finalFilename;
       } catch (imgErr) {
         require('fs').unlink(destPath, () => {});
       }

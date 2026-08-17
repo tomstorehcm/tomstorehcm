@@ -256,7 +256,7 @@ table { border-collapse: collapse; width: 100%; }
   margin-top: var(--space-5);
 }
 .hero-anim {
-  animation: heroEnter 2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  animation: heroEnter 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
 .hero-slider {
   position: relative;
@@ -479,9 +479,13 @@ table { border-collapse: collapse; width: 100%; }
 
 .empty-state { color: var(--color-text-muted); padding: var(--space-6) 0; text-align: center; }
 
-.related-category-links { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-5); }
-.related-category-link { background: var(--color-bg-alt); border-radius: 999px; padding: var(--space-2) var(--space-4); font-size: 14px; font-weight: 600; }
-.related-category-link:hover { background: var(--color-border); }
+.category-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-5); }
+.category-tab {
+  background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px;
+  padding: var(--space-2) var(--space-4); font-size: 14px; font-weight: 600; color: var(--color-text-muted);
+}
+.category-tab:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.category-tab.active { background: var(--gradient-brand); border-color: transparent; color: #fff; }
 
 /* ===== Product detail ===== */
 .product-detail { display: grid; gap: var(--space-6); }
@@ -489,19 +493,14 @@ table { border-collapse: collapse; width: 100%; }
 .product-detail-image { aspect-ratio: 1/1; background: var(--color-bg-alt); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .product-detail-image img { width: 100%; height: 100%; object-fit: cover; }
 
-.product-gallery-main { position: relative; aspect-ratio: 1/1; background: #fff; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.product-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
-.gallery-slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: scale(0.92);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-.gallery-slide.is-active { opacity: 1; transform: scale(1); pointer-events: auto; z-index: 1; }
-@media (prefers-reduced-motion: reduce), (max-width: 767px) {
-  .gallery-slide { transition: none; transform: none !important; }
+.product-gallery-main { position: relative; aspect-ratio: 1/1; background: #fff; border-radius: var(--radius-lg); overflow: hidden; touch-action: pan-y; }
+.product-gallery-main:has(> .product-icon-placeholder) { display: flex; align-items: center; justify-content: center; }
+.gallery-track { display: flex; width: 100%; height: 100%; transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.gallery-track.is-dragging { transition: none; }
+.gallery-slide { position: relative; flex: 0 0 100%; width: 100%; height: 100%; }
+.gallery-slide img { width: 100%; height: 100%; object-fit: cover; }
+@media (prefers-reduced-motion: reduce) {
+  .gallery-track { transition: none; }
 }
 .product-gallery-thumbs { display: flex; gap: var(--space-2); margin-top: var(--space-3); overflow-x: auto; }
 .gallery-thumb { flex: 0 0 auto; width: 64px; height: 64px; border-radius: var(--radius-sm); overflow: hidden; border: 2px solid transparent; padding: 0; background: var(--color-bg-alt); }
@@ -719,7 +718,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 .admin-form { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 640px; }
 .product-edit-layout { display: flex; gap: var(--space-5); align-items: flex-start; flex-wrap: wrap; }
-.product-edit-layout > .admin-form { flex: 1 1 480px; }
+.product-edit-layout > .admin-form { flex: 1 1 480px; max-width: 900px; }
 .image-management-col { display: flex; flex-direction: column; gap: var(--space-5); flex: 1 1 340px; max-width: 400px; }
 .image-management-col .gallery-section { margin-top: 0; }
 .image-management-col .gallery-section h2 { font-size: 15px; }

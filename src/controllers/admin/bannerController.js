@@ -52,8 +52,9 @@ async function createHeroBanner(req, res, next) {
     if (!desktopFile) return res.redirect('/admin/banner');
 
     const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', desktopFile.filename);
+    let finalDesktopFilename;
     try {
-      await cropToFixedSize(destPath, 'hero');
+      finalDesktopFilename = await cropToFixedSize(destPath, 'hero');
     } catch (imgErr) {
       removeUploadedFile('/images/uploads/banners/' + desktopFile.filename);
       if (mobileFile) removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
@@ -64,14 +65,14 @@ async function createHeroBanner(req, res, next) {
     if (mobileFile) {
       const mobileDestPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', mobileFile.filename);
       try {
-        await cropToFixedSize(mobileDestPath, 'heroMobile');
-        imageUrlMobile = '/images/uploads/banners/' + mobileFile.filename;
+        const finalMobileFilename = await cropToFixedSize(mobileDestPath, 'heroMobile');
+        imageUrlMobile = '/images/uploads/banners/' + finalMobileFilename;
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
       }
     }
 
-    const imageUrl = '/images/uploads/banners/' + desktopFile.filename;
+    const imageUrl = '/images/uploads/banners/' + finalDesktopFilename;
     const maxSort = await db('banners').where('type', 'hero').max('sort_order as max').first();
 
     await db('banners').insert({
@@ -96,8 +97,9 @@ async function updateHeroBannerMobileImage(req, res, next) {
     if (!banner || !req.file) return res.redirect('/admin/banner');
 
     const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
+    let finalFilename;
     try {
-      await cropToFixedSize(destPath, 'heroMobile');
+      finalFilename = await cropToFixedSize(destPath, 'heroMobile');
     } catch (imgErr) {
       removeUploadedFile('/images/uploads/banners/' + req.file.filename);
       return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
@@ -105,7 +107,7 @@ async function updateHeroBannerMobileImage(req, res, next) {
 
     if (banner.image_url_mobile) removeUploadedFile(banner.image_url_mobile);
     await db('banners').where('id', banner.id).update({
-      image_url_mobile: '/images/uploads/banners/' + req.file.filename
+      image_url_mobile: '/images/uploads/banners/' + finalFilename
     });
 
     res.redirect('/admin/banner');
@@ -158,13 +160,14 @@ async function uploadFeaturedBanner(req, res, next) {
     let imageUrl = existing ? existing.image_url : null;
     if (req.file) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
+      let finalFilename;
       try {
-        await cropToFixedSize(destPath, 'featured');
+        finalFilename = await cropToFixedSize(destPath, 'featured');
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/banners/' + req.file.filename);
         return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
       }
-      imageUrl = '/images/uploads/banners/' + req.file.filename;
+      imageUrl = '/images/uploads/banners/' + finalFilename;
     }
 
     if (!imageUrl) return res.redirect('/admin/banner');

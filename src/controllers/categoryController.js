@@ -1,5 +1,21 @@
 const db = require('../db');
 
+async function productsForCategory(categoryId, sort) {
+  let query = db('products').where('category_id', categoryId);
+  if (sort === 'price_asc') {
+    query = query.orderByRaw('COALESCE(sale_price, price) asc');
+  } else if (sort === 'price_desc') {
+    query = query.orderByRaw('COALESCE(sale_price, price) desc');
+  } else {
+    query = query.orderBy([
+      { column: 'category_sort_order', order: 'asc' },
+      { column: 'created_at', order: 'desc' },
+      { column: 'id', order: 'asc' }
+    ]);
+  }
+  return query;
+}
+
 async function showCategory(req, res, next) {
   try {
     const category = await db('categories').where('slug', req.params.slug).first();
@@ -15,33 +31,26 @@ async function showCategory(req, res, next) {
       ? req.query.sort
       : 'newest';
 
-    let query = db('products').where('category_id', category.id);
-    if (sort === 'price_asc') {
-      query = query.orderByRaw('COALESCE(sale_price, price) asc');
-    } else if (sort === 'price_desc') {
-      query = query.orderByRaw('COALESCE(sale_price, price) desc');
-    } else {
-      query = query.orderBy([
-        { column: 'category_sort_order', order: 'asc' },
-        { column: 'created_at', order: 'desc' },
-        { column: 'id', order: 'asc' }
-      ]);
-    }
-
-    const products = await query;
-
     // "Điện thoại cũ 99%" and "Samsung" are hidden from the homepage tiles but
-    // should still be easy to find once a customer is browsing phones.
+    // browsable as tabs within "Điện thoại" instead of their own separate page.
     const relatedCategories = category.slug === 'dien-thoai'
       ? await db('categories').where('show_on_homepage', false).orderBy('sort_order')
       : [];
 
+    const tabCategories = [category, ...relatedCategories];
+    const tabGroups = await Promise.all(
+      tabCategories.map(async (cat) => ({
+        category: cat,
+        products: await productsForCategory(cat.id, sort)
+      }))
+    );
+
     res.render('category', {
       title: `${category.name} - TOMSTORE`,
       category,
-      products,
+      products: tabGroups[0].products,
       sort,
-      relatedCategories
+      tabGroups
     });
   } catch (err) {
     next(err);

@@ -51,10 +51,10 @@ async function uploadImages(req, res, next) {
     if (mainImageFile) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', mainImageFile.filename);
       try {
-        await cropToFixedSize(destPath, 'product');
+        const finalFilename = await cropToFixedSize(destPath, 'product');
         removeUploadedFile(product.image_url);
         await db('products').where('id', product.id).update({
-          image_url: '/images/uploads/products/' + mainImageFile.filename
+          image_url: '/images/uploads/products/' + finalFilename
         });
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/products/' + mainImageFile.filename);
@@ -81,8 +81,9 @@ async function uploadImages(req, res, next) {
           continue;
         }
         const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', file.filename);
+        let finalFilename;
         try {
-          await cropToFixedSize(destPath, 'product');
+          finalFilename = await cropToFixedSize(destPath, 'product');
         } catch (imgErr) {
           removeUploadedFile('/images/uploads/products/' + file.filename);
           continue;
@@ -90,7 +91,7 @@ async function uploadImages(req, res, next) {
 
         await db('product_images').insert({
           product_id: product.id,
-          image_url: '/images/uploads/products/' + file.filename,
+          image_url: '/images/uploads/products/' + finalFilename,
           sort_order: nextSort++
         });
       }

@@ -84,8 +84,18 @@
     <% if (!isEdit) { %>
       <div class="form-group">
         <label for="imageFile">Ảnh đại diện</label>
-        <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" />
-        <small>Bỏ trống nếu muốn dùng icon minh họa theo danh mục. Có thể thêm ảnh chi tiết sau khi tạo sản phẩm.</small>
+        <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" />
+        <small>Bỏ trống nếu muốn dùng icon minh họa theo danh mục.</small>
+      </div>
+      <div class="form-group">
+        <label>Ảnh chi tiết (tối đa 8 ảnh)</label>
+        <label for="galleryFileInput" class="btn btn-outline gallery-pick-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Chọn ảnh chi tiết
+        </label>
+        <input type="file" id="galleryFileInput" name="images" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" multiple hidden />
+        <small>Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
+        <ul class="gallery-staged-list" id="galleryStagedList"></ul>
       </div>
     <% } %>
     <div class="form-group form-group-checkbox">
@@ -147,7 +157,7 @@
                       <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
                         <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
                         <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+                        <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
                       </label>
                       <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
                       <details class="color-swatch-picker">
@@ -189,7 +199,7 @@
               <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
                 <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
                 <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+                <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
               </label>
               <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
               <details class="color-swatch-picker">
@@ -256,7 +266,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             Chọn ảnh đại diện
           </label>
-          <input type="file" id="mainImageInput" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+          <input type="file" id="mainImageInput" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
           <input type="text" id="imageUrlInput" name="imageUrl" value="<%= product.image_url && product.image_url.startsWith('/images/uploads/') ? '' : (product.image_url || '') %>" placeholder="Hoặc dán URL ảnh..." />
           <% if (product.image_url) { %>
             <button type="submit" name="removeImage" value="1" class="btn btn-outline gallery-delete-main-btn" formnovalidate onclick="return confirm('Xóa ảnh đại diện hiện tại?');">
@@ -285,7 +295,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               Chọn ảnh chi tiết
             </label>
-            <input type="file" id="galleryFileInput" name="images" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
+            <input type="file" id="galleryFileInput" name="images" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" multiple hidden />
             <small>Còn có thể thêm tối đa <%= 8 - galleryImages.length %> ảnh nữa. Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
             <ul class="gallery-staged-list" id="galleryStagedList"></ul>
           <% } else { %>
@@ -386,7 +396,7 @@
         '<label class="color-image-picker" title="Chọn ảnh cho màu này">' +
         '<img class="color-image-preview" alt="" hidden />' +
         placeholderIcon +
-        '<input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden />' +
+        '<input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />' +
         '</label>' +
         '<input type="hidden" name="colorImageUrl" class="color-image-url-input" value="" />' +
         '<details class="color-swatch-picker">' +

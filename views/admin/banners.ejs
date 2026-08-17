@@ -21,12 +21,12 @@
         <div class="form-group">
           <label for="heroImage">Ảnh desktop (ngang) *</label>
           <img class="admin-image-preview" id="heroImagePreview" hidden />
-          <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="heroImagePreview" required />
+          <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroImagePreview" required />
         </div>
         <div class="form-group">
           <label for="heroImageMobile">Ảnh mobile (dọc)</label>
           <img class="admin-image-preview" id="heroImageMobilePreview" hidden />
-          <input type="file" id="heroImageMobile" name="imageMobile" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="heroImageMobilePreview" />
+          <input type="file" id="heroImageMobile" name="imageMobile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroImageMobilePreview" />
         </div>
       </div>
       <div class="form-group">
@@ -49,7 +49,7 @@
                 <span class="status-badge status-inactive">Chưa có</span>
               <% } %>
               <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile" method="post" enctype="multipart/form-data" class="banner-mobile-form">
-                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" required />
+                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" required />
                 <button type="submit" class="btn btn-outline btn-sm"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></button>
               </form>
             </td>
@@ -91,7 +91,7 @@
       <div class="form-group">
         <label for="featuredImage">Chọn ảnh mới *</label>
         <img class="admin-image-preview" id="featuredImagePreview" hidden />
-        <input type="file" id="featuredImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="featuredImagePreview" required />
+        <input type="file" id="featuredImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="featuredImagePreview" required />
       </div>
       <div class="form-group">
         <label for="featuredLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
@@ -112,7 +112,7 @@
           <img src="<%= cat.image_url %>" alt="<%= cat.name %>" class="admin-thumb-preview" id="catThumbPreview<%= cat.id %>" />
           <p><%= cat.name %></p>
           <form action="/admin/banner/danh-muc/<%= cat.id %>" method="post" enctype="multipart/form-data">
-            <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="catThumbPreview<%= cat.id %>" required />
+            <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="catThumbPreview<%= cat.id %>" required />
             <button type="submit" class="btn btn-outline btn-sm">Đổi ảnh</button>
           </form>
         </div>

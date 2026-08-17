@@ -18,7 +18,7 @@ const uploadCategoryImage = makeUploader('categories');
 
 const MAX_COLOR_ROWS = 20;
 const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
-const uploadProductWithColors = uploadProductImage.fields([{ name: 'imageFile', maxCount: 1 }, ...colorImageFields]);
+const uploadProductWithColors = uploadProductImage.fields([{ name: 'imageFile', maxCount: 1 }, { name: 'images', maxCount: 8 }, ...colorImageFields]);
 
 router.get('/login', redirectIfAdmin, authController.showLogin);
 router.post('/login', redirectIfAdmin, authController.login);

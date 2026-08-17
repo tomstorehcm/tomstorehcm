@@ -49,13 +49,36 @@ function getJimp() {
   return jimpWithWebpPromise;
 }
 
+// iPhone photos are often HEIC/HEIF, which Jimp can't read and no browser
+// besides Safari can render in an <img> tag. Convert to JPEG first -- this
+// changes the file's extension, so the caller must use the returned filename
+// (not the one it uploaded) when building the final URL.
+const HEIC_EXTENSIONS = ['.heic', '.heif'];
+
+async function convertHeicIfNeeded(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (!HEIC_EXTENSIONS.includes(ext)) return filePath;
+
+  const heicConvert = require('heic-convert');
+  const inputBuffer = fs.readFileSync(filePath);
+  const outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'JPEG', quality: 0.9 });
+  const newPath = filePath.slice(0, -ext.length) + '.jpg';
+  fs.writeFileSync(newPath, outputBuffer);
+  fs.unlinkSync(filePath);
+  return newPath;
+}
+
+// Returns the final filename (basename only) after cropping -- identical to
+// the input filename unless the file was HEIC/HEIF and got converted to .jpg.
 async function cropToFixedSize(filePath, sizeKey) {
   const size = BANNER_SIZES[sizeKey];
   if (!size) throw new Error('Unknown image size key: ' + sizeKey);
+  const finalPath = await convertHeicIfNeeded(filePath);
   const Jimp = await getJimp();
-  const image = await Jimp.read(filePath);
+  const image = await Jimp.read(finalPath);
   image.cover({ w: size.w, h: size.h });
-  await image.write(filePath);
+  await image.write(finalPath);
+  return path.basename(finalPath);
 }
 
 module.exports = { cropToFixedSize, BANNER_SIZES };

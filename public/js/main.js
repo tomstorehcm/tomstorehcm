@@ -67,21 +67,25 @@
     setInterval(updateTimers, 1000);
   }
 
-  // Product detail gallery: arrows + thumbnails, same crossfade/zoom style as the hero banner
+  // Product detail gallery: track-based slider (drag-follows-finger on touch)
+  // plus arrows/thumbnails. onGallerySlideChange (wired up by the variant/color
+  // picker below) keeps price + color selection in sync with whichever photo
+  // is showing, however the customer got there.
   var galleryMain = document.getElementById('galleryMain');
-  var gallerySlides = galleryMain ? galleryMain.querySelectorAll('.gallery-slide') : [];
+  var galleryTrack = document.getElementById('galleryTrack');
+  var gallerySlides = galleryTrack ? galleryTrack.querySelectorAll('.gallery-slide') : [];
   var galleryThumbs = document.querySelectorAll('.gallery-thumb');
   var galleryCurrent = 0;
+  var onGallerySlideChange = null;
 
   function galleryGoTo(index) {
     if (!gallerySlides.length) return;
     galleryCurrent = (index + gallerySlides.length) % gallerySlides.length;
-    gallerySlides.forEach(function (slide, i) {
-      slide.classList.toggle('is-active', i === galleryCurrent);
-    });
+    if (galleryTrack) galleryTrack.style.transform = 'translateX(-' + (galleryCurrent * 100) + '%)';
     galleryThumbs.forEach(function (thumb, i) {
       thumb.classList.toggle('active', i === galleryCurrent);
     });
+    if (onGallerySlideChange) onGallerySlideChange(galleryCurrent);
   }
 
   if (gallerySlides.length > 1) {
@@ -96,26 +100,57 @@
       });
     });
 
-    // Swipe left/right on touch devices
-    var galleryTouchStartX = null;
-    var galleryTouchStartY = null;
+    // Drag-follows-finger swipe: the track tracks the finger while dragging,
+    // then snaps to the next/prev slide or springs back on release.
+    // preventDefault() only fires once the gesture is confirmed horizontal,
+    // so vertical page scrolling still works normally.
+    var dragStartX = 0;
+    var dragStartY = 0;
+    var dragDeltaX = 0;
+    var dragAxis = null;
+
     galleryMain.addEventListener('touchstart', function (e) {
-      galleryTouchStartX = e.touches[0].clientX;
-      galleryTouchStartY = e.touches[0].clientY;
+      dragStartX = e.touches[0].clientX;
+      dragStartY = e.touches[0].clientY;
+      dragDeltaX = 0;
+      dragAxis = null;
+      if (galleryTrack) galleryTrack.classList.add('is-dragging');
     }, { passive: true });
-    galleryMain.addEventListener('touchend', function (e) {
-      if (galleryTouchStartX === null) return;
-      var dx = e.changedTouches[0].clientX - galleryTouchStartX;
-      var dy = e.changedTouches[0].clientY - galleryTouchStartY;
-      galleryTouchStartX = null;
-      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-      galleryGoTo(dx < 0 ? galleryCurrent + 1 : galleryCurrent - 1);
+
+    galleryMain.addEventListener('touchmove', function (e) {
+      var dx = e.touches[0].clientX - dragStartX;
+      var dy = e.touches[0].clientY - dragStartY;
+      if (dragAxis === null) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        dragAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      }
+      if (dragAxis !== 'x') return;
+      e.preventDefault();
+      dragDeltaX = dx;
+      if (galleryTrack) {
+        var percent = (dx / galleryMain.offsetWidth) * 100;
+        galleryTrack.style.transform = 'translateX(calc(-' + (galleryCurrent * 100) + '% + ' + percent + '%))';
+      }
+    }, { passive: false });
+
+    galleryMain.addEventListener('touchend', function () {
+      if (galleryTrack) galleryTrack.classList.remove('is-dragging');
+      if (dragAxis === 'x') {
+        var threshold = galleryMain.offsetWidth * 0.18;
+        if (dragDeltaX < -threshold) galleryGoTo(galleryCurrent + 1);
+        else if (dragDeltaX > threshold) galleryGoTo(galleryCurrent - 1);
+        else galleryGoTo(galleryCurrent);
+      }
+      dragAxis = null;
+      dragDeltaX = 0;
     }, { passive: true });
   }
 
   // Product detail: storage/capacity variant picker + color picker. Colors can
   // be scoped to a specific variant (own price, only shown for that capacity)
-  // or "general" (apply to every capacity, no price of their own).
+  // or "general" (apply to every capacity, no price of their own). Picking a
+  // color jumps the gallery to its photo, and landing on a color's photo any
+  // other way (swipe, arrows, thumbnail) updates the picker to match.
   var variantColorDataEl = document.getElementById('variantColorData');
   var variantOptions = document.querySelectorAll('.variant-option');
   var colorPickerEl = document.getElementById('colorPicker');
@@ -135,8 +170,13 @@
     }
 
     function jumpGalleryForColor(colorId) {
-      if (!galleryMain || !colorId) return;
-      var targetSlide = galleryMain.querySelector('.gallery-slide[data-color-id="' + colorId + '"]');
+      if (!galleryMain || colorId == null) return;
+      var targetSlide = null;
+      gallerySlides.forEach(function (slide) {
+        if (targetSlide) return;
+        var idsAttr = slide.getAttribute('data-color-ids');
+        if (idsAttr && idsAttr.split(',').indexOf(String(colorId)) > -1) targetSlide = slide;
+      });
       if (targetSlide) {
         var slideIndex = Array.prototype.indexOf.call(gallerySlides, targetSlide);
         if (slideIndex > -1) galleryGoTo(slideIndex);
@@ -171,57 +211,93 @@
         if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
       };
 
-      var renderColorOptions = function () {
-        var variant = data.variants[activeVariantIndex];
-        var colors = colorsForVariant(variant);
-        if (!colorOptionsWrap || !colorPickerEl) return;
+      var selectColor = function (color, jumpGallery) {
+        activeColorId = color.id;
+        if (colorOptionsWrap) {
+          colorOptionsWrap.querySelectorAll('.color-option').forEach(function (btn) {
+            btn.classList.toggle('active', Number(btn.getAttribute('data-color-id')) === color.id);
+          });
+        }
+        if (colorIdInput) colorIdInput.value = color.id;
+        if (colorNameDisplay) colorNameDisplay.textContent = color.name;
+        updatePriceAndStock();
+        if (jumpGallery) jumpGalleryForColor(color.id);
+      };
 
+      var renderColorButtons = function (colors) {
+        if (!colorOptionsWrap || !colorPickerEl) return;
         colorOptionsWrap.innerHTML = '';
         if (colors.length === 0) {
           colorPickerEl.hidden = true;
-          activeColorId = null;
-          if (colorIdInput) colorIdInput.value = '';
           return;
         }
-
         colorPickerEl.hidden = false;
-        colors.forEach(function (c, i) {
+        colors.forEach(function (c) {
           var btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'color-option' + (i === 0 ? ' active' : '');
+          btn.className = 'color-option';
           btn.style.backgroundColor = c.hex;
           btn.title = c.name;
           btn.disabled = !c.inStock;
+          btn.setAttribute('data-color-id', c.id);
           btn.addEventListener('click', function () {
             if (btn.disabled) return;
-            colorOptionsWrap.querySelectorAll('.color-option').forEach(function (o) { o.classList.remove('active'); });
-            btn.classList.add('active');
-            activeColorId = c.id;
-            if (colorIdInput) colorIdInput.value = c.id;
-            if (colorNameDisplay) colorNameDisplay.textContent = c.name;
-            updatePriceAndStock();
-            jumpGalleryForColor(c.id);
+            selectColor(c, true);
           });
           colorOptionsWrap.appendChild(btn);
         });
-
-        activeColorId = colors[0].id;
-        if (colorIdInput) colorIdInput.value = colors[0].id;
-        if (colorNameDisplay) colorNameDisplay.textContent = colors[0].name;
       };
 
-      renderColorOptions();
-      updatePriceAndStock();
+      var selectVariant = function (index, opts) {
+        opts = opts || {};
+        activeVariantIndex = index;
+        variantOptions.forEach(function (o, i) { o.classList.toggle('active', i === index); });
+        if (variantIdInput) variantIdInput.value = data.variants[index].id;
+
+        var colors = colorsForVariant(data.variants[index]);
+        renderColorButtons(colors);
+
+        var preferred = opts.preferColorId != null ? colors.filter(function (c) { return c.id === opts.preferColorId; })[0] : null;
+        var toSelect = preferred || colors[0] || null;
+        if (toSelect) {
+          selectColor(toSelect, !!opts.jumpGallery);
+        } else {
+          activeColorId = null;
+          if (colorIdInput) colorIdInput.value = '';
+          updatePriceAndStock();
+        }
+      };
+
+      // Reverse sync: arriving at a color's photo updates the picker to match,
+      // switching capacity too if that photo belongs to a different one (e.g.
+      // the same White shared across several capacities).
+      onGallerySlideChange = function (slideIndex) {
+        var slide = gallerySlides[slideIndex];
+        var idsAttr = slide && slide.getAttribute('data-color-ids');
+        if (!idsAttr) return;
+        var ids = idsAttr.split(',').map(Number);
+
+        var currentColors = colorsForVariant(data.variants[activeVariantIndex]);
+        var match = currentColors.filter(function (c) { return ids.indexOf(c.id) > -1; })[0];
+        var matchVariantIndex = match ? activeVariantIndex : -1;
+
+        if (!match) {
+          for (var vi = 0; vi < data.variants.length; vi++) {
+            var found = colorsForVariant(data.variants[vi]).filter(function (c) { return ids.indexOf(c.id) > -1; })[0];
+            if (found) { match = found; matchVariantIndex = vi; break; }
+          }
+        }
+        if (!match) return;
+        selectVariant(matchVariantIndex, { jumpGallery: false, preferColorId: match.id });
+      };
+
+      var initialColorId = colorIdInput && colorIdInput.value ? Number(colorIdInput.value) : null;
+      selectVariant(0, { jumpGallery: false, preferColorId: initialColorId });
 
       variantOptions.forEach(function (opt, i) {
         opt.addEventListener('click', function () {
           if (opt.disabled) return;
-          variantOptions.forEach(function (o) { o.classList.remove('active'); });
-          opt.classList.add('active');
-          activeVariantIndex = i;
-          if (variantIdInput) variantIdInput.value = data.variants[i].id;
-          renderColorOptions();
-          updatePriceAndStock();
+          selectVariant(i, { jumpGallery: true });
         });
       });
     } else {
@@ -254,6 +330,17 @@
           jumpGalleryForColor(opt.getAttribute('data-color-id'));
         });
       });
+
+      onGallerySlideChange = function (slideIndex) {
+        var slide = gallerySlides[slideIndex];
+        var idsAttr = slide && slide.getAttribute('data-color-ids');
+        if (!idsAttr) return;
+        var ids = idsAttr.split(',');
+        var match = Array.prototype.filter.call(colorOptions, function (o) {
+          return ids.indexOf(o.getAttribute('data-color-id')) > -1;
+        })[0];
+        if (match && !match.disabled) match.click();
+      };
     }
   }
 

@@ -92,9 +92,9 @@ async function parseColorRows(body, files) {
     if (file) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', file.filename);
       try {
-        await cropToFixedSize(destPath, 'product');
+        const finalFilename = await cropToFixedSize(destPath, 'product');
         if (imageUrl) removeUploadedFile(imageUrl);
-        imageUrl = '/images/uploads/products/' + file.filename;
+        imageUrl = '/images/uploads/products/' + finalFilename;
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/products/' + file.filename);
       }
@@ -130,6 +130,31 @@ async function syncProductColors(productId, colorRows, variantIds) {
         sort_order: i
       }))
     );
+  }
+}
+
+const MAX_GALLERY_IMAGES = 8;
+
+// Only used at product creation, when there are no existing gallery images
+// yet -- editing an existing product's gallery still goes through the
+// separate upload form on the edit page.
+async function syncGalleryImages(productId, files) {
+  const filesToUse = files.slice(0, MAX_GALLERY_IMAGES);
+  files.slice(MAX_GALLERY_IMAGES).forEach((file) => removeUploadedFile('/images/uploads/products/' + file.filename));
+
+  let sortOrder = 0;
+  for (const file of filesToUse) {
+    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', file.filename);
+    try {
+      const finalFilename = await cropToFixedSize(destPath, 'product');
+      await db('product_images').insert({
+        product_id: productId,
+        image_url: '/images/uploads/products/' + finalFilename,
+        sort_order: sortOrder++
+      });
+    } catch (imgErr) {
+      removeUploadedFile('/images/uploads/products/' + file.filename);
+    }
   }
 }
 
@@ -274,8 +299,9 @@ async function createProduct(req, res, next) {
     let imageUrl = req.body.imageUrl || null;
     if (mainImageFile) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', mainImageFile.filename);
+      let finalFilename;
       try {
-        await cropToFixedSize(destPath, 'product');
+        finalFilename = await cropToFixedSize(destPath, 'product');
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/products/' + mainImageFile.filename);
         return res.status(400).render('admin/product-form', {
@@ -293,7 +319,7 @@ async function createProduct(req, res, next) {
           colors: colorRows
         });
       }
-      imageUrl = '/images/uploads/products/' + mainImageFile.filename;
+      imageUrl = '/images/uploads/products/' + finalFilename;
     }
 
     const isContactPrice = req.body.isContactPrice === 'on';
@@ -318,6 +344,7 @@ async function createProduct(req, res, next) {
     await syncProductPolicies(insertedId, policyGroupId, selectedPolicyIds);
     const variantIds = await syncProductVariants(insertedId, variantRows);
     await syncProductColors(insertedId, colorRows, variantIds);
+    await syncGalleryImages(insertedId, (req.files && req.files.images) || []);
 
     res.redirect('/admin/san-pham');
   } catch (err) {

@@ -15,21 +15,36 @@
     <div class="product-detail">
       <div class="product-gallery">
         <%
-          var colorImages = (colors || []).filter(function(c) { return c.image_url; });
-          var totalSlides = images.length + colorImages.length;
+          // Several colors (e.g. the same White across different capacities)
+          // often share the exact same photo -- group them into one slide so
+          // the gallery doesn't repeat the same picture, while still letting
+          // every one of those colors jump to it (data-color-ids, plural).
+          var colorImageGroups = [];
+          var colorImagesByUrl = {};
+          (colors || []).forEach(function(c) {
+            if (!c.image_url) return;
+            if (!colorImagesByUrl[c.image_url]) {
+              colorImagesByUrl[c.image_url] = { image_url: c.image_url, name: c.name, colorIds: [] };
+              colorImageGroups.push(colorImagesByUrl[c.image_url]);
+            }
+            colorImagesByUrl[c.image_url].colorIds.push(c.id);
+          });
+          var totalSlides = images.length + colorImageGroups.length;
         %>
         <div class="product-gallery-main" id="galleryMain">
           <% if (totalSlides > 0) { %>
-            <% images.forEach(function(src, i) { %>
-              <div class="gallery-slide <%= i === 0 ? 'is-active' : '' %>">
-                <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="800" height="800" />
-              </div>
-            <% }); %>
-            <% colorImages.forEach(function(c) { %>
-              <div class="gallery-slide" data-color-id="<%= c.id %>">
-                <img src="<%= c.image_url %>" alt="<%= product.name %> - màu <%= c.name %>" width="800" height="800" />
-              </div>
-            <% }); %>
+            <div class="gallery-track" id="galleryTrack">
+              <% images.forEach(function(src, i) { %>
+                <div class="gallery-slide">
+                  <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="800" height="800" />
+                </div>
+              <% }); %>
+              <% colorImageGroups.forEach(function(c) { %>
+                <div class="gallery-slide" data-color-ids="<%= c.colorIds.join(',') %>">
+                  <img src="<%= c.image_url %>" alt="<%= product.name %> - màu <%= c.name %>" width="800" height="800" />
+                </div>
+              <% }); %>
+            </div>
             <% if (totalSlides > 1) { %>
               <button type="button" class="hero-slider-arrow prev" id="galleryPrev" aria-label="Ảnh trước">&larr;</button>
               <button type="button" class="hero-slider-arrow next" id="galleryNext" aria-label="Ảnh sau">&rarr;</button>
@@ -45,8 +60,8 @@
                 <img src="<%= src %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" width="64" height="64" loading="lazy" />
               </button>
             <% }); %>
-            <% colorImages.forEach(function(c, j) { %>
-              <button type="button" class="gallery-thumb" data-index="<%= images.length + j %>" data-color-id="<%= c.id %>">
+            <% colorImageGroups.forEach(function(c, j) { %>
+              <button type="button" class="gallery-thumb" data-index="<%= images.length + j %>" data-color-ids="<%= c.colorIds.join(',') %>">
                 <img src="<%= c.image_url %>" alt="<%= product.name %> - màu <%= c.name %>" width="64" height="64" loading="lazy" />
               </button>
             <% }); %>

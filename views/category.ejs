@@ -22,15 +22,40 @@
       </form>
     </div>
 
-    <% if (relatedCategories.length > 0) { %>
-      <div class="related-category-links">
-        <% relatedCategories.forEach(function(rc) { %>
-          <a href="/danh-muc/<%= rc.slug %>" class="related-category-link"><%= rc.name %></a>
+    <% if (tabGroups.length > 1) { %>
+      <div class="category-tabs" id="categoryTabs">
+        <% tabGroups.forEach(function(group, i) { %>
+          <button type="button" class="category-tab <%= i === 0 ? 'active' : '' %>" data-target="category-tab-panel-<%= i %>"><%= group.category.name %></button>
         <% }); %>
       </div>
-    <% } %>
-
-    <% if (products.length === 0) { %>
+      <% tabGroups.forEach(function(group, i) { %>
+        <div class="category-tab-panel" id="category-tab-panel-<%= i %>" <%= i === 0 ? '' : 'hidden' %>>
+          <% if (group.products.length === 0) { %>
+            <p class="empty-state">Danh mục này hiện chưa có sản phẩm.</p>
+          <% } else { %>
+            <div class="product-grid">
+              <% group.products.forEach(function(product) { %>
+                <%- include('partials/product-card', { product: product }) %>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+      <script>
+        (function () {
+          var tabs = document.querySelectorAll('#categoryTabs .category-tab');
+          var panels = document.querySelectorAll('.category-tab-panel');
+          tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+              tabs.forEach(function (t) { t.classList.remove('active'); });
+              panels.forEach(function (p) { p.hidden = true; });
+              tab.classList.add('active');
+              document.getElementById(tab.getAttribute('data-target')).hidden = false;
+            });
+          });
+        })();
+      </script>
+    <% } else if (products.length === 0) { %>
       <p class="empty-state">Danh mục này hiện chưa có sản phẩm.</p>
     <% } else { %>
       <div class="product-grid">
