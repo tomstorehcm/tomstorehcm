@@ -150,8 +150,16 @@
             <% } %>
             <input type="hidden" name="colorId" id="colorIdInput" value="<%= activeColor ? activeColor.id : '' %>" />
             <div class="product-detail-cta-row">
-              <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>><%= effectiveInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' %></button>
-              <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>Thanh toán ngay</button>
+              <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
+                <% if (effectiveInStock) { %>
+                  <span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>
+                <% } else { %>Hết hàng<% } %>
+              </button>
+              <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
+                <% if (effectiveInStock) { %>
+                  <span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>
+                <% } else { %>Hết hàng<% } %>
+              </button>
             </div>
           </form>
         <% } %>

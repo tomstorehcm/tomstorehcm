@@ -169,6 +169,16 @@
       return (vndFormatter ? vndFormatter.format(amount) : String(amount)) + '₫';
     }
 
+    // Keeps the full/short label pair (CSS hides one or the other on narrow
+    // phone screens) intact when JS updates the add-to-cart button's state.
+    function setAddBtnLabel(inStock) {
+      if (!pickerAddBtn) return;
+      pickerAddBtn.disabled = !inStock;
+      pickerAddBtn.innerHTML = inStock
+        ? '<span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>'
+        : 'Hết hàng';
+    }
+
     function jumpGalleryForColor(colorId) {
       if (!galleryMain || colorId == null) return;
       var targetSlide = null;
@@ -204,10 +214,7 @@
           pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
           pickerStockText.classList.toggle('product-stock-out', !inStock);
         }
-        if (pickerAddBtn) {
-          pickerAddBtn.disabled = !inStock;
-          pickerAddBtn.textContent = inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-        }
+        setAddBtnLabel(inStock);
         if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
       };
 
@@ -311,10 +318,7 @@
           pickerStockText.textContent = colorInStock ? 'Còn hàng' : 'Hết hàng';
           pickerStockText.classList.toggle('product-stock-out', !colorInStock);
         }
-        if (pickerAddBtn) {
-          pickerAddBtn.disabled = !colorInStock;
-          pickerAddBtn.textContent = colorInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng';
-        }
+        setAddBtnLabel(colorInStock);
         if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !colorInStock;
       };
 
@@ -521,7 +525,7 @@
     });
   });
 
-  // Product detail page: "Thêm vào giỏ hàng" stays on page (AJAX). "Thanh toán ngay"
+  // Product detail page: "Thêm vào giỏ hàng" stays on page (AJAX). "Đặt hàng ngay"
   // is a real form submit (via formaction) straight to the buy-now checkout route,
   // so it never touches the persistent cart.
   var productDetailCartForm = document.getElementById('productDetailCartForm');
