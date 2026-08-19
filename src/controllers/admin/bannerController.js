@@ -138,6 +138,16 @@ async function updateHeroSortOrder(req, res, next) {
   }
 }
 
+async function updateHeroLinkUrl(req, res, next) {
+  try {
+    const linkUrl = (req.body.linkUrl || '').trim() || null;
+    await db('banners').where('id', req.params.id).where('type', 'hero').update({ link_url: linkUrl });
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function deleteHeroBanner(req, res, next) {
   try {
     const banner = await db('banners').where('id', req.params.id).where('type', 'hero').first();
@@ -227,6 +237,7 @@ module.exports = {
   updateHeroBannerMobileImage,
   toggleHeroBanner,
   updateHeroSortOrder,
+  updateHeroLinkUrl,
   deleteHeroBanner,
   uploadFeaturedBanner,
   uploadCategoryThumb

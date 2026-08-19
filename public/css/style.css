@@ -751,6 +751,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .banner-mobile-form input[type=file] { font-size: 12px; max-width: 160px; }
 .inline-number-form { display: flex; gap: var(--space-2); align-items: center; }
 .inline-number-form input { width: 60px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; }
+.inline-text-form input { width: 160px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
 
 .admin-inline-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
 .admin-inline-form input[type="text"] { height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); min-width: 200px; }

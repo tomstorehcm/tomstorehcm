@@ -43,25 +43,27 @@
           <tr>
             <td><img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" /></td>
             <td>
-              <% if (b.image_url_mobile) { %>
-                <img src="<%= b.image_url_mobile %>" alt="Banner mobile" class="admin-banner-thumb-mobile" />
-              <% } else { %>
-                <span class="status-badge status-inactive">Chưa có</span>
-              <% } %>
+              <img src="<%= b.image_url_mobile || '' %>" alt="Banner mobile" class="admin-banner-thumb-mobile" id="heroMobileThumb<%= b.id %>" <%= b.image_url_mobile ? '' : 'hidden' %> />
+              <span class="status-badge status-inactive" id="heroMobileBadge<%= b.id %>" <%= b.image_url_mobile ? 'hidden' : '' %>>Chưa có</span>
               <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile" method="post" enctype="multipart/form-data" class="banner-mobile-form">
-                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" required />
-                <button type="submit" class="btn btn-outline btn-sm"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></button>
+                <label for="heroMobileFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></label>
+                <input type="file" id="heroMobileFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroMobileThumb<%= b.id %>" data-preview-badge="heroMobileBadge<%= b.id %>" hidden />
               </form>
             </td>
-            <td><%= b.link_url || '-' %></td>
             <td>
-              <form action="/admin/banner/chinh/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
+              <form id="heroLinkForm<%= b.id %>" action="/admin/banner/chinh/<%= b.id %>/link" method="post" class="inline-text-form">
+                <input type="text" name="linkUrl" value="<%= b.link_url || '' %>" placeholder="/danh-muc/dien-thoai" />
+              </form>
+            </td>
+            <td>
+              <form id="heroSortForm<%= b.id %>" action="/admin/banner/chinh/<%= b.id %>/thu-tu" method="post" class="inline-number-form">
                 <input type="number" name="sortOrder" value="<%= b.sort_order %>" min="0" />
-                <button type="submit" class="btn btn-outline btn-sm">Lưu</button>
               </form>
             </td>
             <td><span class="status-badge <%= b.is_active ? 'status-active' : 'status-inactive' %>"><%= b.is_active ? 'Đang hiện' : 'Đang ẩn' %></span></td>
             <td class="admin-actions">
+              <button type="submit" form="heroLinkForm<%= b.id %>" class="btn btn-outline btn-sm">Lưu link</button>
+              <button type="submit" form="heroSortForm<%= b.id %>" class="btn btn-outline btn-sm">Lưu thứ tự</button>
               <form action="/admin/banner/chinh/<%= b.id %>/an-hien" method="post"><button type="submit" class="btn btn-outline btn-sm"><%= b.is_active ? 'Ẩn' : 'Hiện' %></button></form>
               <form action="/admin/banner/chinh/<%= b.id %>/xoa" method="post" onsubmit="return confirm('Xóa banner này?');"><button type="submit" class="btn-link-danger">Xóa</button></form>
             </td>
@@ -129,6 +131,14 @@
           target.src = URL.createObjectURL(input.files[0]);
           target.hidden = false;
         }
+        var badgeId = input.getAttribute('data-preview-badge');
+        var badge = badgeId ? document.getElementById(badgeId) : null;
+        if (badge) badge.hidden = true;
+
+        // Rows where "choose file" is the only control (mobile banner) submit
+        // as soon as a file is picked, instead of needing a separate button.
+        var form = input.closest('form.banner-mobile-form');
+        if (form && input.files && input.files[0]) form.requestSubmit();
       });
     });
   })();

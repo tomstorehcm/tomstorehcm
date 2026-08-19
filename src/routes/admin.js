@@ -79,6 +79,7 @@ router.post(
 router.post('/banner/chinh/:id/anh-mobile', handleUploadErrors(uploadBannerImage.single('image')), bannerController.updateHeroBannerMobileImage);
 router.post('/banner/chinh/:id/an-hien', bannerController.toggleHeroBanner);
 router.post('/banner/chinh/:id/thu-tu', bannerController.updateHeroSortOrder);
+router.post('/banner/chinh/:id/link', bannerController.updateHeroLinkUrl);
 router.post('/banner/chinh/:id/xoa', bannerController.deleteHeroBanner);
 router.post('/banner/san-pham-hot', handleUploadErrors(uploadBannerImage.single('image')), bannerController.uploadFeaturedBanner);
 router.post('/banner/danh-muc/:id', handleUploadErrors(uploadCategoryImage.single('image')), bannerController.uploadCategoryThumb);
