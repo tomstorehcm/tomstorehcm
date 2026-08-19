@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const db = require('../../db');
 const { slugify } = require('../../utils/slug');
@@ -11,6 +12,20 @@ function removeUploadedFile(imageUrl) {
   if (imageUrl && imageUrl.startsWith('/images/uploads/')) {
     const filePath = path.join(__dirname, '..', '..', '..', 'public', imageUrl);
     fs.unlink(filePath, () => {});
+  }
+}
+
+// Hashes an uploaded image's actual pixel content so two colors that got the
+// exact same photo (common once a product has several groups repeating the
+// same color, e.g. "Đen" under every screen size) resolve to one shared file
+// instead of piling up as separate near-identical gallery slides.
+function hashUploadedImage(imageUrl) {
+  if (!imageUrl || !imageUrl.startsWith('/images/uploads/')) return null;
+  try {
+    const filePath = path.join(__dirname, '..', '..', '..', 'public', imageUrl);
+    return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+  } catch (e) {
+    return null;
   }
 }
 
@@ -106,6 +121,10 @@ async function parseColorRows(body, files) {
   const prices = [].concat(body.colorPrice || []);
   const variantIndexes = [].concat(body.colorVariantIndex || []);
   const rows = [];
+  // Maps content hash -> the URL already kept for it, so that uploading the
+  // same photo for several colors (e.g. "Đen" repeated under every group)
+  // collapses onto one shared file instead of piling up near-duplicates.
+  const seenImageHashes = new Map();
   for (let i = 0; i < names.length; i++) {
     const name = (names[i] || '').trim();
     if (!name) continue;
@@ -118,10 +137,27 @@ async function parseColorRows(body, files) {
       const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'products', file.filename);
       try {
         const finalFilename = await cropToFixedSize(destPath, 'product');
-        if (imageUrl) removeUploadedFile(imageUrl);
-        imageUrl = '/images/uploads/products/' + finalFilename;
+        const croppedUrl = '/images/uploads/products/' + finalFilename;
+        const hash = hashUploadedImage(croppedUrl);
+        const dupUrl = hash ? seenImageHashes.get(hash) : null;
+        if (dupUrl) {
+          removeUploadedFile(croppedUrl);
+          if (imageUrl) removeUploadedFile(imageUrl);
+          imageUrl = dupUrl;
+        } else {
+          if (imageUrl) removeUploadedFile(imageUrl);
+          imageUrl = croppedUrl;
+          if (hash) seenImageHashes.set(hash, imageUrl);
+        }
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/products/' + file.filename);
+      }
+    } else if (imageUrl) {
+      const hash = hashUploadedImage(imageUrl);
+      if (hash) {
+        const dupUrl = seenImageHashes.get(hash);
+        if (dupUrl) imageUrl = dupUrl;
+        else seenImageHashes.set(hash, imageUrl);
       }
     }
 
