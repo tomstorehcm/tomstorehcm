@@ -85,7 +85,11 @@
           var hasColors = activeColors && activeColors.length > 0;
           var activeColor = hasColors ? activeColors[0] : null;
           var activePrice = activeColor && activeColor.price != null ? activeColor.price : (activeVariant ? activeVariant.price : null);
-          var effectiveInStock = product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
+          // A variant/color price of 0 means the admin never actually set one
+          // (price is a required non-null column) -- treat that the same as
+          // out of stock and show "Liên hệ" instead of a literal "0₫".
+          var activePriceIsContact = activePrice === 0;
+          var effectiveInStock = !activePriceIsContact && product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
         %>
 
         <% if (hasVariantSelection) { %>
@@ -121,7 +125,7 @@
           <% if (product.is_contact_price) { %>
             <span class="price-current price-contact">Liên hệ</span>
           <% } else if (hasVariantSelection) { %>
-            <span class="price-current" id="variantPriceDisplay"><%= formatVND(activePrice) %></span>
+            <span class="price-current<%= activePriceIsContact ? ' price-contact' : '' %>" id="variantPriceDisplay"><%= activePriceIsContact ? 'Liên hệ' : formatVND(activePrice) %></span>
           <% } else { %>
             <% var hasSale = product.sale_price && product.sale_price < product.price; %>
             <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>

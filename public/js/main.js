@@ -75,6 +75,7 @@
   var galleryTrack = document.getElementById('galleryTrack');
   var gallerySlides = galleryTrack ? galleryTrack.querySelectorAll('.gallery-slide') : [];
   var galleryThumbs = document.querySelectorAll('.gallery-thumb');
+  var galleryThumbsWrap = document.querySelector('.product-gallery-thumbs');
   var galleryCurrent = 0;
   var onGallerySlideChange = null;
 
@@ -85,9 +86,20 @@
     galleryThumbs.forEach(function (thumb, i) {
       thumb.classList.toggle('active', i === galleryCurrent);
     });
+    // Scroll the thumbnail strip's own horizontal scrollbar directly (never
+    // the page) so the active thumbnail stays visible without any risk of
+    // scrollIntoView bubbling up and jumping the whole page vertically.
     var activeThumb = galleryThumbs[galleryCurrent];
-    if (activeThumb && activeThumb.scrollIntoView) {
-      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    if (activeThumb && galleryThumbsWrap) {
+      var thumbLeft = activeThumb.offsetLeft;
+      var thumbRight = thumbLeft + activeThumb.offsetWidth;
+      var visibleLeft = galleryThumbsWrap.scrollLeft;
+      var visibleRight = visibleLeft + galleryThumbsWrap.clientWidth;
+      if (thumbLeft < visibleLeft) {
+        galleryThumbsWrap.scrollTo({ left: thumbLeft, behavior: 'smooth' });
+      } else if (thumbRight > visibleRight) {
+        galleryThumbsWrap.scrollTo({ left: thumbRight - galleryThumbsWrap.clientWidth, behavior: 'smooth' });
+      }
     }
     if (onGallerySlideChange) onGallerySlideChange(galleryCurrent);
   }
@@ -183,6 +195,14 @@
         : 'Liên hệ';
     }
 
+    function setCheckoutBtnLabel(inStock) {
+      if (!pickerCheckoutBtn) return;
+      pickerCheckoutBtn.disabled = !inStock;
+      pickerCheckoutBtn.innerHTML = inStock
+        ? '<span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>'
+        : 'Liên hệ';
+    }
+
     function jumpGalleryForColor(colorId) {
       if (!galleryMain || colorId == null) return;
       var targetSlide = null;
@@ -220,15 +240,21 @@
           var colors = colorsForVariant(variant);
           var color = activeColorId != null ? colors.filter(function (c) { return c.id === activeColorId; })[0] : null;
           var price = (color && color.price != null) ? color.price : variant.price;
-          var inStock = variant.inStock && (color ? color.inStock : true);
+          // Price of 0 means no real price was ever set for this variant/color
+          // -- treat it like out of stock and show "Liên hệ" instead of "0₫".
+          var isContactOnly = price === 0;
+          var inStock = !isContactOnly && variant.inStock && (color ? color.inStock : true);
 
-          if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
+          if (variantPriceDisplay) {
+            variantPriceDisplay.textContent = isContactOnly ? 'Liên hệ' : formatVNDClient(price);
+            variantPriceDisplay.classList.toggle('price-contact', isContactOnly);
+          }
           if (pickerStockText) {
             pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
           setAddBtnLabel(inStock);
-          if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
+          setCheckoutBtnLabel(inStock);
         };
 
         var selectColor = function (color, jumpGallery) {
@@ -409,15 +435,21 @@
           var colors = colorsForVariant(variant);
           var color = activeColorId != null ? colors.filter(function (c) { return c.id === activeColorId; })[0] : null;
           var price = (color && color.price != null) ? color.price : variant.price;
-          var inStock = variant.inStock && (color ? color.inStock : true);
+          // Price of 0 means no real price was ever set for this variant/color
+          // -- treat it like out of stock and show "Liên hệ" instead of "0₫".
+          var isContactOnly = price === 0;
+          var inStock = !isContactOnly && variant.inStock && (color ? color.inStock : true);
 
-          if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
+          if (variantPriceDisplay) {
+            variantPriceDisplay.textContent = isContactOnly ? 'Liên hệ' : formatVNDClient(price);
+            variantPriceDisplay.classList.toggle('price-contact', isContactOnly);
+          }
           if (pickerStockText) {
             pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
           setAddBtnLabel(inStock);
-          if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !inStock;
+          setCheckoutBtnLabel(inStock);
         };
 
         var selectColor = function (color, jumpGallery) {
@@ -522,7 +554,7 @@
           pickerStockText.classList.toggle('product-stock-out', !colorInStock);
         }
         setAddBtnLabel(colorInStock);
-        if (pickerCheckoutBtn) pickerCheckoutBtn.disabled = !colorInStock;
+        setCheckoutBtnLabel(colorInStock);
       };
 
       colorOptions.forEach(function (opt) {
