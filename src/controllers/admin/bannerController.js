@@ -216,8 +216,9 @@ async function toggleCategoryHomepage(req, res, next) {
 async function updateCategoryName(req, res, next) {
   try {
     const name = (req.body.name || '').trim().slice(0, 24);
+    const navLabel = (req.body.navLabel || '').trim().slice(0, 30) || null;
     if (name) {
-      await db('categories').where('id', req.params.id).update({ name });
+      await db('categories').where('id', req.params.id).update({ name, nav_label: navLabel });
     }
     res.redirect('/admin/banner');
   } catch (err) {

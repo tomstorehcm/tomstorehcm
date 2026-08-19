@@ -112,7 +112,8 @@
           <span class="status-badge <%= cat.show_on_homepage ? 'status-active' : 'status-inactive' %>"><%= cat.show_on_homepage ? 'Đang hiện' : 'Đang ẩn' %></span>
           <img src="<%= cat.image_url %>" alt="<%= cat.name %>" class="admin-thumb-preview" id="catThumbPreview<%= cat.id %>" />
           <form action="/admin/banner/danh-muc/<%= cat.id %>/ten" method="post" class="category-name-form">
-            <input type="text" name="name" value="<%= cat.name %>" maxlength="24" required />
+            <input type="text" name="name" value="<%= cat.name %>" maxlength="24" placeholder="Tên danh mục" required />
+            <input type="text" name="navLabel" value="<%= cat.nav_label || '' %>" maxlength="30" placeholder="Nhãn menu (tùy chọn, để trống dùng tên)" />
             <button type="submit" class="btn btn-outline btn-sm">Lưu tên</button>
           </form>
           <form action="/admin/banner/danh-muc/<%= cat.id %>" method="post" enctype="multipart/form-data">
