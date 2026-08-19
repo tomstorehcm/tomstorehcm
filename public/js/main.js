@@ -342,13 +342,30 @@
           var ids = idsAttr.split(',').map(Number);
 
           var match = null, matchGroupIndex = -1, matchVariantIndex = -1;
-          for (var gi = 0; gi < data.variantGroups.length && !match; gi++) {
+          function tryGroup(gi) {
             var groupVariants = data.variantGroups[gi].variants;
             for (var vi = 0; vi < groupVariants.length; vi++) {
               var found = colorsForVariant(groupVariants[vi]).filter(function (c) { return ids.indexOf(c.id) > -1; })[0];
-              if (found) { match = found; matchGroupIndex = gi; matchVariantIndex = vi; break; }
+              if (found) { match = found; matchGroupIndex = gi; matchVariantIndex = vi; return; }
             }
           }
+
+          // Same photo can be shared across groups (colors with identical
+          // images get deduped into one gallery slide), so check the currently
+          // active group first -- otherwise this would always snap back to
+          // whichever group happens to come first, undoing the user's own click.
+          var currentGroup = data.variantGroups[activeGroupIndex];
+          var currentVariant = currentGroup && currentGroup.variants[activeVariantIndex];
+          if (currentVariant) {
+            var currentMatch = colorsForVariant(currentVariant).filter(function (c) { return ids.indexOf(c.id) > -1; })[0];
+            if (currentMatch) { match = currentMatch; matchGroupIndex = activeGroupIndex; matchVariantIndex = activeVariantIndex; }
+          }
+          if (!match && currentGroup) tryGroup(activeGroupIndex);
+          for (var gi = 0; gi < data.variantGroups.length && !match; gi++) {
+            if (gi === activeGroupIndex) continue;
+            tryGroup(gi);
+          }
+
           if (!match) return;
           selectGroup(matchGroupIndex, {
             jumpGallery: false,
