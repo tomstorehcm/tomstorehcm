@@ -602,6 +602,20 @@
     }
   }
 
+  // Category tiles slider (only rendered once there are more than 4
+  // categories) -- plain native scroll, arrows just nudge it by one "page".
+  var categorySlider = document.getElementById('categoryTilesSlider');
+  var categoryPrev = document.getElementById('categoryPrev');
+  var categoryNext = document.getElementById('categoryNext');
+  if (categorySlider && categoryPrev && categoryNext) {
+    categoryPrev.addEventListener('click', function () {
+      categorySlider.scrollBy({ left: -categorySlider.clientWidth * 0.9, behavior: 'smooth' });
+    });
+    categoryNext.addEventListener('click', function () {
+      categorySlider.scrollBy({ left: categorySlider.clientWidth * 0.9, behavior: 'smooth' });
+    });
+  }
+
   // Hero banner: shrinks and darkens as the user scrolls down past it
   var heroWrap = document.getElementById('heroWrap');
   var heroSlider = document.getElementById('heroSlider');

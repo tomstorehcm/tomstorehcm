@@ -64,18 +64,37 @@
   <% } %>
 
   <div class="container">
-    <div class="category-tiles">
-      <% homeCategories.forEach(function(cat) { %>
-        <a href="/danh-muc/<%= cat.slug %>" class="category-tile">
-          <% if (cat.image_url) { %>
-            <img src="<%= cat.image_url %>" alt="<%= cat.name %>" loading="lazy" />
-          <% } else { %>
-            <span class="category-tile-placeholder"><%- categoryIcon(cat.slug) %></span>
-          <% } %>
-          <span class="category-tile-label"><%= cat.name %></span>
-        </a>
-      <% }); %>
-    </div>
+    <% if (homeCategories.length > 4) { %>
+      <div class="category-tiles-slider-wrap">
+        <div class="category-tiles category-tiles-slider" id="categoryTilesSlider">
+          <% homeCategories.forEach(function(cat) { %>
+            <a href="/danh-muc/<%= cat.slug %>" class="category-tile">
+              <% if (cat.image_url) { %>
+                <img src="<%= cat.image_url %>" alt="<%= cat.name %>" loading="lazy" />
+              <% } else { %>
+                <span class="category-tile-placeholder"><%- categoryIcon(cat.slug) %></span>
+              <% } %>
+              <span class="category-tile-label"><%= cat.name %></span>
+            </a>
+          <% }); %>
+        </div>
+        <button type="button" class="hero-slider-arrow prev" id="categoryPrev" aria-label="Danh mục trước">&larr;</button>
+        <button type="button" class="hero-slider-arrow next" id="categoryNext" aria-label="Danh mục sau">&rarr;</button>
+      </div>
+    <% } else { %>
+      <div class="category-tiles">
+        <% homeCategories.forEach(function(cat) { %>
+          <a href="/danh-muc/<%= cat.slug %>" class="category-tile">
+            <% if (cat.image_url) { %>
+              <img src="<%= cat.image_url %>" alt="<%= cat.name %>" loading="lazy" />
+            <% } else { %>
+              <span class="category-tile-placeholder"><%- categoryIcon(cat.slug) %></span>
+            <% } %>
+            <span class="category-tile-label"><%= cat.name %></span>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
   </div>
 
   <% if (featuredProducts.length > 0) { %>

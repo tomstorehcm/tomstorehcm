@@ -128,20 +128,17 @@ async function toggleHeroBanner(req, res, next) {
   }
 }
 
-async function updateHeroSortOrder(req, res, next) {
+// Saves every hero banner's link + sort order in one request -- the table
+// posts them all keyed by banner id (linkUrl_<id>, sortOrder_<id>) instead of
+// each row having its own separate save action.
+async function bulkUpdateHeroBanners(req, res, next) {
   try {
-    const sortOrder = Number(req.body.sortOrder) || 0;
-    await db('banners').where('id', req.params.id).where('type', 'hero').update({ sort_order: sortOrder });
-    res.redirect('/admin/banner');
-  } catch (err) {
-    next(err);
-  }
-}
-
-async function updateHeroLinkUrl(req, res, next) {
-  try {
-    const linkUrl = (req.body.linkUrl || '').trim() || null;
-    await db('banners').where('id', req.params.id).where('type', 'hero').update({ link_url: linkUrl });
+    const banners = await db('banners').where('type', 'hero');
+    for (const b of banners) {
+      const linkUrl = (req.body['linkUrl_' + b.id] || '').trim() || null;
+      const sortOrder = Number(req.body['sortOrder_' + b.id]) || 0;
+      await db('banners').where('id', b.id).update({ link_url: linkUrl, sort_order: sortOrder });
+    }
     res.redirect('/admin/banner');
   } catch (err) {
     next(err);
@@ -204,6 +201,30 @@ async function uploadFeaturedBanner(req, res, next) {
   }
 }
 
+async function toggleCategoryHomepage(req, res, next) {
+  try {
+    const category = await db('categories').where('id', req.params.id).first();
+    if (category) {
+      await db('categories').where('id', category.id).update({ show_on_homepage: !category.show_on_homepage });
+    }
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateCategoryName(req, res, next) {
+  try {
+    const name = (req.body.name || '').trim().slice(0, 24);
+    if (name) {
+      await db('categories').where('id', req.params.id).update({ name });
+    }
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function uploadCategoryThumb(req, res, next) {
   try {
     if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
@@ -236,9 +257,10 @@ module.exports = {
   createHeroBanner,
   updateHeroBannerMobileImage,
   toggleHeroBanner,
-  updateHeroSortOrder,
-  updateHeroLinkUrl,
+  bulkUpdateHeroBanners,
   deleteHeroBanner,
   uploadFeaturedBanner,
+  updateCategoryName,
+  toggleCategoryHomepage,
   uploadCategoryThumb
 };
