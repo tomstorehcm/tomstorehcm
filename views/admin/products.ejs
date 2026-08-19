@@ -30,7 +30,7 @@
                   <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
                 <% } %>
               </td>
-              <td><span class="status-badge <%= p.in_stock ? 'status-active' : 'status-inactive' %>"><%= p.in_stock ? 'Còn hàng' : 'Hết hàng' %></span></td>
+              <td><span class="status-badge <%= p.in_stock ? 'status-active' : 'status-inactive' %>"><%= p.in_stock ? 'Còn hàng' : 'Liên hệ' %></span></td>
               <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
               <td class="admin-actions">
                 <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>
@@ -74,7 +74,7 @@
                     <% if (p.sale_price) { %><br /><span class="text-accent"><%= formatVND(p.sale_price) %></span><% } %>
                   <% } %>
                 </td>
-                <td><span class="status-badge <%= p.in_stock ? 'status-active' : 'status-inactive' %>"><%= p.in_stock ? 'Còn hàng' : 'Hết hàng' %></span></td>
+                <td><span class="status-badge <%= p.in_stock ? 'status-active' : 'status-inactive' %>"><%= p.in_stock ? 'Còn hàng' : 'Liên hệ' %></span></td>
                 <td><%= p.is_hot_deal ? 'Có' : '-' %></td>
                 <td class="admin-actions">
                   <a href="/admin/san-pham/<%= p.id %>/sua">Sửa</a>

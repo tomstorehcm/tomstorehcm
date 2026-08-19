@@ -8,7 +8,7 @@
     <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price || '' %>" />
     <select name="variantInStock">
       <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
-      <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
+      <option value="0" <%= !vInStock ? 'selected' : '' %>>Liên hệ</option>
     </select>
     <input type="hidden" name="variantGroupIndex" class="variant-group-index-input" value="" />
     <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
