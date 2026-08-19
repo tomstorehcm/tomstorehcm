@@ -36,30 +36,55 @@ function parsePolicyIds(body) {
   return [].concat(body.policyIds || []).map(Number).filter((n) => !Number.isNaN(n));
 }
 
+function parseVariantGroupRows(body) {
+  const names = [].concat(body.groupName || []);
+  return names.map((n) => (n || '').trim()).filter(Boolean).map((name) => ({ name }));
+}
+
+async function syncVariantGroups(productId, groupRows) {
+  await db('product_variant_groups').where('product_id', productId).del();
+  if (groupRows.length === 0) return [];
+  await db('product_variant_groups').insert(
+    groupRows.map((g, i) => ({
+      product_id: productId,
+      name: g.name,
+      sort_order: i
+    }))
+  );
+  // Same positional re-lookup trick as variants/colors below -- ids aren't
+  // known until after insert.
+  const inserted = await db('product_variant_groups').where('product_id', productId).orderBy('sort_order');
+  return inserted.map((g) => g.id);
+}
+
 function parseVariantRows(body) {
   const labels = [].concat(body.variantLabel || []);
   const prices = [].concat(body.variantPrice || []);
   const inStocks = [].concat(body.variantInStock || []);
+  const groupIndexes = [].concat(body.variantGroupIndex || []);
   const rows = [];
   for (let i = 0; i < labels.length; i++) {
     const label = (labels[i] || '').trim();
     const price = Number(String(prices[i] || '').replace(/\D/g, ''));
     if (!label || Number.isNaN(price)) continue;
+    const groupIndex = groupIndexes[i] !== undefined && groupIndexes[i] !== '' ? Number(groupIndexes[i]) : null;
     rows.push({
       label,
       price,
-      inStock: inStocks[i] !== '0'
+      inStock: inStocks[i] !== '0',
+      groupIndex
     });
   }
   return rows;
 }
 
-async function syncProductVariants(productId, variantRows) {
+async function syncProductVariants(productId, variantRows, groupIds) {
   await db('product_variants').where('product_id', productId).del();
   if (variantRows.length === 0) return [];
   await db('product_variants').insert(
     variantRows.map((v, i) => ({
       product_id: productId,
+      variant_group_id: v.groupIndex !== null && groupIds && groupIds[v.groupIndex] !== undefined ? groupIds[v.groupIndex] : null,
       label: v.label,
       price: v.price,
       in_stock: v.inStock,
@@ -204,6 +229,7 @@ async function newProductForm(req, res, next) {
       policyGroups,
       allPolicies,
       selectedPolicyIds: [],
+      variantGroups: [],
       variants: [],
       colors: []
     });
@@ -250,6 +276,7 @@ async function createProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
+    const variantGroupRows = parseVariantGroupRows(req.body);
     const variantRows = parseVariantRows(req.body);
     const colorRows = await parseColorRows(req.body, req.files);
     const mainImageFile = req.files && req.files.imageFile && req.files.imageFile[0];
@@ -266,6 +293,7 @@ async function createProduct(req, res, next) {
         policyGroups,
         allPolicies,
         selectedPolicyIds,
+        variantGroups: variantGroupRows,
         variants: variantRows,
         colors: colorRows
       });
@@ -284,6 +312,7 @@ async function createProduct(req, res, next) {
         policyGroups,
         allPolicies,
         selectedPolicyIds,
+        variantGroups: variantGroupRows,
         variants: variantRows,
         colors: colorRows
       });
@@ -315,6 +344,7 @@ async function createProduct(req, res, next) {
           policyGroups,
           allPolicies,
           selectedPolicyIds,
+          variantGroups: variantGroupRows,
           variants: variantRows,
           colors: colorRows
         });
@@ -336,13 +366,15 @@ async function createProduct(req, res, next) {
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
       in_stock: req.body.outOfStock !== 'on',
-      is_featured: req.body.isFeatured === 'on'
+      is_featured: req.body.isFeatured === 'on',
+      variant_group_label: (req.body.variantGroupLabel || '').trim() || null
     });
     const insertedId = insertedRaw && insertedRaw.id ? insertedRaw.id : insertedRaw;
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(insertedId, policyGroupId, selectedPolicyIds);
-    const variantIds = await syncProductVariants(insertedId, variantRows);
+    const groupIds = await syncVariantGroups(insertedId, variantGroupRows);
+    const variantIds = await syncProductVariants(insertedId, variantRows, groupIds);
     await syncProductColors(insertedId, colorRows, variantIds);
     await syncGalleryImages(insertedId, (req.files && req.files.images) || []);
 
@@ -361,6 +393,7 @@ async function editProductForm(req, res, next) {
     const galleryImages = await db('product_images').where('product_id', product.id).orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = await getSelectedPolicyIds(product.id);
+    const variantGroups = await db('product_variant_groups').where('product_id', product.id).orderBy('sort_order');
     const variants = await db('product_variants').where('product_id', product.id).orderBy('sort_order');
     const colors = await db('product_colors').where('product_id', product.id).orderBy('sort_order');
     res.render('admin/product-form', {
@@ -374,6 +407,7 @@ async function editProductForm(req, res, next) {
       policyGroups,
       allPolicies,
       selectedPolicyIds,
+      variantGroups,
       variants,
       colors
     });
@@ -391,6 +425,7 @@ async function updateProduct(req, res, next) {
     const categories = await db('categories').orderBy('sort_order');
     const { policyGroups, allPolicies } = await getPolicyFormData();
     const selectedPolicyIds = parsePolicyIds(req.body);
+    const variantGroupRows = parseVariantGroupRows(req.body);
     const variantRows = parseVariantRows(req.body);
     const colorRows = await parseColorRows(req.body, req.files);
 
@@ -407,6 +442,7 @@ async function updateProduct(req, res, next) {
         policyGroups,
         allPolicies,
         selectedPolicyIds,
+        variantGroups: variantGroupRows,
         variants: variantRows,
         colors: colorRows
       });
@@ -424,12 +460,14 @@ async function updateProduct(req, res, next) {
       description: req.body.description || null,
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
       in_stock: req.body.outOfStock !== 'on',
-      is_featured: req.body.isFeatured === 'on'
+      is_featured: req.body.isFeatured === 'on',
+      variant_group_label: (req.body.variantGroupLabel || '').trim() || null
     });
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
     await syncProductPolicies(product.id, policyGroupId, selectedPolicyIds);
-    const variantIds = await syncProductVariants(product.id, variantRows);
+    const groupIds = await syncVariantGroups(product.id, variantGroupRows);
+    const variantIds = await syncProductVariants(product.id, variantRows, groupIds);
     await syncProductColors(product.id, colorRows, variantIds);
 
     res.redirect('/admin/san-pham/' + product.id + '/sua');

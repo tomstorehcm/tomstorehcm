@@ -74,19 +74,36 @@
         <h1><%= product.name %></h1>
 
         <%
-          var hasVariants = variants && variants.length > 0;
-          function colorsForVariant(v) { return (v.colors && v.colors.length > 0) ? v.colors : generalColors; }
-          var activeVariant = hasVariants ? variants[0] : null;
-          var activeColors = hasVariants ? colorsForVariant(activeVariant) : generalColors;
+          var hasGroups = variantGroups && variantGroups.length > 0;
+          var hasVariants = !hasGroups && variants && variants.length > 0;
+          var hasVariantSelection = hasGroups || hasVariants;
+          function colorsForVariant(v) { return (v && v.colors && v.colors.length > 0) ? v.colors : generalColors; }
+          var activeGroup = hasGroups ? variantGroups[0] : null;
+          var activeGroupVariants = hasGroups ? activeGroup.variants : variants;
+          var activeVariant = hasVariantSelection && activeGroupVariants.length > 0 ? activeGroupVariants[0] : null;
+          var activeColors = activeVariant ? colorsForVariant(activeVariant) : generalColors;
           var hasColors = activeColors && activeColors.length > 0;
           var activeColor = hasColors ? activeColors[0] : null;
           var activePrice = activeColor && activeColor.price != null ? activeColor.price : (activeVariant ? activeVariant.price : null);
           var effectiveInStock = product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
         %>
 
-        <% if (hasVariants) { %>
+        <% if (hasVariantSelection) { %>
           <script type="application/json" id="variantColorData"><%- JSON.stringify({
-            variants: variants.map(function(v) {
+            variantGroups: (variantGroups || []).map(function(g) {
+              return {
+                id: g.id, name: g.name,
+                variants: g.variants.map(function(v) {
+                  return {
+                    id: v.id, label: v.label, price: v.price, inStock: !!v.in_stock,
+                    colors: v.colors.map(function(c) {
+                      return { id: c.id, name: c.name, hex: c.hex_code, price: c.price, inStock: !!c.in_stock };
+                    })
+                  };
+                })
+              };
+            }),
+            variants: (variants || []).map(function(v) {
               return {
                 id: v.id, label: v.label, price: v.price, inStock: !!v.in_stock,
                 colors: v.colors.map(function(c) {
@@ -103,7 +120,7 @@
         <div class="product-price product-price-lg" id="productPriceBlock">
           <% if (product.is_contact_price) { %>
             <span class="price-current price-contact">Liên hệ</span>
-          <% } else if (hasVariants) { %>
+          <% } else if (hasVariantSelection) { %>
             <span class="price-current" id="variantPriceDisplay"><%= formatVND(activePrice) %></span>
           <% } else { %>
             <% var hasSale = product.sale_price && product.sale_price < product.price; %>
@@ -121,10 +138,27 @@
           <p class="product-stock product-stock-out">Hết hàng</p>
           <button type="button" class="btn btn-outline btn-lg" disabled>Hết hàng</button>
         <% } else { %>
-          <% if (hasVariants) { %>
+          <% if (hasGroups) { %>
+            <div class="variant-picker" id="groupPicker">
+              <label><%= product.variant_group_label %></label>
+              <div class="variant-options" id="groupOptionsWrap">
+                <% variantGroups.forEach(function(g, i) { %>
+                  <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-group-id="<%= g.id %>"><%= g.name %></button>
+                <% }); %>
+              </div>
+            </div>
             <div class="variant-picker" id="variantPicker">
               <label>Dung lượng</label>
-              <div class="variant-options">
+              <div class="variant-options" id="variantOptionsWrap">
+                <% activeGroupVariants.forEach(function(v, i) { %>
+                  <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-variant-id="<%= v.id %>" data-price="<%= v.price %>" data-in-stock="<%= v.in_stock ? '1' : '0' %>" <%= v.in_stock ? '' : 'disabled' %>><%= v.label %></button>
+                <% }); %>
+              </div>
+            </div>
+          <% } else if (hasVariants) { %>
+            <div class="variant-picker" id="variantPicker">
+              <label>Dung lượng</label>
+              <div class="variant-options" id="variantOptionsWrap">
                 <% variants.forEach(function(v, i) { %>
                   <button type="button" class="variant-option <%= i === 0 ? 'active' : '' %>" data-variant-id="<%= v.id %>" data-price="<%= v.price %>" data-in-stock="<%= v.in_stock ? '1' : '0' %>" <%= v.in_stock ? '' : 'disabled' %>><%= v.label %></button>
                 <% }); %>
@@ -145,7 +179,7 @@
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
             <input type="hidden" name="productId" value="<%= product.id %>" />
-            <% if (hasVariants) { %>
+            <% if (hasVariantSelection && activeVariant) { %>
               <input type="hidden" name="variantId" id="variantIdInput" value="<%= activeVariant.id %>" />
             <% } %>
             <input type="hidden" name="colorId" id="colorIdInput" value="<%= activeColor ? activeColor.id : '' %>" />

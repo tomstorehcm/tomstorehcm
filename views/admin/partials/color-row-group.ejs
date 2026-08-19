@@ -1,0 +1,33 @@
+<%
+  var cInStock = colorRowInStock(c);
+  var cHex = colorRowHex(c);
+%>
+<div class="color-row-group">
+  <div class="color-row<%= withPrice ? ' color-row-priced' : '' %>">
+    <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
+      <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
+      <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
+    </label>
+    <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
+    <details class="color-swatch-picker">
+      <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
+      <div class="color-swatch-grid">
+        <% PRESET_COLORS.forEach(function(preset) { %>
+          <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
+        <% }); %>
+      </div>
+    </details>
+    <input type="hidden" name="colorHex" class="color-hex-input" value="<%= cHex %>" />
+    <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
+    <% if (withPrice) { %>
+      <input type="text" inputmode="numeric" class="price-input color-price-input" name="colorPrice" placeholder="Giá riêng (để trống = dùng giá dung lượng)" value="<%= c.price || '' %>" />
+    <% } %>
+    <select name="colorInStock">
+      <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
+      <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
+    </select>
+    <input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />
+    <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
+  </div>
+</div>

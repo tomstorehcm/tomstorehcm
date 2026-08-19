@@ -25,6 +25,10 @@ async function showProduct(req, res, next) {
       .where('product_id', product.id)
       .orderBy('sort_order');
 
+    const variantGroups = await db('product_variant_groups')
+      .where('product_id', product.id)
+      .orderBy('sort_order');
+
     const variants = await db('product_variants')
       .where('product_id', product.id)
       .orderBy('sort_order');
@@ -40,6 +44,15 @@ async function showProduct(req, res, next) {
       v.colors = colors.filter((c) => c.variant_id === v.id);
     });
     const generalColors = colors.filter((c) => !c.variant_id);
+
+    // Optional third tier above capacity/color (e.g. MacBook screen size,
+    // iPad connectivity): each group holds its own subset of the capacities
+    // above. Variants with no variant_group_id are the flat/ungrouped case
+    // every other product still uses.
+    variantGroups.forEach((g) => {
+      g.variants = variants.filter((v) => v.variant_group_id === g.id);
+    });
+    const flatVariants = variants.filter((v) => !v.variant_group_id);
 
     const images = [];
     if (product.image_url) images.push(product.image_url);
@@ -62,7 +75,8 @@ async function showProduct(req, res, next) {
       specs,
       images,
       policies,
-      variants,
+      variantGroups,
+      variants: flatVariants,
       colors,
       generalColors
     });

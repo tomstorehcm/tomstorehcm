@@ -1,0 +1,24 @@
+<%
+  var vInStock = colorRowInStock(v);
+  var globalVariantIndex = variants.indexOf(v);
+%>
+<div class="variant-row-group">
+  <div class="variant-row">
+    <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label || '' %>" />
+    <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price || '' %>" />
+    <select name="variantInStock">
+      <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
+      <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
+    </select>
+    <input type="hidden" name="variantGroupIndex" class="variant-group-index-input" value="" />
+    <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+  </div>
+  <div class="variant-colors">
+    <div class="variant-colors-rows">
+      <% colorsForVariant(colors, v, globalVariantIndex).forEach(function(c) { %>
+        <%- include('color-row-group', { c: c, withPrice: true, PRESET_COLORS: PRESET_COLORS, colorRowInStock: colorRowInStock, colorRowHex: colorRowHex }) %>
+      <% }); %>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>
+  </div>
+</div>

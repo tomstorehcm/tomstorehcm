@@ -132,58 +132,51 @@
           return c.variantIndex === null || typeof c.variantIndex === 'undefined';
         });
       }
+      function variantsForGroup(allVariants, group, groupIndex) {
+        return (allVariants || []).filter(function(v) {
+          if (typeof group.id !== 'undefined') return v.variant_group_id === group.id;
+          return v.groupIndex === groupIndex;
+        });
+      }
+      function ungroupedVariants(allVariants) {
+        return (allVariants || []).filter(function(v) {
+          if (typeof v.variant_group_id !== 'undefined') return !v.variant_group_id;
+          return v.groupIndex === null || typeof v.groupIndex === 'undefined';
+        });
+      }
     %>
     <div class="form-group">
-      <label>Dung lượng / phiên bản (tùy chọn)</label>
-      <div id="variantRows" class="variant-rows">
-        <% (variants || []).forEach(function(v, vi) { %>
-          <% var vInStock = colorRowInStock(v); %>
-          <div class="variant-row-group">
-            <div class="variant-row">
-              <input type="text" name="variantLabel" placeholder="VD: 256GB" value="<%= v.label %>" />
-              <input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" value="<%= v.price %>" />
-              <select name="variantInStock">
-                <option value="1" <%= vInStock ? 'selected' : '' %>>Còn hàng</option>
-                <option value="0" <%= !vInStock ? 'selected' : '' %>>Hết hàng</option>
-              </select>
-              <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+      <label for="variantGroupLabel">Tên nhóm lớn (tùy chọn)</label>
+      <input type="text" id="variantGroupLabel" name="variantGroupLabel" value="<%= product.variant_group_label || '' %>" placeholder="VD: Kích thước màn hình, Loại kết nối" />
+      <small>Dùng khi sản phẩm cần chia theo 1 nhóm lớn trước cả dung lượng (VD: MacBook chia theo kích thước màn hình 13/14/16 inch, iPad chia theo loại kết nối WiFi/WiFi+5G), mỗi nhóm có dung lượng và màu riêng của nó. Để trống nếu sản phẩm chỉ cần chọn dung lượng/màu bình thường, không cần nhóm lớn.</small>
+    </div>
+    <div class="form-group" id="groupedVariantsSection" hidden>
+      <label>Dung lượng / phiên bản theo từng nhóm lớn</label>
+      <div id="groupRows" class="group-rows">
+        <% (variantGroups || []).forEach(function(g, gi) { %>
+          <div class="group-row-group">
+            <div class="group-row">
+              <input type="text" name="groupName" placeholder="VD: 13 inch" value="<%= g.name %>" />
+              <button type="button" class="btn-remove group-remove-btn" aria-label="Xóa nhóm">&times;</button>
             </div>
-            <div class="variant-colors">
-              <div class="variant-colors-rows">
-                <% colorsForVariant(colors, v, vi).forEach(function(c) { %>
-                  <% var cInStock = colorRowInStock(c); var cHex = colorRowHex(c); %>
-                  <div class="color-row-group">
-                    <div class="color-row color-row-priced">
-                      <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
-                        <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
-                        <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
-                      </label>
-                      <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
-                      <details class="color-swatch-picker">
-                        <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
-                        <div class="color-swatch-grid">
-                          <% PRESET_COLORS.forEach(function(preset) { %>
-                            <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
-                          <% }); %>
-                        </div>
-                      </details>
-                      <input type="hidden" name="colorHex" class="color-hex-input" value="<%= cHex %>" />
-                      <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
-                      <input type="text" inputmode="numeric" class="price-input color-price-input" name="colorPrice" placeholder="Giá riêng (để trống = dùng giá dung lượng)" value="<%= c.price || '' %>" />
-                      <select name="colorInStock">
-                        <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
-                        <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
-                      </select>
-                      <input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />
-                      <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
-                    </div>
-                  </div>
+            <div class="group-variants">
+              <div class="group-variants-rows">
+                <% variantsForGroup(variants, g, gi).forEach(function(v) { %>
+                  <%- include('partials/variant-row-group', { v: v, variants: variants, colors: colors, PRESET_COLORS: PRESET_COLORS, colorRowInStock: colorRowInStock, colorRowHex: colorRowHex, colorsForVariant: colorsForVariant }) %>
                 <% }); %>
               </div>
-              <button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>
+              <button type="button" class="btn btn-outline btn-sm add-group-variant-btn">+ Thêm dung lượng cho nhóm này</button>
             </div>
           </div>
+        <% }); %>
+      </div>
+      <button type="button" id="addGroupRowBtn" class="btn btn-outline btn-sm">+ Thêm nhóm lớn</button>
+    </div>
+    <div class="form-group" id="flatVariantsSection">
+      <label>Dung lượng / phiên bản (tùy chọn)</label>
+      <div id="variantRows" class="variant-rows">
+        <% ungroupedVariants(variants).forEach(function(v) { %>
+          <%- include('partials/variant-row-group', { v: v, variants: variants, colors: colors, PRESET_COLORS: PRESET_COLORS, colorRowInStock: colorRowInStock, colorRowHex: colorRowHex, colorsForVariant: colorsForVariant }) %>
         <% }); %>
       </div>
       <button type="button" id="addVariantRowBtn" class="btn btn-outline btn-sm">+ Thêm dung lượng</button>
@@ -193,33 +186,7 @@
       <label>Màu sắc chung (không theo dung lượng)</label>
       <div id="colorRows" class="color-rows">
         <% generalColors(colors).forEach(function(c) { %>
-          <% var cInStock = colorRowInStock(c); var cHex = colorRowHex(c); %>
-          <div class="color-row-group">
-            <div class="color-row">
-              <label class="color-image-picker" title="<%= c.image_url ? 'Đổi ảnh cho màu này' : 'Chọn ảnh cho màu này' %>">
-                <img src="<%= c.image_url || '' %>" alt="" class="color-image-preview" <%= c.image_url ? '' : 'hidden' %> />
-                <svg class="color-image-placeholder-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" <%= c.image_url ? 'hidden' : '' %>><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M21 15l-5.5-5.5a2 2 0 0 0-2.8 0L4 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <input type="file" class="color-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
-              </label>
-              <input type="hidden" name="colorImageUrl" class="color-image-url-input" value="<%= c.image_url || '' %>" />
-              <details class="color-swatch-picker">
-                <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
-                <div class="color-swatch-grid">
-                  <% PRESET_COLORS.forEach(function(preset) { %>
-                    <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
-                  <% }); %>
-                </div>
-              </details>
-              <input type="hidden" name="colorHex" class="color-hex-input" value="<%= cHex %>" />
-              <input type="text" name="colorName" placeholder="VD: Titan Xanh" value="<%= c.name %>" />
-              <select name="colorInStock">
-                <option value="1" <%= cInStock ? 'selected' : '' %>>Còn hàng</option>
-                <option value="0" <%= !cInStock ? 'selected' : '' %>>Hết hàng</option>
-              </select>
-              <input type="hidden" name="colorVariantIndex" class="color-variant-index-input" value="" />
-              <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa dòng">&times;</button>
-            </div>
-          </div>
+          <%- include('partials/color-row-group', { c: c, withPrice: false, PRESET_COLORS: PRESET_COLORS, colorRowInStock: colorRowInStock, colorRowHex: colorRowHex }) %>
         <% }); %>
       </div>
       <button type="button" id="addColorRowBtn" class="btn btn-outline btn-sm">+ Thêm màu sắc</button>
@@ -413,11 +380,63 @@
       return group;
     }
 
-    // Sự kiện cho mọi dòng màu, dù nằm trong danh sách chung hay lồng trong 1
-    // dòng dung lượng -- gắn 1 lần trên toàn form thay vì lặp lại cho từng nơi.
+    function buildVariantRowGroup() {
+      var group = document.createElement('div');
+      group.className = 'variant-row-group';
+      group.innerHTML =
+        '<div class="variant-row">' +
+        '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
+        '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
+        '<select name="variantInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
+        '<input type="hidden" name="variantGroupIndex" class="variant-group-index-input" value="" />' +
+        '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+        '</div>' +
+        '<div class="variant-colors">' +
+        '<div class="variant-colors-rows"></div>' +
+        '<button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>' +
+        '</div>';
+      return group;
+    }
+
+    function buildGroupRowGroup() {
+      var group = document.createElement('div');
+      group.className = 'group-row-group';
+      group.innerHTML =
+        '<div class="group-row">' +
+        '<input type="text" name="groupName" placeholder="VD: 13 inch" />' +
+        '<button type="button" class="btn-remove group-remove-btn" aria-label="Xóa nhóm">&times;</button>' +
+        '</div>' +
+        '<div class="group-variants">' +
+        '<div class="group-variants-rows"></div>' +
+        '<button type="button" class="btn btn-outline btn-sm add-group-variant-btn">+ Thêm dung lượng cho nhóm này</button>' +
+        '</div>';
+      return group;
+    }
+
+    // Sự kiện cho mọi dòng màu/dung lượng/nhóm, dù nằm phẳng hay lồng nhiều
+    // cấp (nhóm > dung lượng > màu) -- gắn 1 lần trên toàn form thay vì lặp
+    // lại theo từng nơi chứa, vì các dòng có thể được thêm động ở bất kỳ cấp nào.
     productForm.addEventListener('click', function (e) {
       if (e.target.classList.contains('color-remove-btn')) {
         e.target.closest('.color-row-group').remove();
+        return;
+      }
+      if (e.target.classList.contains('variant-remove-btn')) {
+        e.target.closest('.variant-row-group').remove();
+        return;
+      }
+      if (e.target.classList.contains('group-remove-btn')) {
+        e.target.closest('.group-row-group').remove();
+        return;
+      }
+      if (e.target.classList.contains('add-variant-color-btn')) {
+        var colorRowsContainer = e.target.closest('.variant-colors').querySelector('.variant-colors-rows');
+        colorRowsContainer.appendChild(buildColorRowGroup(true));
+        return;
+      }
+      if (e.target.classList.contains('add-group-variant-btn')) {
+        var variantRowsContainer = e.target.closest('.group-variants').querySelector('.group-variants-rows');
+        variantRowsContainer.appendChild(buildVariantRowGroup());
         return;
       }
       if (e.target.classList.contains('color-swatch-option')) {
@@ -443,36 +462,41 @@
       if (placeholder) placeholder.hidden = true;
     });
 
-    // Dung lượng / phiên bản: thêm, xóa dòng động, mỗi dòng có khu màu riêng lồng bên trong
+    // Dung lượng / phiên bản (chế độ phẳng, không nhóm): thêm dòng động
     var variantRows = document.getElementById('variantRows');
     var addVariantRowBtn = document.getElementById('addVariantRowBtn');
     if (variantRows && addVariantRowBtn) {
       addVariantRowBtn.addEventListener('click', function () {
-        var group = document.createElement('div');
-        group.className = 'variant-row-group';
-        group.innerHTML =
-          '<div class="variant-row">' +
-          '<input type="text" name="variantLabel" placeholder="VD: 256GB" />' +
-          '<input type="text" inputmode="numeric" class="price-input variant-price-input" name="variantPrice" placeholder="Giá (VND)" />' +
-          '<select name="variantInStock"><option value="1" selected>Còn hàng</option><option value="0">Hết hàng</option></select>' +
-          '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>' +
-          '</div>' +
-          '<div class="variant-colors">' +
-          '<div class="variant-colors-rows"></div>' +
-          '<button type="button" class="btn btn-outline btn-sm add-variant-color-btn">+ Thêm màu cho dung lượng này</button>' +
-          '</div>';
-        variantRows.appendChild(group);
+        variantRows.appendChild(buildVariantRowGroup());
       });
-      variantRows.addEventListener('click', function (e) {
-        if (e.target.classList.contains('variant-remove-btn')) {
-          e.target.closest('.variant-row-group').remove();
-          return;
-        }
-        if (e.target.classList.contains('add-variant-color-btn')) {
-          var rowsContainer = e.target.closest('.variant-colors').querySelector('.variant-colors-rows');
-          rowsContainer.appendChild(buildColorRowGroup(true));
-        }
+    }
+
+    // Nhóm lớn: thêm dòng nhóm động, mỗi nhóm có khu dung lượng riêng lồng bên trong
+    var groupRows = document.getElementById('groupRows');
+    var addGroupRowBtn = document.getElementById('addGroupRowBtn');
+    if (groupRows && addGroupRowBtn) {
+      addGroupRowBtn.addEventListener('click', function () {
+        groupRows.appendChild(buildGroupRowGroup());
       });
+    }
+
+    // Bật/tắt chế độ nhóm lớn theo việc admin có gõ "Tên nhóm lớn" hay không --
+    // để trống thì dùng khu dung lượng phẳng như trước, gõ tên thì chuyển sang
+    // khu nhóm lớn (mỗi nhóm có dung lượng + màu riêng bên trong).
+    var variantGroupLabelInput = document.getElementById('variantGroupLabel');
+    var groupedVariantsSection = document.getElementById('groupedVariantsSection');
+    var flatVariantsSection = document.getElementById('flatVariantsSection');
+    function usingVariantGroups() {
+      return !!(variantGroupLabelInput && variantGroupLabelInput.value.trim());
+    }
+    function syncVariantMode() {
+      var useGroups = usingVariantGroups();
+      if (groupedVariantsSection) groupedVariantsSection.hidden = !useGroups;
+      if (flatVariantsSection) flatVariantsSection.hidden = useGroups;
+    }
+    if (variantGroupLabelInput && groupedVariantsSection && flatVariantsSection) {
+      variantGroupLabelInput.addEventListener('input', syncVariantMode);
+      syncVariantMode();
     }
 
     // Màu sắc chung (không theo dung lượng): thêm dòng động
@@ -485,14 +509,24 @@
     }
 
     // Truoc khi luu: gan lai colorVariantIndex theo vi tri dong dung luong hien
-    // tai (mau nam ngoai moi dong dung luong thi giu nguyen = rong/chung), va
-    // danh lai ten file anh theo mau (colorImage_0, colorImage_1, ...) dung vi
-    // tri hien tai trong toan bo danh sach, de server ghep dung anh voi dung dong.
+    // tai trong toan bo trang (ke ca dung luong nam long trong 1 nhom lon), gan
+    // lai variantGroupIndex theo vi tri dong nhom lon chua dung luong do (rong
+    // neu dung luong khong nam trong nhom nao), danh lai ten file anh theo mau
+    // (colorImage_0, colorImage_1, ...) dung vi tri hien tai trong toan bo danh
+    // sach, va vo hieu hoa (disable) toan bo khu dung luong dang an de khong
+    // gui len server 2 bo du lieu dung luong cung luc (chi khu dang hien mac
+    // dinh -- phang hay theo nhom -- moi thuc su duoc luu).
     productForm.addEventListener('submit', function () {
+      var allGroupRowGroups = document.querySelectorAll('.group-row-group');
       document.querySelectorAll('.variant-row-group').forEach(function (group, groupIndex) {
         group.querySelectorAll('.color-variant-index-input').forEach(function (input) {
           input.value = groupIndex;
         });
+        var groupIndexInput = group.querySelector('.variant-group-index-input');
+        if (groupIndexInput) {
+          var parentGroup = group.closest('.group-row-group');
+          groupIndexInput.value = parentGroup ? Array.prototype.indexOf.call(allGroupRowGroups, parentGroup) : '';
+        }
       });
       document.querySelectorAll('.color-row').forEach(function (row, i) {
         var fileInput = row.querySelector('.color-image-input');
@@ -500,6 +534,12 @@
           fileInput.name = 'colorImage_' + i;
         }
       });
+      var inactiveSection = usingVariantGroups() ? flatVariantsSection : groupedVariantsSection;
+      if (inactiveSection) {
+        inactiveSection.querySelectorAll('input, select, textarea').forEach(function (el) {
+          el.disabled = true;
+        });
+      }
     });
 
     // Ảnh đại diện: xem trước ngay khi chọn file
