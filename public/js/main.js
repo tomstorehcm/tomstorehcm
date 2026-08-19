@@ -180,7 +180,7 @@
       pickerAddBtn.disabled = !inStock;
       pickerAddBtn.innerHTML = inStock
         ? '<span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>'
-        : 'Hết hàng';
+        : 'Liên hệ';
     }
 
     function jumpGalleryForColor(colorId) {
@@ -224,7 +224,7 @@
 
           if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
           if (pickerStockText) {
-            pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+            pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
           setAddBtnLabel(inStock);
@@ -396,7 +396,7 @@
 
           if (variantPriceDisplay) variantPriceDisplay.textContent = formatVNDClient(price);
           if (pickerStockText) {
-            pickerStockText.textContent = inStock ? 'Còn hàng' : 'Hết hàng';
+            pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
           setAddBtnLabel(inStock);
@@ -501,7 +501,7 @@
 
       var updateSimpleAvailability = function () {
         if (pickerStockText) {
-          pickerStockText.textContent = colorInStock ? 'Còn hàng' : 'Hết hàng';
+          pickerStockText.textContent = colorInStock ? 'Còn hàng' : 'Liên hệ';
           pickerStockText.classList.toggle('product-stock-out', !colorInStock);
         }
         setAddBtnLabel(colorInStock);

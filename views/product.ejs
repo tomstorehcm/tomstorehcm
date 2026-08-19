@@ -135,8 +135,8 @@
         <% if (product.is_contact_price) { %>
           <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-lg">Liên hệ đặt mua: <%= hotline %></a>
         <% } else if (!product.in_stock) { %>
-          <p class="product-stock product-stock-out">Hết hàng</p>
-          <button type="button" class="btn btn-outline btn-lg" disabled>Hết hàng</button>
+          <p class="product-stock product-stock-out">Liên hệ</p>
+          <button type="button" class="btn btn-outline btn-lg" disabled>Liên hệ</button>
         <% } else { %>
           <% if (hasGroups) { %>
             <div class="variant-picker" id="groupPicker">
@@ -175,7 +175,7 @@
             </div>
           </div>
 
-          <p class="product-stock" id="productStockText"><%= effectiveInStock ? 'Còn hàng' : 'Hết hàng' %></p>
+          <p class="product-stock" id="productStockText"><%= effectiveInStock ? 'Còn hàng' : 'Liên hệ' %></p>
 
           <form action="/gio-hang/them" method="post" class="add-to-cart-form-detail" id="productDetailCartForm">
             <input type="hidden" name="productId" value="<%= product.id %>" />
@@ -187,12 +187,12 @@
               <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
                 <% if (effectiveInStock) { %>
                   <span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>
-                <% } else { %>Hết hàng<% } %>
+                <% } else { %>Liên hệ<% } %>
               </button>
               <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
                 <% if (effectiveInStock) { %>
                   <span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>
-                <% } else { %>Hết hàng<% } %>
+                <% } else { %>Liên hệ<% } %>
               </button>
             </div>
           </form>

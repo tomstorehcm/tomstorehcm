@@ -27,7 +27,7 @@
       <input type="hidden" name="productId" value="<%= product.id %>" />
       <input type="hidden" name="quantity" value="1" />
       <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
-      <button type="submit" class="btn btn-flow btn-block" <%= product.in_stock ? '' : 'disabled' %>><%= product.in_stock ? 'Thêm vào giỏ' : 'Hết hàng' %></button>
+      <button type="submit" class="btn btn-flow btn-block" <%= product.in_stock ? '' : 'disabled' %>><%= product.in_stock ? 'Thêm vào giỏ' : 'Liên hệ' %></button>
     </form>
   </div>
 </article>

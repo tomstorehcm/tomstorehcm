@@ -238,7 +238,7 @@ table { border-collapse: collapse; width: 100%; }
 
   .category-nav-sep { display: none; }
 }
-.category-nav-sep { color: rgba(255, 255, 255, 0.25); font-size: 14px; }
+.category-nav-sep { color: rgba(255, 255, 255, 0.35); font-size: 20px; font-weight: 700; line-height: 1; }
 .category-nav a { color: #c7c7cc; font-weight: 600; font-size: 14px; padding: var(--space-2) 0; white-space: nowrap; }
 .category-nav a:hover, .category-nav a.active { color: #fff; }
 .category-nav a.hot-deal-nav-link {
