@@ -326,6 +326,19 @@
     document.querySelectorAll('.price-input').forEach(formatPriceInput);
 
     var productForm = document.getElementById('productForm');
+
+    // Canh bao neu roi trang (dong tab, bam link khac...) khi form dang co
+    // thay doi chua luu -- tranh mat du lieu da go do quen bam nut Luu.
+    var formDirty = false;
+    productForm.addEventListener('input', function () { formDirty = true; });
+    productForm.addEventListener('change', function () { formDirty = true; });
+    productForm.addEventListener('submit', function () { formDirty = false; });
+    window.addEventListener('beforeunload', function (e) {
+      if (!formDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
     productForm.addEventListener('input', function (e) {
       if (!e.target.classList.contains('price-input')) return;
       var input = e.target;
