@@ -232,18 +232,22 @@
         var activeColorId = null;
 
         var colorsForVariant = function (variant) {
-          return (variant.colors && variant.colors.length > 0) ? variant.colors : data.generalColors;
+          return (variant && variant.colors && variant.colors.length > 0) ? variant.colors : data.generalColors;
         };
 
         var updatePriceAndStock = function () {
-          var variant = data.variantGroups[activeGroupIndex].variants[activeVariantIndex];
+          var group = data.variantGroups[activeGroupIndex];
+          // A group can legitimately have zero capacities added under it yet
+          // (incomplete product setup) -- fall back to a "nothing sellable"
+          // state instead of crashing on a missing variant.
+          var variant = group ? group.variants[activeVariantIndex] : null;
           var colors = colorsForVariant(variant);
           var color = activeColorId != null ? colors.filter(function (c) { return c.id === activeColorId; })[0] : null;
-          var price = (color && color.price != null) ? color.price : variant.price;
-          // Price of 0 means no real price was ever set for this variant/color
+          var price = (color && color.price != null) ? color.price : (variant ? variant.price : null);
+          // Price of 0 (or no variant at all) means no real price was ever set
           // -- treat it like out of stock and show "Liên hệ" instead of "0₫".
-          var isContactOnly = price === 0;
-          var inStock = !isContactOnly && variant.inStock && (color ? color.inStock : true);
+          var isContactOnly = price == null || price === 0;
+          var inStock = !isContactOnly && (variant ? variant.inStock : false) && (color ? color.inStock : true);
 
           if (variantPriceDisplay) {
             variantPriceDisplay.textContent = isContactOnly ? 'Liên hệ' : formatVNDClient(price);
@@ -302,8 +306,9 @@
               btn.classList.toggle('active', i === variantIndex);
             });
           }
-          var variant = data.variantGroups[activeGroupIndex].variants[variantIndex];
-          if (variantIdInput) variantIdInput.value = variant.id;
+          var group = data.variantGroups[activeGroupIndex];
+          var variant = group ? group.variants[variantIndex] : null;
+          if (variantIdInput) variantIdInput.value = variant ? variant.id : '';
 
           var colors = colorsForVariant(variant);
           renderColorButtons(colors);
@@ -427,7 +432,7 @@
         var activeColorId = null;
 
         var colorsForVariant = function (variant) {
-          return (variant.colors && variant.colors.length > 0) ? variant.colors : data.generalColors;
+          return (variant && variant.colors && variant.colors.length > 0) ? variant.colors : data.generalColors;
         };
 
         var updatePriceAndStock = function () {

@@ -87,8 +87,10 @@
           var activePrice = activeColor && activeColor.price != null ? activeColor.price : (activeVariant ? activeVariant.price : null);
           // A variant/color price of 0 means the admin never actually set one
           // (price is a required non-null column) -- treat that the same as
-          // out of stock and show "Liên hệ" instead of a literal "0₫".
-          var activePriceIsContact = activePrice === 0;
+          // out of stock and show "Liên hệ" instead of a literal "0₫". A null
+          // price means there's no variant to even price (e.g. a group with no
+          // capacities added under it yet) -- same fallback applies.
+          var activePriceIsContact = activePrice == null || activePrice === 0;
           var effectiveInStock = !activePriceIsContact && product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
         %>
 
