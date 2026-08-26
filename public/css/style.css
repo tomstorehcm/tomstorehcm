@@ -768,7 +768,14 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .installment-editor { min-height: 260px; background: #fff; font-size: 15px; }
 .installment-editor img { max-width: 100%; height: auto; }
 
-.installment-page { display: flex; flex-direction: column; gap: var(--space-7); margin-top: var(--space-4); max-width: 760px; }
+.installment-page { display: flex; flex-direction: column; gap: var(--space-5); margin-top: var(--space-4); max-width: 760px; }
+.installment-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.installment-tab {
+  background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px;
+  padding: var(--space-2) var(--space-5); font-size: 15px; font-weight: 700; color: var(--color-text-muted);
+}
+.installment-tab:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.installment-tab.active { background: var(--gradient-brand); border-color: transparent; color: #fff; }
 .installment-block h2 { margin-bottom: var(--space-4); }
 .installment-content { line-height: 1.7; }
 .installment-content p { margin: 0 0 var(--space-3); }

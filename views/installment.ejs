@@ -15,8 +15,12 @@
     <div class="section-heading"><h1>Trả góp linh động</h1></div>
 
     <div class="installment-page">
-      <section class="installment-block">
-        <h2><%= tinDung.title %></h2>
+      <div class="installment-tabs" id="installmentTabs">
+        <button type="button" class="installment-tab active" data-target="panel-tin-dung"><%= tinDung.title %></button>
+        <button type="button" class="installment-tab" data-target="panel-ngan-hang"><%= nganHang.title %></button>
+      </div>
+
+      <section class="installment-block" id="panel-tin-dung">
         <% if (tinDung.content_html) { %>
           <div class="installment-content"><%- tinDung.content_html %></div>
         <% } else { %>
@@ -24,8 +28,7 @@
         <% } %>
       </section>
 
-      <section class="installment-block">
-        <h2><%= nganHang.title %></h2>
+      <section class="installment-block" id="panel-ngan-hang" hidden>
         <% if (nganHang.content_html) { %>
           <div class="installment-content"><%- nganHang.content_html %></div>
         <% } else { %>
@@ -38,5 +41,19 @@
 
 <%- include('partials/footer') %>
 <script src="/js/main.js"></script>
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.installment-tab');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+        var targetId = tab.getAttribute('data-target');
+        document.querySelectorAll('.installment-block').forEach(function (panel) {
+          panel.hidden = panel.id !== targetId;
+        });
+      });
+    });
+  })();
+</script>
 </body>
 </html>
