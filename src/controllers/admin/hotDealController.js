@@ -25,7 +25,7 @@ async function listHotDeals(req, res, next) {
     }));
 
     res.render('admin/hotdeals', {
-      title: 'Quản lý Hot Deal - TOMSTORE Admin',
+      title: 'Quản lý Best Deal - TOMSTORE Admin',
       activeProducts,
       sections,
       categories,

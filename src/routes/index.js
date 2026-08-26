@@ -6,6 +6,7 @@ const categoryController = require('../controllers/categoryController');
 const productController = require('../controllers/productController');
 const cartController = require('../controllers/cartController');
 const checkoutController = require('../controllers/checkoutController');
+const contactRequestController = require('../controllers/contactRequestController');
 
 router.get('/', homeController.showHome);
 
@@ -22,5 +23,9 @@ router.post('/thanh-toan/mua-ngay', checkoutController.buyNow);
 router.get('/thanh-toan', checkoutController.showCheckout);
 router.post('/thanh-toan', checkoutController.checkoutValidators, checkoutController.submitOrder);
 router.get('/don-hang/:code', checkoutController.showConfirmation);
+
+router.get('/lien-he-bao-gia', contactRequestController.showContactRequestForm);
+router.post('/lien-he-bao-gia', contactRequestController.contactRequestValidators, contactRequestController.submitContactRequest);
+router.get('/lien-he-bao-gia/:code', contactRequestController.showContactRequestConfirmation);
 
 module.exports = router;

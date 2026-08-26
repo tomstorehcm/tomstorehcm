@@ -23,11 +23,15 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span class="timer-text">--:--:--</span>
     </div>
-    <form action="/gio-hang/them" method="post" class="add-to-cart-form product-card-cta">
-      <input type="hidden" name="productId" value="<%= product.id %>" />
-      <input type="hidden" name="quantity" value="1" />
-      <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
-      <button type="submit" class="btn btn-flow btn-block" <%= product.in_stock ? '' : 'disabled' %>><%= product.in_stock ? 'Thêm vào giỏ' : 'Liên hệ' %></button>
-    </form>
+    <% if (!product.in_stock) { %>
+      <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-block product-card-cta">Liên hệ</a>
+    <% } else { %>
+      <form action="/gio-hang/them" method="post" class="add-to-cart-form product-card-cta">
+        <input type="hidden" name="productId" value="<%= product.id %>" />
+        <input type="hidden" name="quantity" value="1" />
+        <input type="hidden" name="redirectTo" value="<%= currentPath %>" />
+        <button type="submit" class="btn btn-flow btn-block">Thêm vào giỏ</button>
+      </form>
+    <% } %>
   </div>
 </article>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <div class="order-confirmation">
+      <div class="order-confirmation-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h1>Đã gửi yêu cầu liên hệ!</h1>
+      <p>Mã yêu cầu của bạn: <strong><%= order.order_code %></strong></p>
+
+      <div class="order-instructions">
+        <h2>Bước tiếp theo</h2>
+        <ul>
+          <li>TOMSTORE sẽ gọi lại theo số điện thoại bạn đã để lại để báo giá.</li>
+          <li>Thời gian liên hệ thường trong giờ hành chính, sớm nhất có thể.</li>
+        </ul>
+      </div>
+
+      <table class="cart-table">
+        <thead><tr><th>Sản phẩm quan tâm</th></tr></thead>
+        <tbody>
+          <% items.forEach(function(item) { %>
+            <tr><td><%= item.product_name %></td></tr>
+          <% }); %>
+        </tbody>
+      </table>
+
+      <a href="/" class="btn btn-primary btn-lg">Tiếp tục xem sản phẩm</a>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

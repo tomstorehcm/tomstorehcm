@@ -139,10 +139,10 @@
         </div>
 
         <% if (product.is_contact_price) { %>
-          <a href="tel:<%= hotline.replace(/\s/g, '') %>" class="btn btn-primary btn-lg">Liên hệ đặt mua: <%= hotline %></a>
+          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg">Liên hệ</a>
         <% } else if (!product.in_stock) { %>
           <p class="product-stock product-stock-out">Liên hệ</p>
-          <button type="button" class="btn btn-outline btn-lg" disabled>Liên hệ</button>
+          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg">Liên hệ</a>
         <% } else { %>
           <% if (hasGroups) { %>
             <div class="variant-picker" id="groupPicker">
@@ -190,16 +190,13 @@
             <% } %>
             <input type="hidden" name="colorId" id="colorIdInput" value="<%= activeColor ? activeColor.id : '' %>" />
             <div class="product-detail-cta-row">
-              <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
-                <% if (effectiveInStock) { %>
-                  <span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>
-                <% } else { %>Liên hệ<% } %>
+              <button type="submit" name="intent" value="add" id="addToCartBtn" class="btn btn-outline btn-lg" <%= effectiveInStock ? '' : 'hidden' %>>
+                <span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>
               </button>
-              <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'disabled' %>>
-                <% if (effectiveInStock) { %>
-                  <span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>
-                <% } else { %>Liên hệ<% } %>
+              <button type="submit" name="intent" value="checkout" formaction="/thanh-toan/mua-ngay" class="btn btn-primary btn-lg" <%= effectiveInStock ? '' : 'hidden' %>>
+                <span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>
               </button>
+              <a id="contactRequestBtn" href="/lien-he-bao-gia?productId=<%= product.id %><%= activeVariant ? '&variantId=' + activeVariant.id : '' %><%= activeColor ? '&colorId=' + activeColor.id : '' %>" class="btn btn-primary btn-lg" <%= effectiveInStock ? 'hidden' : '' %>>Liên hệ</a>
             </div>
           </form>
         <% } %>

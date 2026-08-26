@@ -13,10 +13,10 @@
 
   <% if (standaloneProducts.length > 0) { %>
     <section class="admin-category-section">
-      <h2 class="admin-category-heading admin-category-heading-standalone">🏷️ Sản phẩm Hot Deal riêng (<%= standaloneProducts.length %>)</h2>
-      <p class="admin-hint">Tạo trực tiếp từ trang Hot Deal, không thuộc danh mục sản phẩm chính bên dưới.</p>
+      <h2 class="admin-category-heading admin-category-heading-standalone">🏷️ Sản phẩm Best Deal riêng (<%= standaloneProducts.length %>)</h2>
+      <p class="admin-hint">Tạo trực tiếp từ trang Best Deal, không thuộc danh mục sản phẩm chính bên dưới.</p>
       <table class="admin-table">
-        <thead><tr><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tình trạng</th><th>Hot Deal</th><th></th></tr></thead>
+        <thead><tr><th>Tên</th><th>Danh mục</th><th>Giá</th><th>Tình trạng</th><th>Best Deal</th><th></th></tr></thead>
         <tbody>
           <% standaloneProducts.forEach(function(p) { %>
             <tr>
@@ -53,7 +53,7 @@
       <% } else { %>
         <p class="admin-hint">Dùng nút ▲▼ để chỉnh thứ tự hiển thị trong danh mục này.</p>
         <table class="admin-table">
-          <thead><tr><th>Thứ tự</th><th>Tên</th><th>Giá</th><th>Tình trạng</th><th>Hot Deal</th><th></th></tr></thead>
+          <thead><tr><th>Thứ tự</th><th>Tên</th><th>Giá</th><th>Tình trạng</th><th>Best Deal</th><th></th></tr></thead>
           <tbody>
             <% section.products.forEach(function(p, i) { %>
               <tr>

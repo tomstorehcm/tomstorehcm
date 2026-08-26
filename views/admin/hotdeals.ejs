@@ -6,8 +6,8 @@
 <body class="admin-body">
 <%- include('partials/sidebar') %>
 <main class="admin-main">
-  <h1>Quản lý Hot Deal</h1>
-  <p class="admin-hint">Chọn giờ kết thúc tùy ý khi bật Hot Deal, hoặc cập nhật lại giờ bất cứ lúc nào với deal đang chạy.</p>
+  <h1>Quản lý Best Deal</h1>
+  <p class="admin-hint">Chọn giờ kết thúc tùy ý khi bật Best Deal, hoặc cập nhật lại giờ bất cứ lúc nào với deal đang chạy.</p>
 
   <%
     function toLocalInput(date) {
@@ -18,9 +18,9 @@
     var defaultNewExpiry = toLocalInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
   %>
 
-  <!-- Thêm sản phẩm riêng cho Hot Deal -->
+  <!-- Thêm sản phẩm riêng cho Best Deal -->
   <section class="admin-category-section">
-    <h2 class="admin-category-heading">Thêm sản phẩm riêng cho Hot Deal</h2>
+    <h2 class="admin-category-heading">Thêm sản phẩm riêng cho Best Deal</h2>
     <p class="admin-hint">Dùng khi chỉ có 1 sản phẩm độc quyền/số lượng giới hạn, không cần thêm vào danh mục sản phẩm chính trước.</p>
     <form action="/admin/hot-deal/them-rieng" method="post" enctype="multipart/form-data" class="admin-form hotdeal-standalone-form">
       <div class="form-row">
@@ -57,7 +57,7 @@
         <input type="file" id="standaloneImage" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="standaloneImagePreview" />
         <small>Bỏ trống sẽ dùng icon minh họa theo danh mục.</small>
       </div>
-      <button type="submit" class="btn btn-primary">+ Thêm vào Hot Deal</button>
+      <button type="submit" class="btn btn-primary">+ Thêm vào Best Deal</button>
     </form>
   </section>
 
@@ -65,9 +65,9 @@
   <section class="admin-category-section">
     <h2 class="admin-category-heading">Đang chạy (<%= activeProducts.length %>)</h2>
     <% if (activeProducts.length === 0) { %>
-      <p class="empty-state">Chưa có Hot Deal nào đang chạy.</p>
+      <p class="empty-state">Chưa có Best Deal nào đang chạy.</p>
     <% } else { %>
-      <p class="admin-hint">Dùng nút ▲▼ để chỉnh thứ tự hiển thị Hot Deal trên trang chủ (trên cùng hiển thị trước).</p>
+      <p class="admin-hint">Dùng nút ▲▼ để chỉnh thứ tự hiển thị Best Deal trên trang chủ (trên cùng hiển thị trước).</p>
       <table class="admin-table">
         <thead><tr><th>Thứ tự</th><th>Sản phẩm</th><th>Danh mục</th><th>Giá gốc</th><th>Giá KM</th><th>Còn lại</th><th>Thao tác</th></tr></thead>
         <tbody>
@@ -101,9 +101,9 @@
     <% } %>
   </section>
 
-  <!-- Thêm sản phẩm vào Hot Deal, theo danh mục -->
+  <!-- Thêm sản phẩm vào Best Deal, theo danh mục -->
   <section class="admin-category-section">
-    <h2 class="admin-category-heading">Thêm sản phẩm vào Hot Deal</h2>
+    <h2 class="admin-category-heading">Thêm sản phẩm vào Best Deal</h2>
     <div class="hotdeal-category-tabs" id="hotdealCategoryTabs">
       <% categories.forEach(function(cat, i) { %>
         <button type="button" class="hotdeal-category-tab <%= i === 0 ? 'active' : '' %>" data-target="hotdeal-cat-<%= cat.id %>"><%= cat.name %></button>
@@ -113,7 +113,7 @@
     <% sections.forEach(function(section, i) { %>
       <div class="hotdeal-category-panel" id="hotdeal-cat-<%= section.category.id %>" <%= i === 0 ? '' : 'hidden' %>>
         <% if (section.products.length === 0) { %>
-          <p class="empty-state">Danh mục này không còn sản phẩm nào để thêm Hot Deal.</p>
+          <p class="empty-state">Danh mục này không còn sản phẩm nào để thêm Best Deal.</p>
         <% } else { %>
           <table class="admin-table">
             <thead><tr><th>Sản phẩm</th><th>Giá gốc</th><th>Thao tác</th></tr></thead>
@@ -126,7 +126,7 @@
                     <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
                       <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
                       <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" required />
-                      <button type="submit" class="btn btn-primary btn-sm">Bật Hot Deal</button>
+                      <button type="submit" class="btn btn-primary btn-sm">Bật Best Deal</button>
                     </form>
                   </td>
                 </tr>

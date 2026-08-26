@@ -179,28 +179,33 @@
     var pickerStockText = document.getElementById('productStockText');
     var pickerAddBtn = document.querySelector('.product-detail-cta-row button[value="add"]');
     var pickerCheckoutBtn = document.querySelector('.product-detail-cta-row button[value="checkout"]');
+    var pickerContactBtn = document.getElementById('contactRequestBtn');
+    var productIdInput = document.querySelector('#productDetailCartForm input[name="productId"]');
     var vndFormatter = window.Intl ? new Intl.NumberFormat('vi-VN') : null;
 
     function formatVNDClient(amount) {
       return (vndFormatter ? vndFormatter.format(amount) : String(amount)) + '₫';
     }
 
-    // Keeps the full/short label pair (CSS hides one or the other on narrow
-    // phone screens) intact when JS updates the add-to-cart button's state.
-    function setAddBtnLabel(inStock) {
-      if (!pickerAddBtn) return;
-      pickerAddBtn.disabled = !inStock;
-      pickerAddBtn.innerHTML = inStock
-        ? '<span class="btn-text-full">Thêm vào giỏ hàng</span><span class="btn-text-short">Thêm vào giỏ</span>'
-        : 'Liên hệ';
+    function buildContactRequestUrl() {
+      var params = new URLSearchParams();
+      if (productIdInput) params.set('productId', productIdInput.value);
+      if (variantIdInput && variantIdInput.value) params.set('variantId', variantIdInput.value);
+      if (colorIdInput && colorIdInput.value) params.set('colorId', colorIdInput.value);
+      return '/lien-he-bao-gia?' + params.toString();
     }
 
-    function setCheckoutBtnLabel(inStock) {
-      if (!pickerCheckoutBtn) return;
-      pickerCheckoutBtn.disabled = !inStock;
-      pickerCheckoutBtn.innerHTML = inStock
-        ? '<span class="btn-text-full">Đặt hàng ngay</span><span class="btn-text-short">Đặt hàng</span>'
-        : 'Liên hệ';
+    // Swaps between the normal add-to-cart/buy-now pair and a single big
+    // "Liên hệ" button (linking to the price-inquiry form, prefilled with
+    // whichever capacity/color/group is currently selected) whenever there's
+    // nothing sellable at the current price/stock state.
+    function syncBuyState(inStock) {
+      if (pickerAddBtn) pickerAddBtn.hidden = !inStock;
+      if (pickerCheckoutBtn) pickerCheckoutBtn.hidden = !inStock;
+      if (pickerContactBtn) {
+        pickerContactBtn.hidden = inStock;
+        if (!inStock) pickerContactBtn.href = buildContactRequestUrl();
+      }
     }
 
     function jumpGalleryForColor(colorId) {
@@ -257,8 +262,7 @@
             pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
-          setAddBtnLabel(inStock);
-          setCheckoutBtnLabel(inStock);
+          syncBuyState(inStock);
         };
 
         var selectColor = function (color, jumpGallery) {
@@ -453,8 +457,7 @@
             pickerStockText.textContent = inStock ? 'Còn hàng' : 'Liên hệ';
             pickerStockText.classList.toggle('product-stock-out', !inStock);
           }
-          setAddBtnLabel(inStock);
-          setCheckoutBtnLabel(inStock);
+          syncBuyState(inStock);
         };
 
         var selectColor = function (color, jumpGallery) {
@@ -558,8 +561,7 @@
           pickerStockText.textContent = colorInStock ? 'Còn hàng' : 'Liên hệ';
           pickerStockText.classList.toggle('product-stock-out', !colorInStock);
         }
-        setAddBtnLabel(colorInStock);
-        setCheckoutBtnLabel(colorInStock);
+        syncBuyState(colorInStock);
       };
 
       colorOptions.forEach(function (opt) {

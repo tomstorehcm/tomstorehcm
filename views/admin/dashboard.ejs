@@ -22,7 +22,7 @@
     </div>
     <div class="admin-stat-card admin-stat-card-hot">
       <span class="stat-value"><%= stats.hotDealCount %></span>
-      <span class="stat-label">Hot Deal đang chạy</span>
+      <span class="stat-label">Best Deal đang chạy</span>
     </div>
   </div>
 
@@ -53,14 +53,15 @@
       <section class="admin-category-section">
         <h2 class="admin-category-heading"><%= group.date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> (<%= group.orders.length %>)</h2>
         <table class="admin-table">
-          <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>SĐT</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
+          <thead><tr><th>Mã đơn</th><th>Loại</th><th>Khách hàng</th><th>SĐT</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr></thead>
           <tbody>
             <% group.orders.forEach(function(order) { %>
               <tr>
                 <td><%= order.order_code %></td>
+                <td><span class="status-badge <%= order.order_type === 'lien_he' ? 'status-inactive' : 'status-active' %>"><%= order.order_type === 'lien_he' ? 'Liên hệ' : 'Đơn hàng' %></span></td>
                 <td><%= order.customer_name %></td>
                 <td><%= order.phone %></td>
-                <td><%= formatVND(order.total) %></td>
+                <td><%= order.order_type === 'lien_he' ? 'Liên hệ' : formatVND(order.total) %></td>
                 <td>
                   <form action="/admin/don-hang/<%= order.id %>/trang-thai" method="post" class="status-select-form">
                     <input type="hidden" name="redirectTo" value="/admin" />
