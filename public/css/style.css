@@ -46,6 +46,12 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
 }
+/* The [hidden] attribute is only display:none by default via the browser's
+   lowest-priority UA stylesheet -- any class here that sets its own display
+   (flex/block/inline-flex/...) silently wins and the element stays visible
+   even while "hidden". Force it to always actually hide, site-wide. */
+[hidden] { display: none !important; }
+
 /* Prevent horizontal overflow (e.g. from a broken product image) on the
    customer-facing site only -- overflow-x here breaks the admin sidebar's
    position:sticky, which needs the real viewport as its scroll container. */
@@ -752,7 +758,6 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .hotdeal-standalone-form { max-width: 720px; }
 
 .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: capitalize; background: #e5e7eb; color: #374151; }
-.status-badge[hidden] { display: none; }
 .status-moi { background: #fef3c7; color: #92400e; }
 .status-da_lien_he { background: #dbeafe; color: #1e40af; }
 .status-da_giao, .status-completed, .status-active { background: #dcfce7; color: #166534; }

@@ -89,8 +89,14 @@
           // (price is a required non-null column) -- treat that the same as
           // out of stock and show "Liên hệ" instead of a literal "0₫". A null
           // price means there's no variant to even price (e.g. a group with no
-          // capacities added under it yet) -- same fallback applies.
-          var activePriceIsContact = activePrice == null || activePrice === 0;
+          // capacities added under it yet) -- same fallback applies. Only
+          // relevant for products that actually use variant/group pricing --
+          // a flat product (no variants at all, price/sale_price only) or one
+          // with general colors only (which never carry their own price) has
+          // no activeVariant/activeColor.price to derive from either, so this
+          // must not fire for them or every simple product would wrongly show
+          // "Liên hệ" despite having a perfectly good price.
+          var activePriceIsContact = hasVariantSelection && (activePrice == null || activePrice === 0);
           var effectiveInStock = !activePriceIsContact && product.in_stock && (activeVariant ? activeVariant.in_stock : true) && (activeColor ? activeColor.in_stock : true);
         %>
 
