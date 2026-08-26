@@ -28,8 +28,12 @@ router.post('/logout', authController.logout);
 
 router.get('/quen-mat-khau', redirectIfAdmin, authController.showForgotPassword);
 router.post('/quen-mat-khau', redirectIfAdmin, authController.submitForgotPassword);
-router.get('/dat-lai-mat-khau/:token', redirectIfAdmin, authController.showResetPassword);
-router.post('/dat-lai-mat-khau/:token', redirectIfAdmin, authController.submitResetPassword);
+// Không dùng redirectIfAdmin ở 2 route đặt lại mật khẩu: nếu trình duyệt
+// đang có sẵn phiên đăng nhập (vd phiên cũ trên máy khác, hoặc phiên bị
+// chiếm quyền) thì sẽ tự đá về /admin, bỏ qua luôn token hợp lệ trong link
+// email -- khiến không thể đặt lại mật khẩu qua email được nữa.
+router.get('/dat-lai-mat-khau/:token', authController.showResetPassword);
+router.post('/dat-lai-mat-khau/:token', authController.submitResetPassword);
 
 router.use(requireAdmin);
 

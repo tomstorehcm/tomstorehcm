@@ -281,11 +281,19 @@ async function submitResetPassword(req, res, next) {
     await db('admin_users').where('id', record.admin_id).update({ password_hash: newHash });
     await db('admin_verification_codes').where('id', record.id).update({ used_at: new Date() });
 
-    res.render('admin/login', {
+    // Hủy luôn phiên đăng nhập đang có trên trình duyệt này (nếu có) --
+    // phòng trường hợp mật khẩu bị đặt lại vì phiên cũ đã bị người khác
+    // chiếm quyền, buộc phải đăng nhập lại bằng mật khẩu mới.
+    const renderSuccess = () => res.render('admin/login', {
       title: 'Đăng nhập quản trị - TOMSTORE',
       error: null,
       success: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.'
     });
+
+    if (req.session && req.session.adminId) {
+      return req.session.destroy(() => renderSuccess());
+    }
+    return renderSuccess();
   } catch (err) {
     next(err);
   }
