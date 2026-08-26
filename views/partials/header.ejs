@@ -41,6 +41,8 @@
         <span class="category-nav-sep" aria-hidden="true">|</span>
         <a href="/danh-muc/<%= cat.slug %>" class="<%= currentPath === '/danh-muc/' + cat.slug ? 'active' : '' %>"><%= cat.nav_label || cat.name %></a>
       <% }); %>
+      <span class="category-nav-sep" aria-hidden="true">|</span>
+      <a href="/tra-gop" class="<%= currentPath === '/tra-gop' ? 'active' : '' %>">Trả góp linh động</a>
     </div>
   </nav>
 </header>

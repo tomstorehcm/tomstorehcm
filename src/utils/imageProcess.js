@@ -83,4 +83,18 @@ async function cropToFixedSize(filePath, sizeKey) {
   return path.basename(finalPath);
 }
 
-module.exports = { cropToFixedSize, BANNER_SIZES };
+// For free-form article content (e.g. images inline inside a rich-text
+// editor) -- unlike cropToFixedSize this never crops or forces an aspect
+// ratio, it only shrinks images wider than maxWidth (never upscales).
+async function resizeToMaxWidth(filePath, maxWidth) {
+  const finalPath = await convertHeicIfNeeded(filePath);
+  const Jimp = await getJimp();
+  const image = await Jimp.read(finalPath);
+  if (image.width > maxWidth) {
+    image.scaleToFit({ w: maxWidth, h: 999999 });
+  }
+  await image.write(finalPath);
+  return path.basename(finalPath);
+}
+
+module.exports = { cropToFixedSize, resizeToMaxWidth, BANNER_SIZES };

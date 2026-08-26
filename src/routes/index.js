@@ -7,6 +7,7 @@ const productController = require('../controllers/productController');
 const cartController = require('../controllers/cartController');
 const checkoutController = require('../controllers/checkoutController');
 const contactRequestController = require('../controllers/contactRequestController');
+const installmentController = require('../controllers/installmentController');
 
 router.get('/', homeController.showHome);
 
@@ -27,5 +28,7 @@ router.get('/don-hang/:code', checkoutController.showConfirmation);
 router.get('/lien-he-bao-gia', contactRequestController.showContactRequestForm);
 router.post('/lien-he-bao-gia', contactRequestController.contactRequestValidators, contactRequestController.submitContactRequest);
 router.get('/lien-he-bao-gia/:code', contactRequestController.showContactRequestConfirmation);
+
+router.get('/tra-gop', installmentController.showInstallmentPage);
 
 module.exports = router;

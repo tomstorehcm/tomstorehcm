@@ -11,10 +11,12 @@ const hotDealController = require('../controllers/admin/hotDealController');
 const orderAdminController = require('../controllers/admin/orderAdminController');
 const bannerController = require('../controllers/admin/bannerController');
 const policyController = require('../controllers/admin/policyController');
+const installmentAdminController = require('../controllers/admin/installmentAdminController');
 
 const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
 const uploadCategoryImage = makeUploader('categories');
+const uploadInstallmentImage = makeUploader('installment');
 
 const MAX_COLOR_ROWS = 20;
 const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
@@ -101,5 +103,13 @@ router.post('/chinh-sach', policyController.createPolicy);
 router.get('/chinh-sach/:id/sua', policyController.editPolicyForm);
 router.post('/chinh-sach/:id/sua', policyController.updatePolicy);
 router.post('/chinh-sach/:id/xoa', policyController.deletePolicy);
+
+router.get('/tra-gop', installmentAdminController.listInstallmentSections);
+router.post(
+  '/tra-gop/anh',
+  handleUploadErrors(uploadInstallmentImage.single('image')),
+  installmentAdminController.uploadInstallmentImage
+);
+router.post('/tra-gop/:key', installmentAdminController.updateInstallmentSection);
 
 module.exports = router;

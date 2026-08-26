@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb">
+      <a href="/">Trang chủ</a> / <span>Trả góp linh động</span>
+    </nav>
+
+    <div class="section-heading"><h1>Trả góp linh động</h1></div>
+
+    <div class="installment-page">
+      <section class="installment-block">
+        <h2><%= tinDung.title %></h2>
+        <% if (tinDung.content_html) { %>
+          <div class="installment-content"><%- tinDung.content_html %></div>
+        <% } else { %>
+          <p class="empty-state">Nội dung đang được cập nhật.</p>
+        <% } %>
+      </section>
+
+      <section class="installment-block">
+        <h2><%= nganHang.title %></h2>
+        <% if (nganHang.content_html) { %>
+          <div class="installment-content"><%- nganHang.content_html %></div>
+        <% } else { %>
+          <p class="empty-state">Nội dung đang được cập nhật.</p>
+        <% } %>
+      </section>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>

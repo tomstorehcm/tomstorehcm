@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+<link rel="stylesheet" href="/vendor/quill/quill.snow.css" />
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Trả góp linh động</h1>
+  <p class="admin-hint">Trang này khách sẽ thấy khi bấm "Trả góp linh động" ở menu hoặc cuối trang. Có 2 mục: Tín dụng và Ngân hàng, mỗi mục gõ nội dung tự do và chèn ảnh xen kẽ ngay trong bài viết.</p>
+
+  <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
+
+  <% sections.forEach(function(s) { %>
+    <section class="admin-category-section">
+      <h2 class="admin-category-heading">Mục: <%= s.title %></h2>
+      <form action="/admin/tra-gop/<%= s.section_key %>" method="post" class="admin-form installment-section-form" data-key="<%= s.section_key %>">
+        <div class="form-group">
+          <label for="title-<%= s.section_key %>">Tiêu đề mục</label>
+          <input type="text" id="title-<%= s.section_key %>" name="title" value="<%= s.title %>" maxlength="100" required />
+        </div>
+        <div class="form-group">
+          <label>Nội dung</label>
+          <div class="installment-editor-wrap">
+            <div class="installment-editor" id="editor-<%= s.section_key %>"><%- s.content_html %></div>
+          </div>
+          <input type="hidden" name="contentHtml" class="installment-content-input" />
+        </div>
+        <button type="submit" class="btn btn-primary">Lưu mục <%= s.title %></button>
+      </form>
+    </section>
+  <% }); %>
+</main>
+<script src="/vendor/quill/quill.js"></script>
+<script>
+  (function () {
+    var toolbarOptions = [
+      [{ header: [2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      ['link', 'image'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['clean']
+    ];
+
+    document.querySelectorAll('.installment-section-form').forEach(function (form) {
+      var key = form.getAttribute('data-key');
+      var editorEl = document.getElementById('editor-' + key);
+      var hiddenInput = form.querySelector('.installment-content-input');
+
+      var quill = new Quill(editorEl, {
+        theme: 'snow',
+        modules: {
+          toolbar: {
+            container: toolbarOptions,
+            handlers: {
+              image: function () {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/png,image/jpeg,image/gif,image/webp';
+                input.click();
+                input.addEventListener('change', function () {
+                  var file = input.files && input.files[0];
+                  if (!file) return;
+                  var formData = new FormData();
+                  formData.append('image', file);
+                  fetch('/admin/tra-gop/anh', { method: 'POST', body: formData })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                      if (data.url) {
+                        var range = quill.getSelection(true);
+                        quill.insertEmbed(range.index, 'image', data.url, 'user');
+                        quill.setSelection(range.index + 1);
+                      } else {
+                        alert(data.error || 'Lỗi tải ảnh lên.');
+                      }
+                    })
+                    .catch(function () {
+                      alert('Lỗi tải ảnh lên.');
+                    });
+                });
+              }
+            }
+          }
+        }
+      });
+
+      form.addEventListener('submit', function () {
+        hiddenInput.value = quill.root.innerHTML;
+      });
+    });
+  })();
+</script>
+</body>
+</html>
