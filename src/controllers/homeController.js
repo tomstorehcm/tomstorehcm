@@ -10,7 +10,9 @@ async function showHome(req, res, next) {
 
     const hotDeals = await db('products')
       .where('is_hot_deal', true)
-      .andWhere('hot_deal_expires_at', '>', now)
+      .andWhere(function () {
+        this.whereNull('hot_deal_expires_at').orWhere('hot_deal_expires_at', '>', now);
+      })
       .orderBy([{ column: 'hot_deal_sort_order', order: 'asc' }, { column: 'hot_deal_expires_at', order: 'asc' }, { column: 'id', order: 'asc' }]);
 
     const categories = await db('categories').orderBy('sort_order');

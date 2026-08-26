@@ -15,8 +15,12 @@ async function listHotDeals(req, res, next) {
       .orderBy('products.name');
 
     const activeProducts = products
-      .filter((p) => p.is_hot_deal && p.hot_deal_expires_at && new Date(p.hot_deal_expires_at) > now)
-      .sort((a, b) => a.hot_deal_sort_order - b.hot_deal_sort_order || new Date(a.hot_deal_expires_at) - new Date(b.hot_deal_expires_at) || a.id - b.id);
+      .filter((p) => p.is_hot_deal && (!p.hot_deal_expires_at || new Date(p.hot_deal_expires_at) > now))
+      .sort((a, b) => {
+        const aTime = a.hot_deal_expires_at ? new Date(a.hot_deal_expires_at).getTime() : Infinity;
+        const bTime = b.hot_deal_expires_at ? new Date(b.hot_deal_expires_at).getTime() : Infinity;
+        return a.hot_deal_sort_order - b.hot_deal_sort_order || aTime - bTime || a.id - b.id;
+      });
     const inactiveProducts = products.filter((p) => !activeProducts.includes(p));
 
     const sections = categories.map((cat) => ({
@@ -54,7 +58,10 @@ async function enableHotDeal(req, res, next) {
       return res.redirect('/admin/hot-deal');
     }
 
-    const expiresAt = parseExpiresAt(req.body.expiresAt) || new Date(Date.now() + HOURS_24);
+    // Không giới hạn: bo qua gio het han, giu hot_deal_expires_at = null
+    // (khac voi is_hot_deal = false, van tinh la dang chay man khong co dong ho dem).
+    const noLimit = req.body.noLimit === 'on';
+    const expiresAt = noLimit ? null : (parseExpiresAt(req.body.expiresAt) || new Date(Date.now() + HOURS_24));
 
     await db('products').where('id', product.id).update({
       is_hot_deal: true,
@@ -72,6 +79,15 @@ async function setHotDealExpiry(req, res, next) {
   try {
     const product = await db('products').where('id', req.params.id).first();
     if (!product) return res.redirect('/admin/hot-deal');
+
+    const noLimit = req.body.noLimit === 'on';
+    if (noLimit) {
+      await db('products').where('id', product.id).update({
+        is_hot_deal: true,
+        hot_deal_expires_at: null
+      });
+      return res.redirect('/admin/hot-deal');
+    }
 
     const expiresAt = parseExpiresAt(req.body.expiresAt);
     if (!expiresAt) return res.redirect('/admin/hot-deal');
@@ -142,7 +158,8 @@ async function createStandaloneHotDeal(req, res, next) {
       return res.redirect('/admin/hot-deal');
     }
 
-    const expiry = parseExpiresAt(expiresAt) || new Date(Date.now() + HOURS_24);
+    const noLimit = req.body.noLimit === 'on';
+    const expiry = noLimit ? null : (parseExpiresAt(expiresAt) || new Date(Date.now() + HOURS_24));
 
     const slugBase = slugify(name);
     let slug = slugBase;
@@ -189,7 +206,9 @@ async function moveHotDeal(req, res, next, direction) {
     const now = new Date();
     const active = await db('products')
       .where('is_hot_deal', true)
-      .andWhere('hot_deal_expires_at', '>', now)
+      .andWhere(function () {
+        this.whereNull('hot_deal_expires_at').orWhere('hot_deal_expires_at', '>', now);
+      })
       .orderBy([{ column: 'hot_deal_sort_order', order: 'asc' }, { column: 'hot_deal_expires_at', order: 'asc' }, { column: 'id', order: 'asc' }]);
 
     const idx = active.findIndex((p) => p.id === Number(req.params.id));

@@ -7,7 +7,7 @@
 <%- include('partials/sidebar') %>
 <main class="admin-main">
   <h1>Quản lý Best Deal</h1>
-  <p class="admin-hint">Chọn giờ kết thúc tùy ý khi bật Best Deal, hoặc cập nhật lại giờ bất cứ lúc nào với deal đang chạy.</p>
+  <p class="admin-hint">Chọn giờ kết thúc tùy ý khi bật Best Deal, hoặc cập nhật lại giờ bất cứ lúc nào với deal đang chạy. Tick "Không giới hạn" nếu không muốn đặt thời hạn.</p>
 
   <%
     function toLocalInput(date) {
@@ -49,6 +49,10 @@
         <div class="form-group">
           <label for="standaloneExpiry">Giờ kết thúc *</label>
           <input type="datetime-local" id="standaloneExpiry" name="expiresAt" value="<%= defaultNewExpiry %>" required />
+          <label class="hotdeal-nolimit-toggle">
+            <input type="checkbox" name="noLimit" class="hotdeal-nolimit-checkbox" data-target="standaloneExpiry" />
+            Không giới hạn
+          </label>
         </div>
       </div>
       <div class="form-group">
@@ -85,13 +89,19 @@
               <td><%= p.category_name %></td>
               <td><%= formatVND(p.price) %></td>
               <td><span class="text-accent"><%= formatVND(p.sale_price) %></span></td>
-              <td><%= new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') %></td>
+              <td><%= p.hot_deal_expires_at ? new Date(p.hot_deal_expires_at).toLocaleString('vi-VN') : 'Không giới hạn' %></td>
               <td class="admin-actions admin-actions-hotdeal">
                 <form action="/admin/hot-deal/<%= p.id %>/dat-gio" method="post" class="hotdeal-time-form">
-                  <input type="datetime-local" name="expiresAt" value="<%= toLocalInput(p.hot_deal_expires_at) %>" required />
+                  <input type="datetime-local" name="expiresAt" value="<%= toLocalInput(p.hot_deal_expires_at || defaultNewExpiry) %>" id="expiry-<%= p.id %>" <%= p.hot_deal_expires_at ? 'required' : 'disabled' %> />
+                  <label class="hotdeal-nolimit-toggle">
+                    <input type="checkbox" name="noLimit" class="hotdeal-nolimit-checkbox" data-target="expiry-<%= p.id %>" <%= p.hot_deal_expires_at ? '' : 'checked' %> />
+                    Không giới hạn
+                  </label>
                   <button type="submit" class="btn btn-outline btn-sm">Đặt giờ</button>
                 </form>
-                <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
+                <% if (p.hot_deal_expires_at) { %>
+                  <form action="/admin/hot-deal/<%= p.id %>/gia-han" method="post"><button type="submit" class="btn btn-outline btn-sm">+24h</button></form>
+                <% } %>
                 <form action="/admin/hot-deal/<%= p.id %>/tat" method="post"><button type="submit" class="btn btn-outline btn-sm">Tắt</button></form>
               </td>
             </tr>
@@ -125,7 +135,11 @@
                   <td>
                     <form action="/admin/hot-deal/<%= p.id %>/bat" method="post" class="hotdeal-enable-form">
                       <input type="number" name="salePrice" min="0" max="<%= p.price - 1 %>" value="<%= p.sale_price || Math.round(p.price * 0.9) %>" required />
-                      <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" required />
+                      <input type="datetime-local" name="expiresAt" value="<%= defaultNewExpiry %>" id="enable-expiry-<%= p.id %>" required />
+                      <label class="hotdeal-nolimit-toggle">
+                        <input type="checkbox" name="noLimit" class="hotdeal-nolimit-checkbox" data-target="enable-expiry-<%= p.id %>" />
+                        Không giới hạn
+                      </label>
                       <button type="submit" class="btn btn-primary btn-sm">Bật Best Deal</button>
                     </form>
                   </td>
@@ -173,6 +187,17 @@
         priceInputs.forEach(function (input) { input.value = digitsOnly(input.value); });
       });
     }
+
+    document.querySelectorAll('.hotdeal-nolimit-checkbox').forEach(function (checkbox) {
+      var input = document.getElementById(checkbox.getAttribute('data-target'));
+      if (!input) return;
+      function sync() {
+        input.disabled = checkbox.checked;
+        input.required = !checkbox.checked;
+      }
+      checkbox.addEventListener('change', sync);
+      sync();
+    });
 
     document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
       input.addEventListener('change', function () {

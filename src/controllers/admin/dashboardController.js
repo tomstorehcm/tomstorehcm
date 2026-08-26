@@ -19,7 +19,9 @@ async function showDashboard(req, res, next) {
     const now = new Date();
     const [{ count: hotDealCount }] = await db('products')
       .where('is_hot_deal', true)
-      .andWhere('hot_deal_expires_at', '>', now)
+      .andWhere(function () {
+        this.whereNull('hot_deal_expires_at').orWhere('hot_deal_expires_at', '>', now);
+      })
       .count('id as count');
 
     const allOrders = await db('orders').orderBy('created_at', 'desc');

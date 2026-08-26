@@ -313,28 +313,29 @@ table { border-collapse: collapse; width: 100%; }
   position: absolute;
   top: 50%;
   z-index: 3;
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card-hover);
+  width: 20px;
+  height: 20px;
+  background: none;
+  color: var(--color-ink);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
-/* Straddles the frame's edge so it floats mostly outside the image instead
-   of sitting cramped inside it. */
-.hero-slider-arrow.prev { left: 0; transform: translate(-50%, -50%); }
-.hero-slider-arrow.next { right: 0; transform: translate(50%, -50%); }
-.hero-slider-arrow:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
-.hero-slider-arrow.prev:hover { transform: translate(-50%, -50%) scale(1.08); }
-.hero-slider-arrow.next:hover { transform: translate(50%, -50%) scale(1.08); }
-.hero-slider-arrow.prev:active { transform: translate(-50%, -50%) scale(0.94); }
-.hero-slider-arrow.next:active { transform: translate(50%, -50%) scale(0.94); }
+/* Fully outside the frame (not overlapping the image at all). Kept narrow --
+   the container only has --space-5 (24px) of gutter beside the frame on
+   most desktop widths, so a wider control here would get clipped by the
+   viewport edge. */
+.hero-slider-arrow.prev { left: 0; transform: translate(calc(-100% - 2px), -50%); }
+.hero-slider-arrow.next { right: 0; transform: translate(calc(100% + 2px), -50%); }
+.hero-slider-arrow:hover { opacity: 1; }
+.hero-slider-arrow.prev:hover { transform: translate(calc(-100% - 2px), -50%) scale(1.25); }
+.hero-slider-arrow.next:hover { transform: translate(calc(100% + 2px), -50%) scale(1.25); }
+.hero-slider-arrow.prev:active { transform: translate(calc(-100% - 2px), -50%) scale(0.9); }
+.hero-slider-arrow.next:active { transform: translate(calc(100% + 2px), -50%) scale(0.9); }
 @media (max-width: 767px) { .hero-slider-arrow { display: none; } }
 
 /* ===== Hero scroll effect: banner shrinks + darkens as you scroll past it ===== */
@@ -776,6 +777,20 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 }
 .complete-toggle:hover { border-color: var(--color-success); }
 .complete-toggle.is-checked { background: var(--color-success); border-color: var(--color-success); color: #fff; }
+
+.hotdeal-nolimit-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+}
+.hotdeal-nolimit-toggle input[type="checkbox"] { width: auto; height: auto; margin: 0; }
+.hotdeal-enable-form input[type="datetime-local"]:disabled, .hotdeal-time-form input[type="datetime-local"]:disabled { background: var(--color-bg-alt); color: var(--color-text-muted); }
 
 .hotdeal-category-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); }
 .hotdeal-category-tab {

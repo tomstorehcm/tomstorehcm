@@ -2,7 +2,7 @@
   var catSlug = categoriesById[product.category_id] ? categoriesById[product.category_id].slug : '';
   var percent = discountPercent(product.price, product.sale_price);
 %>
-<article class="hotdeal-card" data-expires="<%= new Date(product.hot_deal_expires_at).toISOString() %>">
+<article class="hotdeal-card"<% if (product.hot_deal_expires_at) { %> data-expires="<%= new Date(product.hot_deal_expires_at).toISOString() %>"<% } %>>
   <a href="/san-pham/<%= product.slug %>" class="hotdeal-card-image">
     <% if (percent > 0) { %><span class="badge-sale badge-sale-lg">-<%= percent %>%</span><% } %>
     <% if (product.image_url) { %>
@@ -19,10 +19,12 @@
       <span class="price-current"><%= formatVND(hasSale ? product.sale_price : product.price) %></span>
       <% if (hasSale) { %><span class="price-original"><%= formatVND(product.price) %></span><% } %>
     </div>
-    <div class="hotdeal-timer" aria-live="polite">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <span class="timer-text">--:--:--</span>
-    </div>
+    <% if (product.hot_deal_expires_at) { %>
+      <div class="hotdeal-timer" aria-live="polite">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 2h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="timer-text">--:--:--</span>
+      </div>
+    <% } %>
     <% if (!product.in_stock) { %>
       <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-block product-card-cta">Liên hệ</a>
     <% } else { %>
