@@ -145,10 +145,10 @@
         </div>
 
         <% if (product.is_contact_price) { %>
-          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg">Liên hệ</a>
+          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg btn-block">Liên hệ</a>
         <% } else if (!product.in_stock) { %>
           <p class="product-stock product-stock-out">Liên hệ</p>
-          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg">Liên hệ</a>
+          <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-lg btn-block">Liên hệ</a>
         <% } else { %>
           <% if (hasGroups) { %>
             <div class="variant-picker" id="groupPicker">
