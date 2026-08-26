@@ -168,49 +168,74 @@ async function confirmChangePassword(req, res, next) {
   }
 }
 
-function showForgotPassword(req, res) {
-  res.render('admin/forgot-password', {
-    title: 'Quên mật khẩu - TOMSTORE Admin',
-    error: null,
-    success: null
-  });
+// Che bớt phần đầu địa chỉ email, chỉ để lộ vài ký tự cuối trước @ --
+// vd "tomstorehcm@gmail.com" -> "*****orehcm@gmail.com".
+function maskEmail(email) {
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0) return email;
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex);
+  const maskLen = Math.min(5, Math.max(local.length - 1, 1));
+  return '*'.repeat(maskLen) + local.slice(maskLen) + domain;
+}
+
+async function showForgotPassword(req, res, next) {
+  try {
+    // Hệ thống chỉ có 1 tài khoản admin duy nhất nên không cần bắt nhập
+    // email -- lấy thẳng email đã đăng ký sẵn và chỉ hiện dạng che bớt.
+    const admin = await db('admin_users').first();
+    res.render('admin/forgot-password', {
+      title: 'Quên mật khẩu - TOMSTORE Admin',
+      error: null,
+      success: null,
+      maskedEmail: admin && admin.email ? maskEmail(admin.email) : null
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
 async function submitForgotPassword(req, res, next) {
   try {
-    const email = (req.body.email || '').trim();
-    const admin = email ? await db('admin_users').where('email', email).first() : null;
+    const admin = await db('admin_users').first();
 
-    // Luôn hiện cùng 1 thông báo dù email có tồn tại hay không, tránh lộ
-    // thông tin tài khoản nào đang dùng email nào.
-    const successMsg = 'Nếu email này đúng với tài khoản admin, TOMSTORE đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.';
-
-    if (admin) {
-      const token = crypto.randomBytes(32).toString('hex');
-      await db('admin_verification_codes').insert({
-        admin_id: admin.id,
-        purpose: 'reset',
-        code: token,
-        expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS)
+    if (!admin || !admin.email) {
+      return res.status(400).render('admin/forgot-password', {
+        title: 'Quên mật khẩu - TOMSTORE Admin',
+        error: 'Tài khoản chưa có email khôi phục. Vui lòng liên hệ kỹ thuật để thêm email trước.',
+        success: null,
+        maskedEmail: null
       });
+    }
 
-      const resetUrl = `${req.protocol}://${req.get('host')}/admin/dat-lai-mat-khau/${token}`;
-      try {
-        await sendMail({
-          to: admin.email,
-          subject: 'Đặt lại mật khẩu - TOMSTORE Admin',
-          html: `<p>Bấm vào link bên dưới để đặt lại mật khẩu quản trị TOMSTORE:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Link có hiệu lực trong 30 phút. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.</p>`
-        });
-      } catch (mailErr) {
-        // Không lộ lỗi gửi mail cho người dùng chưa xác thực -- vẫn hiện
-        // thông báo thành công như bình thường.
-      }
+    const token = crypto.randomBytes(32).toString('hex');
+    await db('admin_verification_codes').insert({
+      admin_id: admin.id,
+      purpose: 'reset',
+      code: token,
+      expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS)
+    });
+
+    const resetUrl = `${req.protocol}://${req.get('host')}/admin/dat-lai-mat-khau/${token}`;
+    try {
+      await sendMail({
+        to: admin.email,
+        subject: 'Đặt lại mật khẩu - TOMSTORE Admin',
+        html: `<p>Bấm vào link bên dưới để đặt lại mật khẩu quản trị TOMSTORE:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Link có hiệu lực trong 30 phút. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.</p>`
+      });
+    } catch (mailErr) {
+      return res.status(500).render('admin/forgot-password', {
+        title: 'Quên mật khẩu - TOMSTORE Admin',
+        error: 'Không gửi được email. Vui lòng thử lại sau.',
+        success: null,
+        maskedEmail: maskEmail(admin.email)
+      });
     }
 
     res.render('admin/forgot-password', {
       title: 'Quên mật khẩu - TOMSTORE Admin',
       error: null,
-      success: successMsg
+      success: `TOMSTORE đã gửi link đặt lại mật khẩu về gmail ${maskEmail(admin.email)}. Vui lòng kiểm tra hộp thư.`
     });
   } catch (err) {
     next(err);
