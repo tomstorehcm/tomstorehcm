@@ -269,16 +269,24 @@ table { border-collapse: collapse; width: 100%; }
 }
 .hero-slider {
   position: relative;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+@media (max-width: 767px) {
+  .hero-slider { max-width: 480px; }
+}
+/* The rounded/clipped image box is a separate inner element (not .hero-slider
+   itself) so the arrow buttons -- positioned absolute inside .hero-slider --
+   can float outside its edges instead of being clipped by overflow:hidden. */
+.hero-slider-frame {
   overflow: hidden;
   background: var(--color-bg-alt);
   border-radius: var(--radius-lg);
-  max-width: 1800px;
   aspect-ratio: 1800 / 700;
-  margin: 0 auto;
   box-shadow: var(--shadow-card);
 }
 @media (max-width: 767px) {
-  .hero-slider { aspect-ratio: 1080 / 1350; max-width: 480px; }
+  .hero-slider-frame { aspect-ratio: 1080 / 1350; }
 }
 .hero-slider-track { position: relative; height: 100%; }
 .hero-slide {
@@ -301,10 +309,32 @@ table { border-collapse: collapse; width: 100%; }
 .hero-slider-dots { position: absolute; bottom: var(--space-3); left: 50%; transform: translateX(-50%); display: flex; gap: var(--space-2); z-index: 2; }
 .hero-slider-dots button { width: 8px; height: 8px; border-radius: 999px; border: none; background: rgba(255,255,255,0.5); padding: 0; }
 .hero-slider-dots button.active { background: #fff; width: 22px; }
-.hero-slider-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 36px; height: 36px; border-radius: 999px; background: rgba(17,17,20,0.4); color: #fff; border: none; display: flex; align-items: center; justify-content: center; }
-.hero-slider-arrow.prev { left: var(--space-3); }
-.hero-slider-arrow.next { right: var(--space-3); }
-.hero-slider-arrow:hover { background: rgba(17,17,20,0.65); }
+.hero-slider-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+/* Straddles the frame's edge so it floats mostly outside the image instead
+   of sitting cramped inside it. */
+.hero-slider-arrow.prev { left: 0; transform: translate(-50%, -50%); }
+.hero-slider-arrow.next { right: 0; transform: translate(50%, -50%); }
+.hero-slider-arrow:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.hero-slider-arrow.prev:hover { transform: translate(-50%, -50%) scale(1.08); }
+.hero-slider-arrow.next:hover { transform: translate(50%, -50%) scale(1.08); }
+.hero-slider-arrow.prev:active { transform: translate(-50%, -50%) scale(0.94); }
+.hero-slider-arrow.next:active { transform: translate(50%, -50%) scale(0.94); }
 @media (max-width: 767px) { .hero-slider-arrow { display: none; } }
 
 /* ===== Hero scroll effect: banner shrinks + darkens as you scroll past it ===== */
