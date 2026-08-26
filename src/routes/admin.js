@@ -24,12 +24,19 @@ router.get('/login', redirectIfAdmin, authController.showLogin);
 router.post('/login', redirectIfAdmin, authController.login);
 router.post('/logout', authController.logout);
 
+router.get('/quen-mat-khau', redirectIfAdmin, authController.showForgotPassword);
+router.post('/quen-mat-khau', redirectIfAdmin, authController.submitForgotPassword);
+router.get('/dat-lai-mat-khau/:token', redirectIfAdmin, authController.showResetPassword);
+router.post('/dat-lai-mat-khau/:token', redirectIfAdmin, authController.submitResetPassword);
+
 router.use(requireAdmin);
 
 router.get('/', dashboardController.showDashboard);
 
 router.get('/doi-mat-khau', authController.showChangePassword);
 router.post('/doi-mat-khau', authController.changePassword);
+router.get('/doi-mat-khau/xac-nhan', authController.showConfirmChangePassword);
+router.post('/doi-mat-khau/xac-nhan', authController.confirmChangePassword);
 
 router.get('/san-pham', productAdminController.listProducts);
 router.get('/san-pham/moi', productAdminController.newProductForm);

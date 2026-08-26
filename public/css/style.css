@@ -872,6 +872,8 @@ label.gallery-pick-btn { display: inline-flex; cursor: pointer; width: fit-conte
 .admin-login-card .logo img { height: 36px; margin: 0 auto; }
 .admin-login-subtitle { color: var(--color-text-muted); margin: var(--space-3) 0 var(--space-5); }
 .admin-login-card form { text-align: left; }
+.admin-login-forgot-link { display: inline-block; margin-top: var(--space-4); font-size: 14px; color: var(--color-text-muted); }
+.admin-login-forgot-link:hover { color: var(--color-accent); }
 .password-field { position: relative; }
 .password-field input { padding-right: 44px !important; }
 .password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; width: 36px; background: none; border: none; color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }

@@ -25,7 +25,8 @@
     "jimp": "^1.6.1",
     "knex": "^3.1.0",
     "multer": "^2.2.0",
-    "mysql2": "^3.11.3"
+    "mysql2": "^3.11.3",
+    "nodemailer": "^9.0.5"
   },
   "optionalDependencies": {
     "better-sqlite3": "^13.0.3"
