@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb">
+      <a href="/">Trang chủ</a> / <span>Chính Sách Bảo Hành</span>
+    </nav>
+
+    <div class="section-heading"><h1>Chính Sách Bảo Hành</h1></div>
+
+    <% if (sections.length === 0) { %>
+      <p class="empty-state">Nội dung đang được cập nhật.</p>
+    <% } else { %>
+      <div class="installment-page">
+        <% if (sections.length > 1) { %>
+          <div class="installment-tabs" id="installmentTabs">
+            <% sections.forEach(function(s, i) { %>
+              <button type="button" class="installment-tab <%= i === 0 ? 'active' : '' %>" data-target="panel-<%= s.id %>"><%= s.title %></button>
+            <% }); %>
+          </div>
+        <% } %>
+
+        <% sections.forEach(function(s, i) { %>
+          <section class="installment-block" id="panel-<%= s.id %>" <%= i === 0 ? '' : 'hidden' %>>
+            <% if (s.content_html) { %>
+              <div class="installment-content"><%- s.content_html %></div>
+            <% } else { %>
+              <p class="empty-state">Nội dung đang được cập nhật.</p>
+            <% } %>
+          </section>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.installment-tab');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+        var targetId = tab.getAttribute('data-target');
+        document.querySelectorAll('.installment-block').forEach(function (panel) {
+          panel.hidden = panel.id !== targetId;
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

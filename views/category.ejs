@@ -12,7 +12,7 @@
 
     <div class="section-heading">
       <h1><%= category.name %></h1>
-      <form action="/danh-muc/<%= category.slug %>" method="get" class="sort-form">
+      <form action="<%= currentPath %>" method="get" class="sort-form">
         <label for="sort">Sắp xếp:</label>
         <select name="sort" id="sort" onchange="this.form.submit()">
           <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Mới nhất</option>

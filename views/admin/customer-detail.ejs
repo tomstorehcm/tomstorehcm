@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <div class="admin-title-row">
+      <a href="/admin/khach-hang" class="btn-icon-back" aria-label="Quay lại danh sách" title="Quay lại danh sách">&larr;</a>
+      <h1><%= customer.name %></h1>
+    </div>
+    <div class="admin-actions">
+      <a href="/admin/khach-hang/<%= customer.id %>/sua" class="btn btn-primary btn-sm">Sửa thông tin khách</a>
+    </div>
+  </div>
+
+  <div class="customer-info-card">
+    <p><strong>SĐT:</strong> <a href="tel:<%= customer.phone.replace(/\s/g, '') %>"><%= customer.phone %></a></p>
+    <% if (customer.address) { %><p><strong>Địa chỉ:</strong> <%= customer.address %></p><% } %>
+    <% if (customer.note) { %><p><strong>Ghi chú:</strong> <%= customer.note %></p><% } %>
+  </div>
+
+  <h2 class="admin-category-heading">Lịch sử mua hàng (<%= purchases.length %>)</h2>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <% if (purchases.length === 0) { %>
+    <p class="empty-state">Chưa có sản phẩm nào.</p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+    <table class="admin-table">
+      <thead><tr><th>Sản phẩm</th><th>IMEI/Serial</th><th>Ngày mua</th><th>Hạn bảo hành</th><th>Giá</th><th>Hình thức</th><th>Ghi chú</th><th></th></tr></thead>
+      <tbody>
+        <% purchases.forEach(function(p) { %>
+          <tr>
+            <td><%= p.product_name %></td>
+            <td><%= p.imei || '-' %></td>
+            <td><%= new Date(p.purchase_date).toLocaleDateString('vi-VN') %></td>
+            <td><%= p.warranty_expires_at ? new Date(p.warranty_expires_at).toLocaleDateString('vi-VN') : '-' %></td>
+            <td><%= p.price ? formatVND(p.price) : '-' %></td>
+            <td><%= transactionTypeLabel(p.transaction_type) %></td>
+            <td class="admin-note-cell" title="<%= p.note || '' %>"><%= p.note || '-' %></td>
+            <td class="admin-actions">
+              <a href="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/sua">Sửa</a>
+              <form action="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này khỏi lịch sử mua hàng?');">
+                <button type="submit" class="btn-link-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    </div>
+  <% } %>
+
+  <h2 class="admin-category-heading">+ Thêm sản phẩm mới cho khách này</h2>
+  <form action="/admin/khach-hang/<%= customer.id %>/san-pham" method="post" class="admin-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="productName">Tên sản phẩm *</label>
+        <input type="text" id="productName" name="productName" value="<%= purchaseForm.productName || '' %>" required placeholder="VD: iPhone 17 Pro Max 256GB" />
+      </div>
+      <div class="form-group">
+        <label for="imei">IMEI / Số serial</label>
+        <input type="text" id="imei" name="imei" value="<%= purchaseForm.imei || '' %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="purchaseDate">Ngày mua *</label>
+        <input type="date" id="purchaseDate" name="purchaseDate" value="<%= purchaseForm.purchaseDate || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="warrantyExpiresAt">Hạn bảo hành</label>
+        <input type="date" id="warrantyExpiresAt" name="warrantyExpiresAt" value="<%= purchaseForm.warrantyExpiresAt || '' %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="price">Giá đã bán</label>
+        <input type="text" inputmode="numeric" id="price" name="price" class="vnd-input" value="<%= purchaseForm.price || '' %>" placeholder="VNĐ" />
+      </div>
+      <div class="form-group">
+        <label for="transactionType">Hình thức giao dịch</label>
+        <select id="transactionType" name="transactionType">
+          <% transactionTypes.forEach(function(t) { %>
+            <option value="<%= t.key %>" <%= purchaseForm.transactionType === t.key ? 'selected' : '' %>><%= t.label %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="purchaseNote">Ghi chú</label>
+      <textarea id="purchaseNote" name="purchaseNote" rows="2"><%= purchaseForm.purchaseNote || '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
+  </form>
+</main>
+</body>
+</html>

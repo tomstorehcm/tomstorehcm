@@ -7,7 +7,7 @@ async function showInstallmentPage(req, res, next) {
     const nganHang = sections.find((s) => s.section_key === 'ngan_hang');
 
     res.render('installment', {
-      title: 'Trả góp linh động - TOMSTORE',
+      title: 'Trả Góp Linh Động - TOMSTORE',
       tinDung,
       nganHang
     });

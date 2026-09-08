@@ -16,7 +16,8 @@ const CATEGORIES = [
   { slug: 'dien-thoai', name: 'Điện thoại', sort_order: 1, image_url: '/images/categories/dien-thoai.webp' },
   { slug: 'macbook', name: 'MacBook', sort_order: 2, image_url: '/images/categories/macbook.webp' },
   { slug: 'may-tinh-bang', name: 'Máy tính bảng', sort_order: 3, image_url: '/images/categories/may-tinh-bang.webp' },
-  { slug: 'tai-nghe', name: 'Tai nghe', sort_order: 4, image_url: '/images/categories/tai-nghe.webp' }
+  { slug: 'tai-nghe', name: 'Tai nghe', sort_order: 4, image_url: '/images/categories/tai-nghe.webp', nav_group_key: 'phu-kien', nav_group_label: 'Phụ kiện' },
+  { slug: 'apple-watch', name: 'Apple Watch', sort_order: 5, image_url: null, show_on_homepage: false, nav_group_key: 'phu-kien', nav_group_label: 'Phụ kiện' }
 ];
 
 const PRODUCTS_BY_CATEGORY = {

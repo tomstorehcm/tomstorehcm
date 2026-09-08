@@ -6,3 +6,4 @@ npm-debug.log*
 Thumbs.db
 public/images/uploads/
 exports/
+reset-admin-password.js

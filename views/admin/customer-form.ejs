@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Thêm khách mua hàng</h1>
+  <p class="admin-hint">Nếu SĐT đã có sẵn trong hệ thống, sản phẩm mới sẽ tự động thêm vào hồ sơ khách hàng đó thay vì tạo mới.</p>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="/admin/khach-hang/moi" method="post" class="admin-form">
+    <h2 class="admin-form-subheading">Thông tin khách hàng</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name">Họ tên *</label>
+        <input type="text" id="name" name="name" value="<%= formData.name || '' %>" required maxlength="150" />
+      </div>
+      <div class="form-group">
+        <label for="phone">Số điện thoại *</label>
+        <input type="text" id="phone" name="phone" value="<%= formData.phone || '' %>" required placeholder="0901234567" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="address">Địa chỉ</label>
+      <input type="text" id="address" name="address" value="<%= formData.address || '' %>" />
+    </div>
+    <div class="form-group">
+      <label for="note">Ghi chú khách hàng</label>
+      <textarea id="note" name="note" rows="2"><%= formData.note || '' %></textarea>
+    </div>
+
+    <h2 class="admin-form-subheading">Sản phẩm đã mua</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="productName">Tên sản phẩm *</label>
+        <input type="text" id="productName" name="productName" value="<%= formData.productName || '' %>" required placeholder="VD: iPhone 17 Pro Max 256GB" />
+      </div>
+      <div class="form-group">
+        <label for="imei">IMEI / Số serial</label>
+        <input type="text" id="imei" name="imei" value="<%= formData.imei || '' %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="purchaseDate">Ngày mua *</label>
+        <input type="date" id="purchaseDate" name="purchaseDate" value="<%= formData.purchaseDate || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="warrantyExpiresAt">Hạn bảo hành</label>
+        <input type="date" id="warrantyExpiresAt" name="warrantyExpiresAt" value="<%= formData.warrantyExpiresAt || '' %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="price">Giá đã bán</label>
+        <input type="text" inputmode="numeric" id="price" name="price" class="vnd-input" value="<%= formData.price || '' %>" placeholder="VNĐ" />
+      </div>
+      <div class="form-group">
+        <label for="transactionType">Hình thức giao dịch</label>
+        <select id="transactionType" name="transactionType">
+          <% transactionTypes.forEach(function(t) { %>
+            <option value="<%= t.key %>" <%= formData.transactionType === t.key ? 'selected' : '' %>><%= t.label %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="purchaseNote">Ghi chú lần mua này</label>
+      <textarea id="purchaseNote" name="purchaseNote" rows="2"><%= formData.purchaseNote || '' %></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a href="/admin/khach-hang" class="btn btn-outline">Hủy</a>
+  </form>
+</main>
+</body>
+</html>

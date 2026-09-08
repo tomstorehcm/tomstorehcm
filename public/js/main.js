@@ -34,6 +34,95 @@
     });
   }
 
+  // Nav dropdown ("Phụ kiện" etc.) -- click/tap to open, so it works the same
+  // on desktop hover-less trackpads and on the mobile slide-in drawer. Only
+  // one dropdown open at a time; closes on outside click or Escape.
+  var navDropdowns = document.querySelectorAll('.nav-dropdown');
+  // The desktop nav bar scrolls horizontally (overflow-x: auto) when it
+  // doesn't fit -- which forces the browser to also clip vertical overflow
+  // of anything inside it (a CSS quirk: overflow-x != visible makes
+  // overflow-y compute as auto too), cutting off the absolutely-positioned
+  // dropdown panel (it shows up as a tiny scrollbar on the nav bar instead
+  // of a floating panel). Fix: switch the open panel to position:fixed,
+  // placed via JS from the toggle button's actual on-screen position, so it
+  // renders as its own floating panel above everything -- including the
+  // hero banner underneath -- instead of being clipped by/tied to that
+  // scrolling nav bar. Only applies at desktop widths -- the mobile drawer
+  // keeps the dropdown static/in-flow (handled by CSS), so inline styles
+  // are cleared there.
+  function positionDropdownMenu(dropdown) {
+    var toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    var menu = dropdown.querySelector('.nav-dropdown-menu');
+    if (!toggle || !menu) return;
+    if (window.innerWidth < 900) {
+      menu.style.position = '';
+      menu.style.top = '';
+      menu.style.left = '';
+      return;
+    }
+    var rect = toggle.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 8) + 'px';
+    menu.style.left = rect.left + 'px';
+  }
+
+  if (navDropdowns.length) {
+    navDropdowns.forEach(function (dropdown) {
+      var toggle = dropdown.querySelector('.nav-dropdown-toggle');
+      if (!toggle) return;
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var wasOpen = dropdown.classList.contains('is-open');
+        navDropdowns.forEach(function (d) {
+          d.classList.remove('is-open');
+          var t = d.querySelector('.nav-dropdown-toggle');
+          if (t) t.setAttribute('aria-expanded', 'false');
+        });
+        if (!wasOpen) {
+          dropdown.classList.add('is-open');
+          toggle.setAttribute('aria-expanded', 'true');
+          positionDropdownMenu(dropdown);
+        }
+      });
+    });
+    document.addEventListener('click', function () {
+      navDropdowns.forEach(function (d) {
+        d.classList.remove('is-open');
+        var t = d.querySelector('.nav-dropdown-toggle');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+    });
+    // A fixed-position panel doesn't follow the page when it scrolls, so
+    // close it on scroll rather than let it drift away from the toggle.
+    window.addEventListener('scroll', function () {
+      navDropdowns.forEach(function (d) {
+        if (!d.classList.contains('is-open')) return;
+        d.classList.remove('is-open');
+        var t = d.querySelector('.nav-dropdown-toggle');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+    }, { passive: true });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        navDropdowns.forEach(function (d) { d.classList.remove('is-open'); });
+      }
+    });
+  }
+
+  // VNĐ price inputs ("Giá đã bán" etc.): show "." thousands separators as
+  // the user types (35000000 -> 35.000.000), same look as the read-only
+  // formatVND() prices elsewhere on the site. The input stays type="text" so
+  // it can hold the dots -- server side strips non-digits back out before
+  // parsing (see purchaseFieldsFromBody / the price validator).
+  document.querySelectorAll('.vnd-input').forEach(function (input) {
+    function formatValue() {
+      var digits = input.value.replace(/[^\d]/g, '');
+      input.value = digits ? Number(digits).toLocaleString('vi-VN') : '';
+    }
+    formatValue();
+    input.addEventListener('input', formatValue);
+  });
+
   // Hot deal countdown timers
   function pad(n) {
     return String(n).padStart(2, '0');

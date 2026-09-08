@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Khách mua hàng (<%= customers.length %>)</h1>
+    <a href="/admin/khach-hang/moi" class="btn btn-primary">+ Thêm khách mua hàng</a>
+  </div>
+  <p class="admin-hint">Tìm theo tên hoặc số điện thoại để xem toàn bộ lịch sử mua hàng &amp; bảo hành. Khách cũ mua thêm sản phẩm: dùng "+ Thêm khách mua hàng" với đúng SĐT cũ, hệ thống tự thêm vào hồ sơ có sẵn thay vì tạo trùng.</p>
+
+  <form action="/admin/khach-hang" method="get" class="admin-search-form">
+    <input type="text" name="q" value="<%= q %>" placeholder="Tìm theo tên hoặc số điện thoại..." />
+    <button type="submit" class="btn btn-outline">Tìm</button>
+    <% if (q) { %><a href="/admin/khach-hang" class="btn-link">Xóa tìm kiếm</a><% } %>
+  </form>
+
+  <% if (customers.length === 0) { %>
+    <p class="empty-state">Chưa có khách mua hàng nào<%= q ? ' khớp với tìm kiếm.' : '.' %></p>
+  <% } else { %>
+    <table class="admin-table">
+      <thead><tr><th>Họ tên</th><th>SĐT</th><th>Địa chỉ</th><th>Số lần mua</th><th>Lần mua gần nhất</th><th></th></tr></thead>
+      <tbody>
+        <% customers.forEach(function(c) { %>
+          <tr>
+            <td><a href="/admin/khach-hang/<%= c.id %>"><%= c.name %></a></td>
+            <td><a href="tel:<%= c.phone.replace(/\s/g, '') %>"><%= c.phone %></a></td>
+            <td><%= c.address || '-' %></td>
+            <td><%= c.purchaseCount %></td>
+            <td><%= c.lastPurchaseDate ? new Date(c.lastPurchaseDate).toLocaleDateString('vi-VN') : '-' %></td>
+            <td class="admin-actions">
+              <a href="/admin/khach-hang/<%= c.id %>">Xem</a>
+              <form action="/admin/khach-hang/<%= c.id %>/xoa" method="post" onsubmit="return confirm('Xóa khách hàng này và toàn bộ lịch sử mua hàng?');">
+                <button type="submit" class="btn-link-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</main>
+</body>
+</html>

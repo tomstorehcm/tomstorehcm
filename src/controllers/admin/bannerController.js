@@ -162,39 +162,49 @@ async function deleteHeroBanner(req, res, next) {
 async function uploadFeaturedBanner(req, res, next) {
   try {
     if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
+    if (!req.file) return res.redirect('/admin/banner');
+
     const existing = await db('banners').where('type', 'featured').first();
 
-    let imageUrl = existing ? existing.image_url : null;
-    if (req.file) {
-      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
-      let finalFilename;
-      try {
-        finalFilename = await cropToFixedSize(destPath, 'featured');
-      } catch (imgErr) {
-        removeUploadedFile('/images/uploads/banners/' + req.file.filename);
-        return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
-      }
-      imageUrl = '/images/uploads/banners/' + finalFilename;
+    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
+    let finalFilename;
+    try {
+      finalFilename = await cropToFixedSize(destPath, 'featured');
+    } catch (imgErr) {
+      removeUploadedFile('/images/uploads/banners/' + req.file.filename);
+      return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
     }
-
-    if (!imageUrl) return res.redirect('/admin/banner');
+    const imageUrl = '/images/uploads/banners/' + finalFilename;
 
     if (existing) {
-      if (req.file) removeUploadedFile(existing.image_url);
-      await db('banners').where('id', existing.id).update({
-        image_url: imageUrl,
-        link_url: req.body.linkUrl || null
-      });
+      removeUploadedFile(existing.image_url);
+      await db('banners').where('id', existing.id).update({ image_url: imageUrl });
     } else {
       await db('banners').insert({
         image_url: imageUrl,
-        link_url: req.body.linkUrl || null,
+        link_url: null,
         sort_order: 1,
         is_active: true,
         type: 'featured'
       });
     }
 
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Separate from the image upload above so changing just the link never
+// forces re-picking an image (the HTML file input can only be required when
+// it's the only field the form is submitting).
+async function updateFeaturedBannerLink(req, res, next) {
+  try {
+    const existing = await db('banners').where('type', 'featured').first();
+    if (!existing) return res.redirect('/admin/banner');
+    await db('banners').where('id', existing.id).update({
+      link_url: (req.body.linkUrl || '').trim() || null
+    });
     res.redirect('/admin/banner');
   } catch (err) {
     next(err);
@@ -261,6 +271,7 @@ module.exports = {
   bulkUpdateHeroBanners,
   deleteHeroBanner,
   uploadFeaturedBanner,
+  updateFeaturedBannerLink,
   updateCategoryName,
   toggleCategoryHomepage,
   uploadCategoryThumb

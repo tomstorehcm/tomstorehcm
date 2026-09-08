@@ -37,12 +37,30 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <a href="/#hot-deal" class="hot-deal-nav-link">🔥 Best Deal</a>
-      <% categories.forEach(function(cat) { %>
+      <% navItems.forEach(function(item) { %>
         <span class="category-nav-sep" aria-hidden="true">|</span>
-        <a href="/danh-muc/<%= cat.slug %>" class="<%= currentPath === '/danh-muc/' + cat.slug ? 'active' : '' %>"><%= cat.nav_label || cat.name %></a>
+        <% if (item.type === 'group') { %>
+          <% var groupActive = currentPath === '/nhom/' + item.key || item.categories.some(function(c) { return currentPath === '/danh-muc/' + c.slug; }); %>
+          <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-toggle <%= groupActive ? 'active' : '' %>" aria-haspopup="true" aria-expanded="false">
+              <%= item.label %>
+              <svg class="nav-dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="nav-dropdown-menu">
+              <a href="/nhom/<%= item.key %>" class="<%= currentPath === '/nhom/' + item.key ? 'active' : '' %>">Xem tất cả</a>
+              <% item.categories.forEach(function(cat) { %>
+                <a href="/danh-muc/<%= cat.slug %>" class="<%= currentPath === '/danh-muc/' + cat.slug ? 'active' : '' %>"><%= cat.nav_label || cat.name %></a>
+              <% }); %>
+            </div>
+          </div>
+        <% } else { %>
+          <a href="/danh-muc/<%= item.category.slug %>" class="<%= currentPath === '/danh-muc/' + item.category.slug ? 'active' : '' %>"><%= item.category.nav_label || item.category.name %></a>
+        <% } %>
       <% }); %>
       <span class="category-nav-sep" aria-hidden="true">|</span>
-      <a href="/tra-gop" class="<%= currentPath === '/tra-gop' ? 'active' : '' %>">Trả góp linh động</a>
+      <a href="/tra-gop" class="<%= currentPath === '/tra-gop' ? 'active' : '' %>">Trả Góp Linh Động</a>
+      <span class="category-nav-sep" aria-hidden="true">|</span>
+      <a href="/chinh-sach-bao-hanh" class="<%= currentPath === '/chinh-sach-bao-hanh' ? 'active' : '' %>">Chính Sách Bảo Hành</a>
     </div>
   </nav>
 </header>

@@ -256,6 +256,62 @@ table { border-collapse: collapse; width: 100%; }
 }
 .category-nav a.hot-deal-nav-link:hover { filter: brightness(1.05); color: #fff; }
 
+/* ===== Nav dropdown ("Phụ kiện" etc.) ===== */
+.nav-dropdown { position: relative; display: inline-flex; align-items: center; }
+.nav-dropdown-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: #c7c7cc;
+  font-weight: 600;
+  font-size: 14px;
+  padding: var(--space-2) 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle.active,
+.nav-dropdown.is-open .nav-dropdown-toggle { color: #fff; }
+.nav-dropdown-arrow { transition: transform 0.2s ease; flex-shrink: 0; }
+.nav-dropdown.is-open .nav-dropdown-arrow { transform: rotate(180deg); }
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--space-2);
+  background: var(--color-ink);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: var(--space-2);
+  min-width: 180px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  z-index: 120;
+}
+.nav-dropdown.is-open .nav-dropdown-menu { display: flex; flex-direction: column; }
+.nav-dropdown-menu a { padding: var(--space-2) var(--space-3); border-radius: 6px; white-space: nowrap; }
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a.active { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+@media (max-width: 899px) {
+  .nav-dropdown { display: flex; flex-direction: column; align-items: stretch; width: 100%; }
+  .nav-dropdown-toggle { width: 100%; justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+  .nav-dropdown-menu {
+    display: none;
+    position: static;
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .nav-dropdown.is-open .nav-dropdown-menu { display: flex; }
+  .nav-dropdown-menu a { padding: var(--space-3) 0 var(--space-3) var(--space-5); border-bottom: 1px solid rgba(255, 255, 255, 0.06); border-radius: 0; }
+}
+
 /* ===== Hero slider (ty le co dinh 1800x700, khong tran vien) ===== */
 @keyframes heroEnter {
   from { opacity: 0; transform: translateY(28px); }
@@ -733,6 +789,22 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 .admin-main { flex: 1; padding: var(--space-6); max-width: 100%; overflow-x: auto; }
 .admin-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); flex-wrap: wrap; gap: var(--space-3); }
+.admin-title-row { display: flex; align-items: center; gap: var(--space-3); }
+.btn-icon-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.btn-icon-back:hover { background: var(--color-bg-alt); }
 .admin-hint { color: var(--color-text-muted); font-size: 14px; margin-bottom: var(--space-4); max-width: 640px; }
 
 .admin-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
@@ -754,6 +826,15 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
   border-radius: 999px;
   margin-bottom: var(--space-3);
   box-shadow: 0 4px 10px rgba(249, 101, 153, 0.25);
+}
+/* A heading that follows a table/list block right above it (e.g. "+ Thêm sản
+   phẩm mới" after the purchase-history table) needs breathing room -- the
+   global h1/h2/h3 reset zeroes out margin-top, so without this it sits flush
+   against whatever came before it. */
+.admin-table-scroll + .admin-category-heading,
+.admin-table + .admin-category-heading,
+.empty-state + .admin-category-heading {
+  margin-top: var(--space-6);
 }
 
 .admin-table { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; border-collapse: collapse; min-width: 640px; }
@@ -813,6 +894,16 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-category-heading-standalone { background: #f97316; box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25); }
 
 .admin-form { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 640px; }
+.admin-form-subheading { font-size: 15px; font-weight: 700; color: var(--color-ink); margin: var(--space-5) 0 var(--space-3); }
+.admin-form-subheading:first-child { margin-top: 0; }
+.admin-search-form { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; }
+.admin-search-form input[type="text"] { flex: 1; min-width: 220px; height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
+.btn-link { background: none; border: none; color: var(--color-text-muted); font-size: 14px; padding: 0; text-decoration: underline; }
+.customer-info-card { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5); max-width: 640px; }
+.customer-info-card p { margin: 0 0 var(--space-2); }
+.customer-info-card p:last-child { margin-bottom: 0; }
+.admin-note-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-table-scroll { overflow-x: auto; }
 .installment-section-form { max-width: 860px; margin-bottom: var(--space-6); }
 .installment-editor-wrap { border-radius: var(--radius-sm); overflow: hidden; }
 .installment-editor { min-height: 260px; background: #fff; font-size: 15px; }

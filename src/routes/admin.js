@@ -12,11 +12,14 @@ const orderAdminController = require('../controllers/admin/orderAdminController'
 const bannerController = require('../controllers/admin/bannerController');
 const policyController = require('../controllers/admin/policyController');
 const installmentAdminController = require('../controllers/admin/installmentAdminController');
+const warrantyPolicyAdminController = require('../controllers/admin/warrantyPolicyAdminController');
+const customerController = require('../controllers/admin/customerController');
 
 const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
 const uploadCategoryImage = makeUploader('categories');
 const uploadInstallmentImage = makeUploader('installment');
+const uploadWarrantyImage = makeUploader('bao-hanh');
 
 const MAX_COLOR_ROWS = 20;
 const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
@@ -94,6 +97,7 @@ router.post('/banner/chinh/:id/an-hien', bannerController.toggleHeroBanner);
 router.post('/banner/chinh/luu-hang-loat', bannerController.bulkUpdateHeroBanners);
 router.post('/banner/chinh/:id/xoa', bannerController.deleteHeroBanner);
 router.post('/banner/san-pham-hot', handleUploadErrors(uploadBannerImage.single('image')), bannerController.uploadFeaturedBanner);
+router.post('/banner/san-pham-hot/link', bannerController.updateFeaturedBannerLink);
 router.post('/banner/danh-muc/:id', handleUploadErrors(uploadCategoryImage.single('image')), bannerController.uploadCategoryThumb);
 router.post('/banner/danh-muc/:id/ten', bannerController.updateCategoryName);
 router.post('/banner/danh-muc/:id/hien-thi', bannerController.toggleCategoryHomepage);
@@ -108,6 +112,23 @@ router.get('/chinh-sach/:id/sua', policyController.editPolicyForm);
 router.post('/chinh-sach/:id/sua', policyController.updatePolicy);
 router.post('/chinh-sach/:id/xoa', policyController.deletePolicy);
 
+router.get('/khach-hang', customerController.listCustomers);
+router.get('/khach-hang/moi', customerController.newCustomerForm);
+router.post(
+  '/khach-hang/moi',
+  customerController.customerValidators,
+  customerController.purchaseValidators,
+  customerController.createCustomer
+);
+router.get('/khach-hang/:id', customerController.showCustomer);
+router.get('/khach-hang/:id/sua', customerController.editCustomerForm);
+router.post('/khach-hang/:id/sua', customerController.customerValidators, customerController.updateCustomer);
+router.post('/khach-hang/:id/xoa', customerController.deleteCustomer);
+router.post('/khach-hang/:id/san-pham', customerController.purchaseValidators, customerController.addPurchase);
+router.get('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.editPurchaseForm);
+router.post('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.purchaseValidators, customerController.updatePurchase);
+router.post('/khach-hang/:id/san-pham/:purchaseId/xoa', customerController.deletePurchase);
+
 router.get('/tra-gop', installmentAdminController.listInstallmentSections);
 router.post(
   '/tra-gop/anh',
@@ -115,5 +136,15 @@ router.post(
   installmentAdminController.uploadInstallmentImage
 );
 router.post('/tra-gop/:key', installmentAdminController.updateInstallmentSection);
+
+router.get('/bao-hanh', warrantyPolicyAdminController.listWarrantySections);
+router.post('/bao-hanh', warrantyPolicyAdminController.createWarrantySection);
+router.post(
+  '/bao-hanh/anh',
+  handleUploadErrors(uploadWarrantyImage.single('image')),
+  warrantyPolicyAdminController.uploadWarrantyImage
+);
+router.post('/bao-hanh/:id/sua', warrantyPolicyAdminController.updateWarrantySection);
+router.post('/bao-hanh/:id/xoa', warrantyPolicyAdminController.deleteWarrantySection);
 
 module.exports = router;

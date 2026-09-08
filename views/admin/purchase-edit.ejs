@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Sửa thông tin lần mua - <%= customer.name %></h1>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="/admin/khach-hang/<%= customer.id %>/san-pham/<%= purchase.id %>/sua" method="post" class="admin-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="productName">Tên sản phẩm *</label>
+        <input type="text" id="productName" name="productName" value="<%= purchase.product_name || purchase.productName || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="imei">IMEI / Số serial</label>
+        <input type="text" id="imei" name="imei" value="<%= purchase.imei || '' %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="purchaseDate">Ngày mua *</label>
+        <input type="date" id="purchaseDate" name="purchaseDate" value="<%= String(purchase.purchase_date || purchase.purchaseDate || '').slice(0, 10) %>" required />
+      </div>
+      <div class="form-group">
+        <label for="warrantyExpiresAt">Hạn bảo hành</label>
+        <input type="date" id="warrantyExpiresAt" name="warrantyExpiresAt" value="<%= String(purchase.warranty_expires_at || purchase.warrantyExpiresAt || '').slice(0, 10) %>" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="price">Giá đã bán</label>
+        <input type="text" inputmode="numeric" id="price" name="price" class="vnd-input" value="<%= purchase.price || '' %>" />
+      </div>
+      <div class="form-group">
+        <label for="transactionType">Hình thức giao dịch</label>
+        <select id="transactionType" name="transactionType">
+          <% transactionTypes.forEach(function(t) { %>
+            <option value="<%= t.key %>" <%= (purchase.transaction_type || purchase.transactionType) === t.key ? 'selected' : '' %>><%= t.label %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="purchaseNote">Ghi chú</label>
+      <textarea id="purchaseNote" name="purchaseNote" rows="2"><%= purchase.note || purchase.purchaseNote || '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+    <a href="/admin/khach-hang/<%= customer.id %>" class="btn btn-outline">Hủy</a>
+  </form>
+</main>
+</body>
+</html>

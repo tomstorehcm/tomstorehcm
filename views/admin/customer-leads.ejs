@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Thông tin khách hàng (<%= leads.length %>)</h1>
+    <a href="/admin/khach-hang/moi" class="btn btn-primary">+ Thêm khách hàng</a>
+  </div>
+  <p class="admin-hint">Nhập thông tin khách khi tư vấn bán hàng để lưu lại và xem/sửa/xóa sau này. Dữ liệu lưu trong database, không mất khi cập nhật code.</p>
+
+  <% if (leads.length === 0) { %>
+    <p class="empty-state">Chưa có thông tin khách hàng nào.</p>
+  <% } else { %>
+    <table class="admin-table">
+      <thead><tr><th>Họ tên</th><th>SĐT</th><th>Quan tâm</th><th>Nguồn</th><th>Ghi chú</th><th>Ngày nhập</th><th></th></tr></thead>
+      <tbody>
+        <% leads.forEach(function(l) { %>
+          <tr>
+            <td><%= l.customer_name %></td>
+            <td><a href="tel:<%= l.phone.replace(/\s/g, '') %>"><%= l.phone %></a></td>
+            <td><%= l.interest || '-' %></td>
+            <td><%= l.source || '-' %></td>
+            <td class="admin-note-cell" title="<%= l.note || '' %>"><%= l.note ? (l.note.length > 40 ? l.note.slice(0, 40) + '…' : l.note) : '-' %></td>
+            <td><%= new Date(l.created_at).toLocaleDateString('vi-VN') %></td>
+            <td class="admin-actions">
+              <a href="/admin/khach-hang/<%= l.id %>/sua">Sửa</a>
+              <form action="/admin/khach-hang/<%= l.id %>/xoa" method="post" onsubmit="return confirm('Xóa thông tin khách hàng này?');">
+                <button type="submit" class="btn-link-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  <% } %>
+</main>
+</body>
+</html>

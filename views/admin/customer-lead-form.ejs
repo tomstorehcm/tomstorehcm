@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1><%= isEdit ? 'Sửa thông tin khách hàng' : 'Thêm khách hàng' %></h1>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="<%= isEdit ? '/admin/khach-hang/' + lead.id + '/sua' : '/admin/khach-hang/moi' %>" method="post" class="admin-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="customerName">Họ tên *</label>
+        <input type="text" id="customerName" name="customerName" value="<%= lead.customerName || '' %>" required maxlength="150" />
+      </div>
+      <div class="form-group">
+        <label for="phone">Số điện thoại *</label>
+        <input type="text" id="phone" name="phone" value="<%= lead.phone || '' %>" required placeholder="0901234567" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="interest">Sản phẩm / nhu cầu quan tâm</label>
+      <input type="text" id="interest" name="interest" value="<%= lead.interest || '' %>" placeholder="VD: iPhone 17 Pro Max 256GB" />
+    </div>
+    <div class="form-group">
+      <label for="source">Nguồn khách</label>
+      <input type="text" id="source" name="source" list="sourceOptions" value="<%= lead.source || '' %>" placeholder="VD: Facebook, Zalo, giới thiệu..." />
+      <datalist id="sourceOptions">
+        <option value="Facebook"></option>
+        <option value="Zalo"></option>
+        <option value="Giới thiệu"></option>
+        <option value="Khách vãng lai"></option>
+        <option value="Website"></option>
+      </datalist>
+    </div>
+    <div class="form-group">
+      <label for="note">Ghi chú tư vấn</label>
+      <textarea id="note" name="note" rows="4"><%= lead.note || '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary"><%= isEdit ? 'Lưu thay đổi' : 'Thêm khách hàng' %></button>
+    <a href="/admin/khach-hang" class="btn btn-outline">Hủy</a>
+  </form>
+</main>
+</body>
+</html>

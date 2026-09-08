@@ -8,11 +8,13 @@ const cartController = require('../controllers/cartController');
 const checkoutController = require('../controllers/checkoutController');
 const contactRequestController = require('../controllers/contactRequestController');
 const installmentController = require('../controllers/installmentController');
+const warrantyPolicyController = require('../controllers/warrantyPolicyController');
 
 router.get('/', homeController.showHome);
 
 router.get('/tim-kiem', productController.searchProducts);
 
+router.get('/nhom/:key', categoryController.showNavGroup);
 router.get('/danh-muc/:slug', categoryController.showCategory);
 router.get('/san-pham/:slug', productController.showProduct);
 
@@ -30,5 +32,6 @@ router.post('/lien-he-bao-gia', contactRequestController.contactRequestValidator
 router.get('/lien-he-bao-gia/:code', contactRequestController.showContactRequestConfirmation);
 
 router.get('/tra-gop', installmentController.showInstallmentPage);
+router.get('/chinh-sach-bao-hanh', warrantyPolicyController.showWarrantyPolicyPage);
 
 module.exports = router;
