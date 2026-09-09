@@ -37,18 +37,15 @@ async function showCategory(req, res, next) {
     // "Điện thoại cũ 99%" and "Samsung" are hidden from the homepage tiles but
     // browsable as tabs within "Điện thoại" instead of their own separate page.
     // Categories that belong to an explicit nav group (nav_group_key, e.g.
-    // "Phụ kiện" for Tai nghe + Apple Watch) are excluded from this catch-all
-    // so they only group with their own nav group, not with Điện thoại too.
+    // "Phụ kiện" for Tai nghe + Apple Watch) are NOT merged as tabs here --
+    // each category page (vd /danh-muc/apple-watch) only shows its own
+    // products. "Xem tất cả" trong dropdown mới là nơi gộp cả nhóm lại
+    // (xem showNavGroup bên dưới).
     let relatedCategories = [];
     if (category.slug === 'dien-thoai') {
       relatedCategories = await db('categories')
         .where('show_on_homepage', false)
         .whereNull('nav_group_key')
-        .orderBy('sort_order');
-    } else if (category.nav_group_key) {
-      relatedCategories = await db('categories')
-        .where('nav_group_key', category.nav_group_key)
-        .whereNot('id', category.id)
         .orderBy('sort_order');
     }
 
