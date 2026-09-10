@@ -7,41 +7,75 @@
 <%- include('partials/header') %>
 
 <main>
-  <% if (banners.length > 0) { %>
-  <div class="hero-slider-wrap container" id="heroWrap">
-    <div class="hero-anim">
-    <section class="hero-slider" id="heroSlider">
-      <div class="hero-slider-frame">
-        <div class="hero-slider-track" id="heroSliderTrack">
-          <% banners.forEach(function(banner) { %>
-            <% var bannerDesktopSrc = banner.image_url || banner.image_url_mobile; %>
-            <% var bannerPicture = '<picture>' + (banner.image_url_mobile ? '<source media="(max-width: 767px)" srcset="' + banner.image_url_mobile + '">' : '') + '<img src="' + bannerDesktopSrc + '" alt="TOMSTORE banner" /></picture>'; %>
-            <% /* Banner mobile-only (chua co anh desktop): anh doc bi ep vao khung ngang
-                  1800x700 se bi object-fit:cover zoom/cat rat sau. Them class de CSS
-                  chuyen sang object-fit:contain tren desktop, hien du anh thay vi bi cat. */ %>
-            <div class="hero-slide<%= !banner.image_url ? ' hero-slide-fallback-mobile' : '' %>">
-              <% if (banner.link_url) { %>
-                <a href="<%= banner.link_url %>"><%- bannerPicture %></a>
-              <% } else { %>
-                <span class="hero-slide-img"><%- bannerPicture %></span>
-              <% } %>
-            </div>
-          <% }); %>
+  <% /* Banner nao thieu anh desktop thi khong hien tren desktop, banner nao
+        thieu anh mobile thi khong hien tren mobile -- coi nhu "khong co" o
+        man hinh do, khong dung anh con lai de thay the. Vi so luong banner
+        o 2 ben co the khac nhau, dung 2 slider doc lap (id khac nhau), moi
+        cai chi hien dung 1 breakpoint qua CSS (.hero-slider-desktop-only /
+        .hero-slider-mobile-only). */ %>
+  <% if (desktopBanners.length > 0 || mobileBanners.length > 0) { %>
+    <% if (desktopBanners.length > 0) { %>
+    <div class="hero-slider-wrap container hero-slider-desktop-only" id="heroWrapDesktop">
+      <div class="hero-anim">
+      <section class="hero-slider" id="heroSliderDesktop">
+        <div class="hero-slider-frame">
+          <div class="hero-slider-track" id="heroSliderTrackDesktop">
+            <% desktopBanners.forEach(function(banner) { %>
+              <div class="hero-slide">
+                <% if (banner.link_url) { %>
+                  <a href="<%= banner.link_url %>"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></a>
+                <% } else { %>
+                  <span class="hero-slide-img"><img src="<%= banner.image_url %>" alt="TOMSTORE banner" /></span>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+          <div class="hero-slider-overlay" id="heroOverlayDesktop"></div>
         </div>
-        <div class="hero-slider-overlay" id="heroOverlay"></div>
+        <% if (desktopBanners.length > 1) { %>
+          <button type="button" class="hero-slider-arrow prev" id="heroPrevDesktop" aria-label="Ảnh trước"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="hero-slider-arrow next" id="heroNextDesktop" aria-label="Ảnh sau"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="hero-slider-dots" id="heroDotsDesktop">
+            <% desktopBanners.forEach(function(banner, i) { %>
+              <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Đến slide <%= i + 1 %>"></button>
+            <% }); %>
+          </div>
+        <% } %>
+      </section>
       </div>
-      <% if (banners.length > 1) { %>
-        <button type="button" class="hero-slider-arrow prev" id="heroPrev" aria-label="Ảnh trước"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <button type="button" class="hero-slider-arrow next" id="heroNext" aria-label="Ảnh sau"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <div class="hero-slider-dots" id="heroDots">
-          <% banners.forEach(function(banner, i) { %>
-            <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Đến slide <%= i + 1 %>"></button>
-          <% }); %>
-        </div>
-      <% } %>
-    </section>
     </div>
-  </div>
+    <% } %>
+    <% if (mobileBanners.length > 0) { %>
+    <div class="hero-slider-wrap container hero-slider-mobile-only" id="heroWrapMobile">
+      <div class="hero-anim">
+      <section class="hero-slider" id="heroSliderMobile">
+        <div class="hero-slider-frame">
+          <div class="hero-slider-track" id="heroSliderTrackMobile">
+            <% mobileBanners.forEach(function(banner) { %>
+              <div class="hero-slide">
+                <% if (banner.link_url) { %>
+                  <a href="<%= banner.link_url %>"><img src="<%= banner.image_url_mobile %>" alt="TOMSTORE banner" /></a>
+                <% } else { %>
+                  <span class="hero-slide-img"><img src="<%= banner.image_url_mobile %>" alt="TOMSTORE banner" /></span>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+          <div class="hero-slider-overlay" id="heroOverlayMobile"></div>
+        </div>
+        <% if (mobileBanners.length > 1) { %>
+          <button type="button" class="hero-slider-arrow prev" id="heroPrevMobile" aria-label="Ảnh trước"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="hero-slider-arrow next" id="heroNextMobile" aria-label="Ảnh sau"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="hero-slider-dots" id="heroDotsMobile">
+            <% mobileBanners.forEach(function(banner, i) { %>
+              <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Đến slide <%= i + 1 %>"></button>
+            <% }); %>
+          </div>
+        <% } %>
+      </section>
+      </div>
+    </div>
+    <% } %>
   <% } else { %>
   <section class="hero-fallback">
     <div class="container">
