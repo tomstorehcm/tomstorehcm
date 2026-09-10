@@ -90,6 +90,32 @@ async function createHeroBanner(req, res, next) {
   }
 }
 
+async function updateHeroBannerImage(req, res, next) {
+  try {
+    if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
+    const banner = await db('banners').where('id', req.params.id).where('type', 'hero').first();
+    if (!banner || !req.file) return res.redirect('/admin/banner');
+
+    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', req.file.filename);
+    let finalFilename;
+    try {
+      finalFilename = await cropToFixedSize(destPath, 'hero');
+    } catch (imgErr) {
+      removeUploadedFile('/images/uploads/banners/' + req.file.filename);
+      return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
+    }
+
+    if (banner.image_url) removeUploadedFile(banner.image_url);
+    await db('banners').where('id', banner.id).update({
+      image_url: '/images/uploads/banners/' + finalFilename
+    });
+
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updateHeroBannerMobileImage(req, res, next) {
   try {
     if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
@@ -266,6 +292,7 @@ async function uploadCategoryThumb(req, res, next) {
 module.exports = {
   listBanners,
   createHeroBanner,
+  updateHeroBannerImage,
   updateHeroBannerMobileImage,
   toggleHeroBanner,
   bulkUpdateHeroBanners,
