@@ -42,11 +42,17 @@
       <tbody>
         <% heroBanners.forEach(function(b) { %>
           <tr>
-            <td><img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" /></td>
+            <td>
+              <img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" id="heroDesktopThumb<%= b.id %>" />
+              <form action="/admin/banner/chinh/<%= b.id %>/anh" method="post" enctype="multipart/form-data" class="banner-image-form">
+                <label for="heroDesktopFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn">Đổi ảnh desktop</label>
+                <input type="file" id="heroDesktopFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroDesktopThumb<%= b.id %>" hidden />
+              </form>
+            </td>
             <td>
               <img src="<%= b.image_url_mobile || '' %>" alt="Banner mobile" class="admin-banner-thumb-mobile" id="heroMobileThumb<%= b.id %>" <%= b.image_url_mobile ? '' : 'hidden' %> />
               <span class="status-badge status-inactive" id="heroMobileBadge<%= b.id %>" <%= b.image_url_mobile ? 'hidden' : '' %>>Chưa có</span>
-              <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile" method="post" enctype="multipart/form-data" class="banner-mobile-form">
+              <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile" method="post" enctype="multipart/form-data" class="banner-image-form">
                 <label for="heroMobileFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></label>
                 <input type="file" id="heroMobileFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroMobileThumb<%= b.id %>" data-preview-badge="heroMobileBadge<%= b.id %>" hidden />
               </form>
@@ -147,9 +153,10 @@
         var badge = badgeId ? document.getElementById(badgeId) : null;
         if (badge) badge.hidden = true;
 
-        // Rows where "choose file" is the only control (mobile banner) submit
-        // as soon as a file is picked, instead of needing a separate button.
-        var form = input.closest('form.banner-mobile-form');
+        // Rows where "choose file" is the only control (desktop/mobile banner
+        // image swap) submit as soon as a file is picked, instead of needing
+        // a separate button.
+        var form = input.closest('form.banner-image-form');
         if (form && input.files && input.files[0]) form.requestSubmit();
       });
     });
