@@ -6,6 +6,11 @@ async function showHome(req, res, next) {
     const now = new Date();
 
     const banners = await db('banners').where('is_active', true).where('type', 'hero').orderBy('sort_order');
+    // Banner nao khong co anh desktop thi khong hien tren desktop, khong co
+    // anh mobile thi khong hien tren mobile -- 2 danh sach doc lap, khong
+    // dung anh con lai de "chua" cho ben kia.
+    const desktopBanners = banners.filter((b) => b.image_url);
+    const mobileBanners = banners.filter((b) => b.image_url_mobile);
     const featuredBanner = await db('banners').where('type', 'featured').first();
 
     const hotDeals = await db('products')
@@ -45,6 +50,8 @@ async function showHome(req, res, next) {
     res.render('home', {
       title: 'TOMSTORE - Chuyên các sản phẩm Apple: iPhone, MacBook, iPad, AirPods chính hãng',
       banners,
+      desktopBanners,
+      mobileBanners,
       featuredBanner,
       hotDeals,
       categories,
