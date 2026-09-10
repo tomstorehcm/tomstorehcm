@@ -16,7 +16,10 @@
           <% banners.forEach(function(banner) { %>
             <% var bannerDesktopSrc = banner.image_url || banner.image_url_mobile; %>
             <% var bannerPicture = '<picture>' + (banner.image_url_mobile ? '<source media="(max-width: 767px)" srcset="' + banner.image_url_mobile + '">' : '') + '<img src="' + bannerDesktopSrc + '" alt="TOMSTORE banner" /></picture>'; %>
-            <div class="hero-slide">
+            <% /* Banner mobile-only (chua co anh desktop): anh doc bi ep vao khung ngang
+                  1800x700 se bi object-fit:cover zoom/cat rat sau. Them class de CSS
+                  chuyen sang object-fit:contain tren desktop, hien du anh thay vi bi cat. */ %>
+            <div class="hero-slide<%= !banner.image_url ? ' hero-slide-fallback-mobile' : '' %>">
               <% if (banner.link_url) { %>
                 <a href="<%= banner.link_url %>"><%- bannerPicture %></a>
               <% } else { %>
