@@ -49,16 +49,20 @@ async function createHeroBanner(req, res, next) {
     if (req.fileUploadError) return renderWithError(req, res, req.fileUploadError);
     const desktopFile = req.files && req.files.image && req.files.image[0];
     const mobileFile = req.files && req.files.imageMobile && req.files.imageMobile[0];
-    if (!desktopFile) return res.redirect('/admin/banner');
+    if (!desktopFile && !mobileFile) {
+      return renderWithError(req, res, 'Vui lòng chọn ít nhất 1 ảnh (desktop hoặc mobile).');
+    }
 
-    const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', desktopFile.filename);
-    let finalDesktopFilename;
-    try {
-      finalDesktopFilename = await cropToFixedSize(destPath, 'hero');
-    } catch (imgErr) {
-      removeUploadedFile('/images/uploads/banners/' + desktopFile.filename);
-      if (mobileFile) removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
-      return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
+    let finalDesktopFilename = null;
+    if (desktopFile) {
+      const destPath = path.join(__dirname, '..', '..', '..', 'public', 'images', 'uploads', 'banners', desktopFile.filename);
+      try {
+        finalDesktopFilename = await cropToFixedSize(destPath, 'hero');
+      } catch (imgErr) {
+        removeUploadedFile('/images/uploads/banners/' + desktopFile.filename);
+        if (mobileFile) removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
+        return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
+      }
     }
 
     let imageUrlMobile = null;
@@ -69,10 +73,11 @@ async function createHeroBanner(req, res, next) {
         imageUrlMobile = '/images/uploads/banners/' + finalMobileFilename;
       } catch (imgErr) {
         removeUploadedFile('/images/uploads/banners/' + mobileFile.filename);
+        if (!desktopFile) return renderWithError(req, res, IMAGE_ERROR_MESSAGE);
       }
     }
 
-    const imageUrl = '/images/uploads/banners/' + finalDesktopFilename;
+    const imageUrl = finalDesktopFilename ? '/images/uploads/banners/' + finalDesktopFilename : null;
     const maxSort = await db('banners').where('type', 'hero').max('sort_order as max').first();
 
     await db('banners').insert({
@@ -109,6 +114,44 @@ async function updateHeroBannerImage(req, res, next) {
     await db('banners').where('id', banner.id).update({
       image_url: '/images/uploads/banners/' + finalFilename
     });
+
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
+// A banner must always keep at least one image (desktop or mobile), so
+// removing one side is only allowed while the other side still has an image.
+async function removeHeroBannerDesktopImage(req, res, next) {
+  try {
+    const banner = await db('banners').where('id', req.params.id).where('type', 'hero').first();
+    if (!banner) return res.redirect('/admin/banner');
+    if (!banner.image_url) return res.redirect('/admin/banner');
+    if (!banner.image_url_mobile) {
+      return renderWithError(req, res, 'Không thể xoá ảnh desktop vì banner này chưa có ảnh mobile -- mỗi banner cần giữ lại ít nhất 1 ảnh.');
+    }
+
+    removeUploadedFile(banner.image_url);
+    await db('banners').where('id', banner.id).update({ image_url: null });
+
+    res.redirect('/admin/banner');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeHeroBannerMobileImage(req, res, next) {
+  try {
+    const banner = await db('banners').where('id', req.params.id).where('type', 'hero').first();
+    if (!banner) return res.redirect('/admin/banner');
+    if (!banner.image_url_mobile) return res.redirect('/admin/banner');
+    if (!banner.image_url) {
+      return renderWithError(req, res, 'Không thể xoá ảnh mobile vì banner này chưa có ảnh desktop -- mỗi banner cần giữ lại ít nhất 1 ảnh.');
+    }
+
+    removeUploadedFile(banner.image_url_mobile);
+    await db('banners').where('id', banner.id).update({ image_url_mobile: null });
 
     res.redirect('/admin/banner');
   } catch (err) {
@@ -294,6 +337,8 @@ module.exports = {
   createHeroBanner,
   updateHeroBannerImage,
   updateHeroBannerMobileImage,
+  removeHeroBannerDesktopImage,
+  removeHeroBannerMobileImage,
   toggleHeroBanner,
   bulkUpdateHeroBanners,
   deleteHeroBanner,
