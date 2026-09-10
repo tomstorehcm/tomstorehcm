@@ -679,14 +679,18 @@
     }
   }
 
-  // Hero banner slider
-  var track = document.getElementById('heroSliderTrack');
-  if (track) {
+  // Hero banner slider -- co the co toi 2 instance doc lap tren trang
+  // (heroSliderTrackDesktop / heroSliderTrackMobile), moi cai chi hien o 1
+  // breakpoint (xem CSS .hero-slider-desktop-only / .hero-slider-mobile-only)
+  // va chi chua cac banner co anh phu hop cho breakpoint do.
+  function initHeroSlider(suffix) {
+    var track = document.getElementById('heroSliderTrack' + suffix);
+    if (!track) return;
     var slides = track.children;
-    var dotsWrap = document.getElementById('heroDots');
+    var dotsWrap = document.getElementById('heroDots' + suffix);
     var dots = dotsWrap ? dotsWrap.querySelectorAll('button') : [];
-    var prevBtn = document.getElementById('heroPrev');
-    var nextBtn = document.getElementById('heroNext');
+    var prevBtn = document.getElementById('heroPrev' + suffix);
+    var nextBtn = document.getElementById('heroNext' + suffix);
     var current = 0;
     var autoplayTimer;
 
@@ -746,6 +750,8 @@
       startAutoplay();
     }
   }
+  initHeroSlider('Desktop');
+  initHeroSlider('Mobile');
 
   // Category tiles slider (only rendered once there are more than 4
   // categories) -- plain native scroll, arrows just nudge it by one "page".
@@ -762,12 +768,15 @@
   }
 
   // Hero banner: shrinks and darkens as the user scrolls down past it
-  var heroWrap = document.getElementById('heroWrap');
-  var heroSlider = document.getElementById('heroSlider');
-  var heroOverlay = document.getElementById('heroOverlay');
+  // (moi instance Desktop/Mobile lam rieng, cai dang display:none thi
+  // getBoundingClientRect() tra ve toan 0 nen hieu ung khong chay, vo hai)
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (heroWrap && heroSlider && heroOverlay && !reducedMotion) {
+  function initHeroScrollEffect(suffix) {
+    var heroWrap = document.getElementById('heroWrap' + suffix);
+    var heroSlider = document.getElementById('heroSlider' + suffix);
+    var heroOverlay = document.getElementById('heroOverlay' + suffix);
+    if (!heroWrap || !heroSlider || !heroOverlay || reducedMotion) return;
     var heroTicking = false;
 
     function updateHeroScrollEffect() {
@@ -792,6 +801,8 @@
 
     updateHeroScrollEffect();
   }
+  initHeroScrollEffect('Desktop');
+  initHeroScrollEffect('Mobile');
 
   // Footer: columns fade + slide up, staggered, the first time they scroll into view
   var footerCols = document.querySelectorAll('.footer-col');
