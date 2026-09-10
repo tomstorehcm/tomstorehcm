@@ -14,7 +14,8 @@
       <div class="hero-slider-frame">
         <div class="hero-slider-track" id="heroSliderTrack">
           <% banners.forEach(function(banner) { %>
-            <% var bannerPicture = '<picture>' + (banner.image_url_mobile ? '<source media="(max-width: 767px)" srcset="' + banner.image_url_mobile + '">' : '') + '<img src="' + banner.image_url + '" alt="TOMSTORE banner" /></picture>'; %>
+            <% var bannerDesktopSrc = banner.image_url || banner.image_url_mobile; %>
+            <% var bannerPicture = '<picture>' + (banner.image_url_mobile ? '<source media="(max-width: 767px)" srcset="' + banner.image_url_mobile + '">' : '') + '<img src="' + bannerDesktopSrc + '" alt="TOMSTORE banner" /></picture>'; %>
             <div class="hero-slide">
               <% if (banner.link_url) { %>
                 <a href="<%= banner.link_url %>"><%- bannerPicture %></a>
