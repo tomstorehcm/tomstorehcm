@@ -92,6 +92,7 @@ router.post(
   handleUploadErrors(uploadBannerImage.fields([{ name: 'image', maxCount: 1 }, { name: 'imageMobile', maxCount: 1 }])),
   bannerController.createHeroBanner
 );
+router.post('/banner/chinh/:id/anh', handleUploadErrors(uploadBannerImage.single('image')), bannerController.updateHeroBannerImage);
 router.post('/banner/chinh/:id/anh-mobile', handleUploadErrors(uploadBannerImage.single('image')), bannerController.updateHeroBannerMobileImage);
 router.post('/banner/chinh/:id/an-hien', bannerController.toggleHeroBanner);
 router.post('/banner/chinh/luu-hang-loat', bannerController.bulkUpdateHeroBanners);
