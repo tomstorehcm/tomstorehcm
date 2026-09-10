@@ -14,14 +14,14 @@
   <!-- Banner chính -->
   <section class="banner-section">
     <h2>1. Banner chính (đầu trang chủ)</h2>
-    <p class="admin-hint">Ảnh desktop (ngang) cố định <strong>1800 × 700px</strong>. Ảnh mobile (dọc, không bắt buộc) cố định <strong>1080 × 1350px</strong> — nếu bỏ trống, mobile sẽ tạm dùng ảnh desktop crop vào giữa (có thể mất chữ 2 bên), nên khuyến nghị luôn thêm ảnh mobile riêng. Nhiều banner sẽ tự động chạy luân phiên.</p>
+    <p class="admin-hint">Ảnh desktop (ngang) cố định <strong>1800 × 700px</strong>, ảnh mobile (dọc) cố định <strong>1080 × 1350px</strong> — chỉ cần chọn <strong>1 trong 2 ảnh</strong> là thêm được banner (không bắt buộc phải có cả hai). Nếu chỉ có 1 ảnh, ảnh còn lại sẽ tạm dùng chung ảnh đó crop vào giữa (có thể mất chữ 2 bên), nên khuyến nghị thêm đủ cả 2 khi có thể. Nhiều banner sẽ tự động chạy luân phiên.</p>
 
-    <form action="/admin/banner/chinh" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form">
+    <form action="/admin/banner/chinh" method="post" enctype="multipart/form-data" class="admin-form banner-upload-form" id="heroBannerCreateForm">
       <div class="form-row">
         <div class="form-group">
-          <label for="heroImage">Ảnh desktop (ngang) *</label>
+          <label for="heroImage">Ảnh desktop (ngang)</label>
           <img class="admin-image-preview" id="heroImagePreview" hidden />
-          <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroImagePreview" required />
+          <input type="file" id="heroImage" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroImagePreview" />
         </div>
         <div class="form-group">
           <label for="heroImageMobile">Ảnh mobile (dọc)</label>
@@ -29,6 +29,7 @@
           <input type="file" id="heroImageMobile" name="imageMobile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroImageMobilePreview" />
         </div>
       </div>
+      <div class="form-errors" id="heroBannerCreateError" hidden><ul><li>Vui lòng chọn ít nhất 1 ảnh (desktop hoặc mobile).</li></ul></div>
       <div class="form-group">
         <label for="heroLinkUrl">Link khi bấm vào banner (không bắt buộc)</label>
         <input type="text" id="heroLinkUrl" name="linkUrl" placeholder="/danh-muc/dien-thoai" />
@@ -43,11 +44,17 @@
         <% heroBanners.forEach(function(b) { %>
           <tr>
             <td>
-              <img src="<%= b.image_url %>" alt="Banner chính" class="admin-banner-thumb" id="heroDesktopThumb<%= b.id %>" />
+              <img src="<%= b.image_url || '' %>" alt="Banner chính" class="admin-banner-thumb" id="heroDesktopThumb<%= b.id %>" <%= b.image_url ? '' : 'hidden' %> />
+              <span class="status-badge status-inactive" id="heroDesktopBadge<%= b.id %>" <%= b.image_url ? 'hidden' : '' %>>Chưa có</span>
               <form action="/admin/banner/chinh/<%= b.id %>/anh" method="post" enctype="multipart/form-data" class="banner-image-form">
-                <label for="heroDesktopFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn">Đổi ảnh desktop</label>
-                <input type="file" id="heroDesktopFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroDesktopThumb<%= b.id %>" hidden />
+                <label for="heroDesktopFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn"><%= b.image_url ? 'Đổi ảnh desktop' : '+ Thêm ảnh desktop' %></label>
+                <input type="file" id="heroDesktopFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroDesktopThumb<%= b.id %>" data-preview-badge="heroDesktopBadge<%= b.id %>" hidden />
               </form>
+              <% if (b.image_url) { %>
+                <form action="/admin/banner/chinh/<%= b.id %>/anh/xoa" method="post" class="banner-remove-image-form" onsubmit="return confirm('Xoá ảnh desktop của banner này? (banner sẽ chỉ còn ảnh mobile)');">
+                  <button type="submit" class="btn-link-danger">Xoá ảnh desktop</button>
+                </form>
+              <% } %>
             </td>
             <td>
               <img src="<%= b.image_url_mobile || '' %>" alt="Banner mobile" class="admin-banner-thumb-mobile" id="heroMobileThumb<%= b.id %>" <%= b.image_url_mobile ? '' : 'hidden' %> />
@@ -56,6 +63,11 @@
                 <label for="heroMobileFile<%= b.id %>" class="btn btn-outline btn-sm gallery-pick-btn"><%= b.image_url_mobile ? 'Đổi ảnh mobile' : '+ Thêm ảnh mobile' %></label>
                 <input type="file" id="heroMobileFile<%= b.id %>" name="image" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" data-preview="heroMobileThumb<%= b.id %>" data-preview-badge="heroMobileBadge<%= b.id %>" hidden />
               </form>
+              <% if (b.image_url_mobile) { %>
+                <form action="/admin/banner/chinh/<%= b.id %>/anh-mobile/xoa" method="post" class="banner-remove-image-form" onsubmit="return confirm('Xoá ảnh mobile của banner này? (banner sẽ chỉ còn ảnh desktop)');">
+                  <button type="submit" class="btn-link-danger">Xoá ảnh mobile</button>
+                </form>
+              <% } %>
             </td>
             <td>
               <input type="text" name="linkUrl_<%= b.id %>" value="<%= b.link_url || '' %>" placeholder="/danh-muc/dien-thoai" form="heroBannersBulkForm" class="inline-text-input" />
@@ -160,6 +172,25 @@
         if (form && input.files && input.files[0]) form.requestSubmit();
       });
     });
+
+    // "Thêm banner chính": desktop and mobile images are each optional, but
+    // at least one of the two must be chosen before submitting.
+    var createForm = document.getElementById('heroBannerCreateForm');
+    if (createForm) {
+      createForm.addEventListener('submit', function (e) {
+        var desktopInput = document.getElementById('heroImage');
+        var mobileInput = document.getElementById('heroImageMobile');
+        var hasDesktop = desktopInput && desktopInput.files && desktopInput.files[0];
+        var hasMobile = mobileInput && mobileInput.files && mobileInput.files[0];
+        var errorBox = document.getElementById('heroBannerCreateError');
+        if (!hasDesktop && !hasMobile) {
+          e.preventDefault();
+          if (errorBox) errorBox.hidden = false;
+        } else if (errorBox) {
+          errorBox.hidden = true;
+        }
+      });
+    }
   })();
 </script>
 </body>
