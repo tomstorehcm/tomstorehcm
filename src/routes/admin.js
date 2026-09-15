@@ -132,6 +132,12 @@ router.get('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.editPu
 router.post('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.purchaseValidators, customerController.updatePurchase);
 router.post('/khach-hang/:id/san-pham/:purchaseId/xoa', customerController.deletePurchase);
 
+router.get('/khach-hang/:id/san-pham/:purchaseId/bao-hanh', customerController.listWarrantyVisits);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh', customerController.warrantyVisitValidators, customerController.addWarrantyVisit);
+router.get('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/sua', customerController.editWarrantyVisitForm);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/sua', customerController.warrantyVisitValidators, customerController.updateWarrantyVisit);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/xoa', customerController.deleteWarrantyVisit);
+
 router.get('/tra-gop', installmentAdminController.listInstallmentSections);
 router.post(
   '/tra-gop/anh',
