@@ -1,6 +1,8 @@
 const { body, validationResult } = require('express-validator');
 const db = require('../../db');
 const { TRANSACTION_TYPES, TRANSACTION_TYPE_KEYS, transactionTypeLabel } = require('../../utils/purchaseTypes');
+const { toDateInputValue } = require('../../utils/format');
+const { WARRANTY_ISSUE_TYPES, issueKeysFromBody, warrantyIssueLabel } = require('../../utils/warrantyIssueTypes');
 
 const PHONE_RE = /^(0\d{9}|\+84\d{9})$/;
 
@@ -9,27 +11,107 @@ const customerValidators = [
   body('phone').trim().matches(PHONE_RE).withMessage('Số điện thoại không hợp lệ')
 ];
 
+// Form "+ Thêm khách mua hàng" / "+ Thêm sản phẩm mới" co 2 che do chon o
+// dau form (nut "Sản phẩm mua mới" / "Mang tới bảo hành", xem entry-mode-*
+// trong customer-form.ejs va customer-detail.ejs), gui kem 1 field an
+// `mode`. Che do 'warranty' bat buoc phai co `issue` (tinh trang/loi mang
+// toi) va se tu tao them 1 dong purchase_warranty_visits ngay khi luu --
+// xem createCustomer/addPurchase.
 const purchaseValidators = [
   body('productName').trim().notEmpty().withMessage('Vui lòng nhập tên sản phẩm').isLength({ max: 255 }),
-  body('purchaseDate').notEmpty().withMessage('Vui lòng chọn ngày mua').isISO8601().withMessage('Ngày mua không hợp lệ'),
+  body('purchaseDate').notEmpty().withMessage('Vui lòng chọn ngày').isISO8601().withMessage('Ngày không hợp lệ'),
   body('price')
     .optional({ checkFalsy: true })
     .customSanitizer((v) => String(v).replace(/[^\d]/g, ''))
     .isInt({ min: 0 })
-    .withMessage('Giá không hợp lệ'),
-  body('warrantyExpiresAt').optional({ checkFalsy: true }).isISO8601().withMessage('Hạn bảo hành không hợp lệ')
+    .withMessage('Giá/chi phí không hợp lệ'),
+  body('warrantyExpiresAt').optional({ checkFalsy: true }).isISO8601().withMessage('Hạn bảo hành không hợp lệ'),
+  // "issue" gio la nhom checkbox (name="issue" lap lai nhieu o) thay vi 1
+  // textarea -- xem warrantyIssueTypes.js. Custom validator vi express-validator
+  // khong co san .notEmpty() cho mang.
+  body('issue').custom((value, { req }) => {
+    if (req.body.mode !== 'warranty') return true;
+    if (issueKeysFromBody(req.body).length === 0) {
+      throw new Error('Vui lòng chọn ít nhất 1 tình trạng / lỗi mang tới');
+    }
+    return true;
+  })
+];
+
+// Lich su cac lan khach mang san pham (da mua o day hoac mua noi khac, cung
+// dung chung 1 dong customer_purchases) toi bao hanh -- xem "Log tinh nang"
+// trong deploy-notes.md de biet ly do tach bang rieng thay vi de trong o
+// ghi chu cua purchase.
+const warrantyVisitValidators = [
+  body('visitDate').notEmpty().withMessage('Vui lòng chọn ngày bảo hành').isISO8601().withMessage('Ngày bảo hành không hợp lệ'),
+  body('issue').custom((value, { req }) => {
+    if (issueKeysFromBody(req.body).length === 0) {
+      throw new Error('Vui lòng chọn ít nhất 1 tình trạng / lỗi mang tới');
+    }
+    return true;
+  }),
+  body('resolution').optional({ checkFalsy: true }).isLength({ max: 1000 }),
+  body('cost')
+    .optional({ checkFalsy: true })
+    .customSanitizer((v) => String(v).replace(/[^\d]/g, ''))
+    .isInt({ min: 0 })
+    .withMessage('Chi phí không hợp lệ')
 ];
 
 function purchaseFieldsFromBody(body) {
+  // Che do "Mang tới bảo hành" khong hien o dropdown "Hinh thuc giao dich"
+  // (client an, server luon ep cung 'bao_hanh_ngoai') nhung VAN giu o "Han
+  // bao hanh" -- 1 san pham mang toi bao hanh co the co nhieu linh kien
+  // duoc bao hanh voi han khac nhau, nen khong duoc tu dong xoa gia tri nay.
+  const isWarranty = body.mode === 'warranty';
   return {
     product_name: body.productName.trim(),
     imei: (body.imei || '').trim() || null,
     purchase_date: body.purchaseDate,
     price: body.price ? Number(String(body.price).replace(/[^\d]/g, '')) : null,
     warranty_expires_at: body.warrantyExpiresAt || null,
-    transaction_type: TRANSACTION_TYPE_KEYS.includes(body.transactionType) ? body.transactionType : 'mua_moi',
+    transaction_type: isWarranty ? 'bao_hanh_ngoai' : (TRANSACTION_TYPE_KEYS.includes(body.transactionType) ? body.transactionType : 'mua_moi'),
     note: (body.purchaseNote || '').trim() || null
   };
+}
+
+// Che do "Mang tới bảo hành" gop lam 1 buoc: vua tao dong customer_purchases
+// (qua purchaseFieldsFromBody o tren) vua tao luon dong purchase_warranty_visits
+// dau tien cho no, khoi phai bam sang trang "Bảo hành" rieng ngay sau khi luu.
+function warrantyVisitFieldsFromPurchaseBody(body) {
+  return {
+    visit_date: body.purchaseDate,
+    issue: issueKeysFromBody(body).join(','),
+    resolution: null,
+    cost: body.price ? Number(String(body.price).replace(/[^\d]/g, '')) : null,
+    note: (body.purchaseNote || '').trim() || null
+  };
+}
+
+function warrantyVisitFieldsFromBody(body) {
+  return {
+    visit_date: body.visitDate,
+    issue: issueKeysFromBody(body).join(','),
+    resolution: (body.resolution || '').trim() || null,
+    cost: body.cost ? Number(String(body.cost).replace(/[^\d]/g, '')) : null,
+    note: (body.note || '').trim() || null
+  };
+}
+
+// Lay toan bo cac lan bao hanh (khong chi dem so luong) theo tung purchase_id
+// -- dung de nhung san luon "Lich su bao hanh" vao popup "Chi tiết" o
+// customer-detail.ejs, khoi phai bam sang trang /bao-hanh rieng moi xem duoc.
+async function warrantyVisitsByPurchase(purchaseIds) {
+  if (purchaseIds.length === 0) return {};
+  const rows = await db('purchase_warranty_visits')
+    .whereIn('purchase_id', purchaseIds)
+    .orderBy('visit_date', 'desc');
+  const map = {};
+  rows.forEach((r) => {
+    if (!map[r.purchase_id]) map[r.purchase_id] = [];
+    map[r.purchase_id].push(r);
+  });
+  return map;
 }
 
 async function listCustomers(req, res, next) {
@@ -77,7 +159,8 @@ function newCustomerForm(req, res) {
     title: 'Thêm khách mua hàng - TOMSTORE Admin',
     formData: {},
     errors: [],
-    transactionTypes: TRANSACTION_TYPES
+    transactionTypes: TRANSACTION_TYPES,
+    warrantyIssueTypes: WARRANTY_ISSUE_TYPES
   });
 }
 
@@ -90,9 +173,10 @@ async function createCustomer(req, res, next) {
     if (!errors.isEmpty()) {
       return res.status(400).render('admin/customer-form', {
         title: 'Thêm khách mua hàng - TOMSTORE Admin',
-        formData: req.body,
+        formData: { ...req.body, issueKeys: issueKeysFromBody(req.body) },
         errors: errors.array(),
-        transactionTypes: TRANSACTION_TYPES
+        transactionTypes: TRANSACTION_TYPES,
+        warrantyIssueTypes: WARRANTY_ISSUE_TYPES
       });
     }
 
@@ -110,10 +194,18 @@ async function createCustomer(req, res, next) {
       customer = await db('customers').where('id', customerId).first();
     }
 
-    await db('customer_purchases').insert({
+    const [purchaseInsertedRaw] = await db('customer_purchases').insert({
       customer_id: customer.id,
       ...purchaseFieldsFromBody(req.body)
     });
+    const purchaseId = purchaseInsertedRaw && purchaseInsertedRaw.id ? purchaseInsertedRaw.id : purchaseInsertedRaw;
+
+    if (req.body.mode === 'warranty') {
+      await db('purchase_warranty_visits').insert({
+        purchase_id: purchaseId,
+        ...warrantyVisitFieldsFromPurchaseBody(req.body)
+      });
+    }
 
     res.redirect('/admin/khach-hang/' + customer.id);
   } catch (err) {
@@ -127,13 +219,21 @@ async function showCustomer(req, res, next) {
     if (!customer) return res.redirect('/admin/khach-hang');
 
     const purchases = await db('customer_purchases').where('customer_id', customer.id).orderBy('purchase_date', 'desc');
+    const visitsByPurchase = await warrantyVisitsByPurchase(purchases.map((p) => p.id));
+    const purchasesWithVisits = purchases.map((p) => ({
+      ...p,
+      warrantyVisits: visitsByPurchase[p.id] || [],
+      warrantyVisitCount: (visitsByPurchase[p.id] || []).length
+    }));
 
     res.render('admin/customer-detail', {
       title: `${customer.name} - Khách mua hàng - TOMSTORE Admin`,
       customer,
-      purchases,
+      purchases: purchasesWithVisits,
       transactionTypes: TRANSACTION_TYPES,
       transactionTypeLabel,
+      warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+      warrantyIssueLabel,
       errors: [],
       purchaseForm: {}
     });
@@ -200,21 +300,37 @@ async function addPurchase(req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const purchases = await db('customer_purchases').where('customer_id', customer.id).orderBy('purchase_date', 'desc');
+      const visitsByPurchase = await warrantyVisitsByPurchase(purchases.map((p) => p.id));
+      const purchasesWithVisits = purchases.map((p) => ({
+        ...p,
+        warrantyVisits: visitsByPurchase[p.id] || [],
+        warrantyVisitCount: (visitsByPurchase[p.id] || []).length
+      }));
       return res.status(400).render('admin/customer-detail', {
         title: `${customer.name} - Khách mua hàng - TOMSTORE Admin`,
         customer,
-        purchases,
+        purchases: purchasesWithVisits,
         transactionTypes: TRANSACTION_TYPES,
         transactionTypeLabel,
+        warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+        warrantyIssueLabel,
         errors: errors.array(),
-        purchaseForm: req.body
+        purchaseForm: { ...req.body, issueKeys: issueKeysFromBody(req.body) }
       });
     }
 
-    await db('customer_purchases').insert({
+    const [purchaseInsertedRaw] = await db('customer_purchases').insert({
       customer_id: customer.id,
       ...purchaseFieldsFromBody(req.body)
     });
+    const purchaseId = purchaseInsertedRaw && purchaseInsertedRaw.id ? purchaseInsertedRaw.id : purchaseInsertedRaw;
+
+    if (req.body.mode === 'warranty') {
+      await db('purchase_warranty_visits').insert({
+        purchase_id: purchaseId,
+        ...warrantyVisitFieldsFromPurchaseBody(req.body)
+      });
+    }
 
     res.redirect('/admin/khach-hang/' + customer.id);
   } catch (err) {
@@ -231,7 +347,11 @@ async function editPurchaseForm(req, res, next) {
     res.render('admin/purchase-edit', {
       title: 'Sửa thông tin lần mua - TOMSTORE Admin',
       customer,
-      purchase,
+      purchase: {
+        ...purchase,
+        purchase_date: toDateInputValue(purchase.purchase_date),
+        warranty_expires_at: toDateInputValue(purchase.warranty_expires_at)
+      },
       transactionTypes: TRANSACTION_TYPES,
       errors: []
     });
@@ -274,9 +394,133 @@ async function deletePurchase(req, res, next) {
   }
 }
 
+// customer + purchase phai duoc tim cung luc va khop nhau (purchase.customer_id
+// == customer.id) de tranh truong hop sua URL doi purchaseId sang cua khach
+// khac ma van duoc chap nhan.
+async function loadCustomerAndPurchase(req) {
+  const customer = await db('customers').where('id', req.params.id).first();
+  if (!customer) return {};
+  const purchase = await db('customer_purchases').where({ id: req.params.purchaseId, customer_id: customer.id }).first();
+  return { customer, purchase };
+}
+
+async function listWarrantyVisits(req, res, next) {
+  try {
+    const { customer, purchase } = await loadCustomerAndPurchase(req);
+    if (!customer || !purchase) return res.redirect('/admin/khach-hang');
+
+    const visits = await db('purchase_warranty_visits').where('purchase_id', purchase.id).orderBy('visit_date', 'desc');
+
+    res.render('admin/warranty-visits', {
+      title: `Bảo hành ${purchase.product_name} - ${customer.name} - TOMSTORE Admin`,
+      customer,
+      purchase,
+      visits,
+      warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+      warrantyIssueLabel,
+      errors: [],
+      visitForm: {}
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function addWarrantyVisit(req, res, next) {
+  try {
+    const { customer, purchase } = await loadCustomerAndPurchase(req);
+    if (!customer || !purchase) return res.redirect('/admin/khach-hang');
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const visits = await db('purchase_warranty_visits').where('purchase_id', purchase.id).orderBy('visit_date', 'desc');
+      return res.status(400).render('admin/warranty-visits', {
+        title: `Bảo hành ${purchase.product_name} - ${customer.name} - TOMSTORE Admin`,
+        customer,
+        purchase,
+        visits,
+        warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+        warrantyIssueLabel,
+        errors: errors.array(),
+        visitForm: { ...req.body, issueKeys: issueKeysFromBody(req.body) }
+      });
+    }
+
+    await db('purchase_warranty_visits').insert({
+      purchase_id: purchase.id,
+      ...warrantyVisitFieldsFromBody(req.body)
+    });
+
+    res.redirect(`/admin/khach-hang/${customer.id}/san-pham/${purchase.id}/bao-hanh`);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function editWarrantyVisitForm(req, res, next) {
+  try {
+    const { customer, purchase } = await loadCustomerAndPurchase(req);
+    if (!customer || !purchase) return res.redirect('/admin/khach-hang');
+    const visit = await db('purchase_warranty_visits').where({ id: req.params.visitId, purchase_id: purchase.id }).first();
+    if (!visit) return res.redirect(`/admin/khach-hang/${customer.id}/san-pham/${purchase.id}/bao-hanh`);
+
+    res.render('admin/warranty-visit-edit', {
+      title: `Sửa lần bảo hành - ${customer.name} - TOMSTORE Admin`,
+      customer,
+      purchase,
+      visit: {
+        ...visit,
+        visit_date: toDateInputValue(visit.visit_date),
+        issueKeys: (visit.issue || '').split(',').map((s) => s.trim()).filter(Boolean)
+      },
+      warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+      errors: []
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateWarrantyVisit(req, res, next) {
+  try {
+    const { customer, purchase } = await loadCustomerAndPurchase(req);
+    if (!customer || !purchase) return res.redirect('/admin/khach-hang');
+    const visit = await db('purchase_warranty_visits').where({ id: req.params.visitId, purchase_id: purchase.id }).first();
+    if (!visit) return res.redirect(`/admin/khach-hang/${customer.id}/san-pham/${purchase.id}/bao-hanh`);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).render('admin/warranty-visit-edit', {
+        title: `Sửa lần bảo hành - ${customer.name} - TOMSTORE Admin`,
+        customer,
+        purchase,
+        visit: { ...visit, ...req.body, issueKeys: issueKeysFromBody(req.body) },
+        warrantyIssueTypes: WARRANTY_ISSUE_TYPES,
+        errors: errors.array()
+      });
+    }
+
+    await db('purchase_warranty_visits').where('id', visit.id).update(warrantyVisitFieldsFromBody(req.body));
+
+    res.redirect(`/admin/khach-hang/${customer.id}/san-pham/${purchase.id}/bao-hanh`);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteWarrantyVisit(req, res, next) {
+  try {
+    await db('purchase_warranty_visits').where({ id: req.params.visitId, purchase_id: req.params.purchaseId }).del();
+    res.redirect(`/admin/khach-hang/${req.params.id}/san-pham/${req.params.purchaseId}/bao-hanh`);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   customerValidators,
   purchaseValidators,
+  warrantyVisitValidators,
   listCustomers,
   newCustomerForm,
   createCustomer,
@@ -287,5 +531,10 @@ module.exports = {
   addPurchase,
   editPurchaseForm,
   updatePurchase,
-  deletePurchase
+  deletePurchase,
+  listWarrantyVisits,
+  addWarrantyVisit,
+  editWarrantyVisitForm,
+  updateWarrantyVisit,
+  deleteWarrantyVisit
 };
