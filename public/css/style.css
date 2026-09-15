@@ -595,7 +595,7 @@ table { border-collapse: collapse; width: 100%; }
 .price-original { color: var(--color-text-muted); text-decoration: line-through; font-size: 13px; }
 .product-price-lg { flex-direction: row; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
 .product-price-lg .price-current { font-size: 30px; }
-.add-to-cart-form { margin-top: auto; }
+.product-card-cta { margin-top: auto; }
 
 .hotdeal-timer { display: inline-flex; align-items: center; gap: var(--space-1); background: #fff0f5; color: var(--color-sale); font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: var(--radius-sm); margin-bottom: var(--space-2); width: fit-content; }
 .hotdeal-timer.expired { background: #eee; color: var(--color-text-muted); }
@@ -848,6 +848,48 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-table th, .admin-table td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--color-border); font-size: 14px; }
 .admin-table thead { background: var(--color-bg-alt); }
 .admin-table tfoot td { font-weight: 700; }
+/* Bang "Lich su mua hang" -- do rong cot co dinh (khong tinh theo noi dung)
+   de tranh cot bi "chay"/lech vi tri khi 1 dong co gia (VD "12.000.000₫")
+   con dong khac khong co gia (chi "-"). table-layout: fixed chi ap dung
+   rieng bang nay qua class .purchases-table, khong dung .admin-table chung
+   vi cac bang admin khac (san pham, hotdeal...) co so cot khac nhau. */
+.purchases-table { table-layout: fixed; min-width: 860px; }
+.purchases-table th:nth-child(1), .purchases-table td:nth-child(1) { width: 16%; }
+.purchases-table th:nth-child(2), .purchases-table td:nth-child(2) { width: 11%; }
+.purchases-table th:nth-child(3), .purchases-table td:nth-child(3) { width: 11%; }
+.purchases-table th:nth-child(4), .purchases-table td:nth-child(4) { width: 13%; }
+.purchases-table th:nth-child(5), .purchases-table td:nth-child(5) { width: 12%; }
+.purchases-table th:nth-child(6), .purchases-table td:nth-child(6) { width: 17%; }
+.purchases-table th:nth-child(7), .purchases-table td:nth-child(7) { width: 20%; }
+.purchases-table td { overflow-wrap: break-word; }
+/* Ten san pham + nut "Lich su bao hanh" to mau hong thuong hieu cho de nhan
+   biet khi luot bang. */
+.purchase-product-name { color: var(--color-accent); font-weight: 700; }
+.warranty-history-btn { color: var(--color-accent); border-color: var(--color-accent); }
+.warranty-history-btn:hover { background: var(--color-accent); color: #fff; }
+/* Nut "Chi tiết"/"Sửa"/"Xóa" trong cot cuoi: giu ca 3 tren CUNG 1 dong (bo
+   flex-wrap mac dinh cua .admin-actions rieng cho bang nay), va "Sửa" dùng
+   chung style voi "Chi tiết"/"Xóa" (chu xam, khong vien/nen -- xem .btn-link)
+   thay vi mau link mac dinh cua the <a>. */
+.purchases-table .admin-actions { flex-wrap: nowrap; gap: var(--space-3); }
+.purchases-table .admin-actions a,
+.purchases-table .admin-actions button { white-space: nowrap; }
+/* Modal "Chi tiet" o bang Lich su mua hang -- xem customer-detail.ejs */
+.modal-overlay { position: fixed; inset: 0; background: rgba(17, 17, 17, 0.55); display: flex; align-items: center; justify-content: center; padding: var(--space-4); z-index: 1000; }
+.modal-overlay[hidden] { display: none; }
+.modal-box { background: #fff; border-radius: var(--radius-lg); padding: var(--space-5); max-width: 420px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; }
+.modal-close { position: absolute; top: var(--space-3); right: var(--space-3); background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--color-text-muted); }
+.modal-close:hover { color: var(--color-ink); }
+.modal-box h3 { margin: 0 var(--space-5) var(--space-3) 0; color: var(--color-accent); }
+.modal-field { margin: 0 0 var(--space-2); font-size: 14px; }
+.modal-field strong { display: inline-block; min-width: 130px; }
+/* Danh sach "Lich su bao hanh" nhung trong popup "Chi tiet" -- xem #pdVisits
+   trong customer-detail.ejs, noi dung lay tu <template> an cua tung dong. */
+.modal-subheading { margin: var(--space-4) 0 var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: 14px; font-weight: 700; color: var(--color-accent); }
+.modal-visit-item { padding: var(--space-2) 0; border-bottom: 1px dashed var(--color-border); }
+.modal-visit-item:last-child { border-bottom: none; padding-bottom: 0; }
+.modal-visit-item .modal-field strong { min-width: 100px; }
+.modal-visit-empty { color: var(--color-text-muted); }
 .admin-actions { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
 .admin-actions-hotdeal form { display: inline-flex; }
 .hotdeal-enable-form, .hotdeal-time-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
@@ -903,6 +945,21 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-form { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 640px; }
 .admin-form-subheading { font-size: 15px; font-weight: 700; color: var(--color-ink); margin: var(--space-5) 0 var(--space-3); }
 .admin-form-subheading:first-child { margin-top: 0; }
+/* Toggle "Sản phẩm mua mới" / "Mang tới bảo hành" o dau form them san pham --
+   cung ngon ngu voi .installment-tab, dat ten rieng vi dung o ngu canh khac. */
+.entry-mode-toggle { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.entry-mode-btn { background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px; padding: var(--space-2) var(--space-5); font-size: 14px; font-weight: 700; color: var(--color-text-muted); }
+.entry-mode-btn:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.entry-mode-btn.active { background: var(--gradient-brand); border-color: transparent; color: #fff; }
+/* Nhom checkbox chon nhieu "Tinh trang / Loi mang toi" khi bao hanh -- cung
+   ngon ngu pill voi .entry-mode-btn, nhung la checkbox (chon nhieu) khong
+   phai nut don (chon 1). :has() de highlight khi tick, khong can JS rieng. */
+.admin-hint-inline { font-weight: 400; font-size: 12px; color: var(--color-text-muted); }
+.issue-options { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.issue-option { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px; padding: var(--space-2) var(--space-4); font-size: 14px; font-weight: 600; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.issue-option:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.issue-option input[type="checkbox"] { accent-color: var(--color-accent); }
+.issue-option:has(input:checked) { background: var(--gradient-brand); border-color: transparent; color: #fff; }
 .admin-search-form { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; }
 .admin-search-form input[type="text"] { flex: 1; min-width: 220px; height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
 .btn-link { background: none; border: none; color: var(--color-text-muted); font-size: 14px; padding: 0; text-decoration: underline; }
