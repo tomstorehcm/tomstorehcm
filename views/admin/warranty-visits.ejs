@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <div class="admin-title-row">
+      <a href="/admin/khach-hang/<%= customer.id %>" class="btn-icon-back" aria-label="Quay lại hồ sơ khách" title="Quay lại hồ sơ khách">&larr;</a>
+      <h1>Lịch sử bảo hành: <%= purchase.product_name %></h1>
+    </div>
+  </div>
+
+  <div class="customer-info-card">
+    <p><strong>Khách hàng:</strong> <%= customer.name %> &bull; <a href="tel:<%= customer.phone.replace(/\s/g, '') %>"><%= customer.phone %></a></p>
+    <% if (purchase.imei) { %><p><strong>IMEI/Serial:</strong> <%= purchase.imei %></p><% } %>
+    <p><strong>Ngày mua:</strong> <%= new Date(purchase.purchase_date).toLocaleDateString('vi-VN') %><% if (purchase.warranty_expires_at) { %> &bull; <strong>Hạn bảo hành:</strong> <%= new Date(purchase.warranty_expires_at).toLocaleDateString('vi-VN') %><% } %></p>
+  </div>
+
+  <h2 class="admin-category-heading">Lịch sử bảo hành (<%= visits.length %>)</h2>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <% if (visits.length === 0) { %>
+    <p class="empty-state">Chưa ghi nhận lần bảo hành nào.</p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+    <table class="admin-table">
+      <thead><tr><th>Ngày mang tới</th><th>Tình trạng / Lỗi</th><th>Đã xử lý</th><th>Chi phí</th><th>Ghi chú</th><th></th></tr></thead>
+      <tbody>
+        <% visits.forEach(function(v) { %>
+          <tr>
+            <td><%= new Date(v.visit_date).toLocaleDateString('vi-VN') %></td>
+            <td><%= warrantyIssueLabel(v.issue) %></td>
+            <td><%= v.resolution || '-' %></td>
+            <td><%= v.cost ? formatVND(v.cost) : '-' %></td>
+            <td class="admin-note-cell" title="<%= v.note || '' %>"><%= v.note || '-' %></td>
+            <td class="admin-actions">
+              <a href="/admin/khach-hang/<%= customer.id %>/san-pham/<%= purchase.id %>/bao-hanh/<%= v.id %>/sua">Sửa</a>
+              <form action="/admin/khach-hang/<%= customer.id %>/san-pham/<%= purchase.id %>/bao-hanh/<%= v.id %>/xoa" method="post" onsubmit="return confirm('Xóa lần bảo hành này?');">
+                <button type="submit" class="btn-link-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    </div>
+  <% } %>
+
+  <h2 class="admin-category-heading">+ Ghi nhận lần bảo hành mới</h2>
+  <form action="/admin/khach-hang/<%= customer.id %>/san-pham/<%= purchase.id %>/bao-hanh" method="post" class="admin-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="visitDate">Ngày mang tới *</label>
+        <input type="date" id="visitDate" name="visitDate" value="<%= visitForm.visitDate || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="cost">Chi phí (nếu có)</label>
+        <input type="text" inputmode="numeric" id="cost" name="cost" class="vnd-input" value="<%= visitForm.cost || '' %>" placeholder="VNĐ" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label id="issueLabel">Tình trạng / Lỗi mang tới * <span class="admin-hint-inline">(chọn được nhiều mục)</span></label>
+      <div class="issue-options">
+        <% warrantyIssueTypes.forEach(function (t) { %>
+          <label class="issue-option">
+            <input type="checkbox" name="issue" value="<%= t.key %>" <%= (visitForm.issueKeys || []).includes(t.key) ? 'checked' : '' %> />
+            <span><%= t.label %></span>
+          </label>
+        <% }); %>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="resolution">Đã xử lý</label>
+      <textarea id="resolution" name="resolution" rows="2"><%= visitForm.resolution || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="note">Ghi chú</label>
+      <textarea id="note" name="note" rows="2"><%= visitForm.note || '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Ghi nhận</button>
+  </form>
+</main>
+</body>
+</html>

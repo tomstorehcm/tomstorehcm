@@ -32,25 +32,57 @@
     <p class="empty-state">Chưa có sản phẩm nào.</p>
   <% } else { %>
     <div class="admin-table-scroll">
-    <table class="admin-table">
-      <thead><tr><th>Sản phẩm</th><th>IMEI/Serial</th><th>Ngày mua</th><th>Hạn bảo hành</th><th>Giá</th><th>Hình thức</th><th>Ghi chú</th><th></th></tr></thead>
+    <table class="admin-table purchases-table">
+      <thead><tr><th>Sản phẩm</th><th>Ngày mua</th><th>Giá</th><th>Hình thức</th><th>Ghi chú</th><th>Lịch sử bảo hành</th><th></th></tr></thead>
       <tbody>
         <% purchases.forEach(function(p) { %>
           <tr>
-            <td><%= p.product_name %></td>
-            <td><%= p.imei || '-' %></td>
+            <td class="purchase-product-name"><%= p.product_name %></td>
             <td><%= new Date(p.purchase_date).toLocaleDateString('vi-VN') %></td>
-            <td><%= p.warranty_expires_at ? new Date(p.warranty_expires_at).toLocaleDateString('vi-VN') : '-' %></td>
             <td><%= p.price ? formatVND(p.price) : '-' %></td>
             <td><%= transactionTypeLabel(p.transaction_type) %></td>
-            <td class="admin-note-cell" title="<%= p.note || '' %>"><%= p.note || '-' %></td>
+            <td class="admin-note-cell">
+              <% if (p.warrantyVisitCount > 0) { %>
+                <span class="status-badge status-active">Đã bảo hành</span>
+              <% } else { %>
+                <span title="<%= p.note || '' %>"><%= p.note || '-' %></span>
+              <% } %>
+            </td>
+            <td><a href="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/bao-hanh" class="btn btn-outline btn-sm warranty-history-btn">🛡️ Lịch sử bảo hành<%= p.warrantyVisitCount > 0 ? ' (' + p.warrantyVisitCount + ')' : '' %></a></td>
             <td class="admin-actions">
-              <a href="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/sua">Sửa</a>
+              <button
+                type="button"
+                class="btn-link purchase-detail-btn"
+                data-target="visitsTpl-<%= p.id %>"
+                data-product="<%= p.product_name %>"
+                data-imei="<%= p.imei || '-' %>"
+                data-date="<%= new Date(p.purchase_date).toLocaleDateString('vi-VN') %>"
+                data-warranty="<%= p.warranty_expires_at ? new Date(p.warranty_expires_at).toLocaleDateString('vi-VN') : '-' %>"
+                data-price="<%= p.price ? formatVND(p.price) : '-' %>"
+                data-transaction="<%= transactionTypeLabel(p.transaction_type) %>"
+                data-note="<%= p.note || '-' %>"
+              >Chi tiết</button>
+              <a href="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/sua" class="btn-link">Sửa</a>
               <form action="/admin/khach-hang/<%= customer.id %>/san-pham/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm này khỏi lịch sử mua hàng?');">
                 <button type="submit" class="btn-link-danger">Xóa</button>
               </form>
             </td>
           </tr>
+          <template id="visitsTpl-<%= p.id %>">
+            <% if (!p.warrantyVisits || p.warrantyVisits.length === 0) { %>
+              <p class="modal-field modal-visit-empty">Chưa có lần bảo hành nào.</p>
+            <% } else { %>
+              <% p.warrantyVisits.forEach(function (v) { %>
+                <div class="modal-visit-item">
+                  <p class="modal-field"><strong>Ngày:</strong> <%= new Date(v.visit_date).toLocaleDateString('vi-VN') %></p>
+                  <p class="modal-field"><strong>Tình trạng:</strong> <%= warrantyIssueLabel(v.issue) %></p>
+                  <% if (v.resolution) { %><p class="modal-field"><strong>Đã xử lý:</strong> <%= v.resolution %></p><% } %>
+                  <% if (v.cost) { %><p class="modal-field"><strong>Chi phí:</strong> <%= formatVND(v.cost) %></p><% } %>
+                  <% if (v.note) { %><p class="modal-field"><strong>Ghi chú:</strong> <%= v.note %></p><% } %>
+                </div>
+              <% }); %>
+            <% } %>
+          </template>
         <% }); %>
       </tbody>
     </table>
@@ -59,9 +91,15 @@
 
   <h2 class="admin-category-heading">+ Thêm sản phẩm mới cho khách này</h2>
   <form action="/admin/khach-hang/<%= customer.id %>/san-pham" method="post" class="admin-form">
+    <div class="entry-mode-toggle" role="group" aria-label="Loại sản phẩm">
+      <button type="button" class="entry-mode-btn" data-mode="purchase">Sản phẩm mua mới</button>
+      <button type="button" class="entry-mode-btn" data-mode="warranty">Mang tới bảo hành</button>
+    </div>
+    <input type="hidden" name="mode" id="entryMode" value="purchase" />
+
     <div class="form-row">
       <div class="form-group">
-        <label for="productName">Tên sản phẩm *</label>
+        <label for="productName" id="productNameLabel">Tên sản phẩm *</label>
         <input type="text" id="productName" name="productName" value="<%= purchaseForm.productName || '' %>" required placeholder="VD: iPhone 17 Pro Max 256GB" />
       </div>
       <div class="form-group">
@@ -71,34 +109,144 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="purchaseDate">Ngày mua *</label>
+        <label for="purchaseDate" id="purchaseDateLabel">Ngày mua *</label>
         <input type="date" id="purchaseDate" name="purchaseDate" value="<%= purchaseForm.purchaseDate || '' %>" required />
       </div>
-      <div class="form-group">
+      <div class="form-group" id="warrantyExpiresGroup">
         <label for="warrantyExpiresAt">Hạn bảo hành</label>
         <input type="date" id="warrantyExpiresAt" name="warrantyExpiresAt" value="<%= purchaseForm.warrantyExpiresAt || '' %>" />
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="price">Giá đã bán</label>
+        <label for="price" id="priceLabel">Giá đã bán</label>
         <input type="text" inputmode="numeric" id="price" name="price" class="vnd-input" value="<%= purchaseForm.price || '' %>" placeholder="VNĐ" />
       </div>
-      <div class="form-group">
+      <div class="form-group" id="transactionTypeGroup">
         <label for="transactionType">Hình thức giao dịch</label>
         <select id="transactionType" name="transactionType">
-          <% transactionTypes.forEach(function(t) { %>
+          <% transactionTypes.filter(function(t) { return t.key !== 'bao_hanh_ngoai'; }).forEach(function(t) { %>
             <option value="<%= t.key %>" <%= purchaseForm.transactionType === t.key ? 'selected' : '' %>><%= t.label %></option>
           <% }); %>
         </select>
       </div>
     </div>
+    <div class="form-group" id="issueGroup" hidden>
+      <label id="issueLabel">Tình trạng / Lỗi mang tới * <span class="admin-hint-inline">(chọn được nhiều mục)</span></label>
+      <div class="issue-options">
+        <% warrantyIssueTypes.forEach(function (t) { %>
+          <label class="issue-option">
+            <input type="checkbox" name="issue" value="<%= t.key %>" <%= (purchaseForm.issueKeys || []).includes(t.key) ? 'checked' : '' %> />
+            <span><%= t.label %></span>
+          </label>
+        <% }); %>
+      </div>
+    </div>
     <div class="form-group">
-      <label for="purchaseNote">Ghi chú</label>
+      <label for="purchaseNote" id="purchaseNoteLabel">Ghi chú</label>
       <textarea id="purchaseNote" name="purchaseNote" rows="2"><%= purchaseForm.purchaseNote || '' %></textarea>
     </div>
-    <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
+    <button type="submit" class="btn btn-primary" id="submitPurchaseBtn">Thêm sản phẩm</button>
   </form>
+
+  <div class="modal-overlay" id="purchaseDetailModal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="pdProductName">
+      <button type="button" class="modal-close" id="purchaseDetailClose" aria-label="Đóng">&times;</button>
+      <h3 id="pdProductName"></h3>
+      <p class="modal-field"><strong>IMEI/Serial:</strong> <span id="pdImei"></span></p>
+      <p class="modal-field"><strong>Ngày mua:</strong> <span id="pdDate"></span></p>
+      <p class="modal-field"><strong>Hạn bảo hành:</strong> <span id="pdWarranty"></span></p>
+      <p class="modal-field"><strong>Giá:</strong> <span id="pdPrice"></span></p>
+      <p class="modal-field"><strong>Hình thức:</strong> <span id="pdTransaction"></span></p>
+      <p class="modal-field"><strong>Ghi chú:</strong> <span id="pdNote"></span></p>
+      <h4 class="modal-subheading">Lịch sử bảo hành</h4>
+      <div id="pdVisits"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var modeButtons = document.querySelectorAll('.entry-mode-btn');
+      var modeInput = document.getElementById('entryMode');
+      var transactionTypeGroup = document.getElementById('transactionTypeGroup');
+      var issueGroup = document.getElementById('issueGroup');
+      var purchaseDateLabel = document.getElementById('purchaseDateLabel');
+      var priceLabel = document.getElementById('priceLabel');
+      var submitBtn = document.getElementById('submitPurchaseBtn');
+
+      function applyMode(mode) {
+        modeInput.value = mode;
+        modeButtons.forEach(function (btn) {
+          btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+        });
+        var isWarranty = mode === 'warranty';
+        if (transactionTypeGroup) transactionTypeGroup.hidden = isWarranty;
+        if (issueGroup) issueGroup.hidden = !isWarranty;
+        if (purchaseDateLabel) purchaseDateLabel.textContent = isWarranty ? 'Ngày mang tới *' : 'Ngày mua *';
+        if (priceLabel) priceLabel.textContent = isWarranty ? 'Chi phí (nếu có)' : 'Giá đã bán';
+        if (submitBtn) submitBtn.textContent = isWarranty ? 'Ghi nhận bảo hành' : 'Thêm sản phẩm';
+      }
+
+      modeButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () { applyMode(btn.getAttribute('data-mode')); });
+      });
+
+      applyMode('<%= purchaseForm.mode === "warranty" ? "warranty" : "purchase" %>');
+    })();
+
+    // Modal "Chi tiết" -- vi bang Lich su mua hang da bo cot IMEI/Serial va
+    // Han bao hanh cho gon, nut nay hien lai day du thong tin (khong can qua
+    // trang Sua) bang cach doc data-* tu chinh nut vua bam.
+    (function () {
+      var modal = document.getElementById('purchaseDetailModal');
+      if (!modal) return;
+      var closeBtn = document.getElementById('purchaseDetailClose');
+      var fields = {
+        product: document.getElementById('pdProductName'),
+        imei: document.getElementById('pdImei'),
+        date: document.getElementById('pdDate'),
+        warranty: document.getElementById('pdWarranty'),
+        price: document.getElementById('pdPrice'),
+        transaction: document.getElementById('pdTransaction'),
+        note: document.getElementById('pdNote')
+      };
+      var visitsContainer = document.getElementById('pdVisits');
+
+      function openModal(btn) {
+        fields.product.textContent = btn.getAttribute('data-product') || '';
+        fields.imei.textContent = btn.getAttribute('data-imei') || '-';
+        fields.date.textContent = btn.getAttribute('data-date') || '-';
+        fields.warranty.textContent = btn.getAttribute('data-warranty') || '-';
+        fields.price.textContent = btn.getAttribute('data-price') || '-';
+        fields.transaction.textContent = btn.getAttribute('data-transaction') || '-';
+        fields.note.textContent = btn.getAttribute('data-note') || '-';
+
+        if (visitsContainer) {
+          var targetId = btn.getAttribute('data-target');
+          var tpl = targetId ? document.getElementById(targetId) : null;
+          visitsContainer.innerHTML = '';
+          if (tpl && tpl.content) {
+            visitsContainer.appendChild(tpl.content.cloneNode(true));
+          }
+        }
+
+        modal.hidden = false;
+      }
+
+      function closeModal() { modal.hidden = true; }
+
+      document.querySelectorAll('.purchase-detail-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { openModal(btn); });
+      });
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+      });
+    })();
+  </script>
 </main>
 </body>
 </html>
