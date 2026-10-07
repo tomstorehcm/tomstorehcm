@@ -14,12 +14,15 @@ const policyController = require('../controllers/admin/policyController');
 const installmentAdminController = require('../controllers/admin/installmentAdminController');
 const warrantyPolicyAdminController = require('../controllers/admin/warrantyPolicyAdminController');
 const customerController = require('../controllers/admin/customerController');
+const tradeInAdminController = require('../controllers/admin/tradeInAdminController');
 
 const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
 const uploadCategoryImage = makeUploader('categories');
 const uploadInstallmentImage = makeUploader('installment');
 const uploadWarrantyImage = makeUploader('bao-hanh');
+const uploadTradeInImage = makeUploader('trade-in');
+const uploadTradeInContentImage = makeUploader('thu-cu');
 
 const MAX_COLOR_ROWS = 20;
 const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
@@ -155,5 +158,37 @@ router.post(
 );
 router.post('/bao-hanh/:id/sua', warrantyPolicyAdminController.updateWarrantySection);
 router.post('/bao-hanh/:id/xoa', warrantyPolicyAdminController.deleteWarrantySection);
+
+router.get('/thu-cu', tradeInAdminController.listTradeInProducts);
+router.get('/thu-cu/moi', tradeInAdminController.newTradeInProductForm);
+router.post(
+  '/thu-cu/moi',
+  handleUploadErrors(uploadTradeInImage.fields([{ name: 'imageFile', maxCount: 1 }])),
+  tradeInAdminController.createTradeInProduct
+);
+router.get('/thu-cu/:id/sua', tradeInAdminController.editTradeInProductForm);
+router.post(
+  '/thu-cu/:id/sua',
+  handleUploadErrors(uploadTradeInImage.fields([{ name: 'imageFile', maxCount: 1 }])),
+  tradeInAdminController.updateTradeInProduct
+);
+router.post('/thu-cu/:id/xoa', tradeInAdminController.deleteTradeInProduct);
+
+router.get('/thu-cu/san-pham-len-doi', tradeInAdminController.listUpgradeEligibleProducts);
+router.post('/thu-cu/san-pham-len-doi', tradeInAdminController.updateUpgradeEligibleProducts);
+
+router.get('/thu-cu/yeu-cau', tradeInAdminController.listTradeInRequests);
+router.post('/thu-cu/yeu-cau/:id/trang-thai', tradeInAdminController.updateTradeInRequestStatus);
+router.post('/thu-cu/yeu-cau/:id/xoa', tradeInAdminController.deleteTradeInRequest);
+
+router.get('/thu-cu/gioi-thieu', tradeInAdminController.listTradeInPolicySections);
+router.post('/thu-cu/gioi-thieu', tradeInAdminController.createTradeInPolicySection);
+router.post(
+  '/thu-cu/gioi-thieu/anh',
+  handleUploadErrors(uploadTradeInContentImage.single('image')),
+  tradeInAdminController.uploadTradeInPolicyImage
+);
+router.post('/thu-cu/gioi-thieu/:id/sua', tradeInAdminController.updateTradeInPolicySection);
+router.post('/thu-cu/gioi-thieu/:id/xoa', tradeInAdminController.deleteTradeInPolicySection);
 
 module.exports = router;
