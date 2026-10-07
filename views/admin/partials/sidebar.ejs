@@ -8,6 +8,13 @@
     <a href="/admin/banner" class="<%= currentPath.startsWith('/admin/banner') ? 'active' : '' %>">Banner trang chủ</a>
     <a href="/admin/chinh-sach" class="<%= currentPath.startsWith('/admin/chinh-sach') ? 'active' : '' %>">Chính sách</a>
     <a href="/admin/bao-hanh" class="<%= currentPath.startsWith('/admin/bao-hanh') ? 'active' : '' %>">Chính sách bảo hành (trang)</a>
+    <div class="admin-nav-group">
+      <span class="admin-nav-group-label">Trade In</span>
+      <a href="/admin/thu-cu" class="<%= currentPath === '/admin/thu-cu' || currentPath.startsWith('/admin/thu-cu/moi') || (currentPath.startsWith('/admin/thu-cu/') && currentPath.endsWith('/sua')) ? 'active' : '' %>">Sản phẩm thu cũ (Trade-in)</a>
+      <a href="/admin/thu-cu/san-pham-len-doi" class="<%= currentPath.startsWith('/admin/thu-cu/san-pham-len-doi') ? 'active' : '' %>">Sản phẩm Trade In</a>
+      <a href="/admin/thu-cu/yeu-cau" class="<%= currentPath.startsWith('/admin/thu-cu/yeu-cau') ? 'active' : '' %>">Khách Trade In</a>
+      <a href="/admin/thu-cu/gioi-thieu" class="<%= currentPath.startsWith('/admin/thu-cu/gioi-thieu') ? 'active' : '' %>">Giới thiệu (trang)</a>
+    </div>
     <a href="/admin/tra-gop" class="<%= currentPath.startsWith('/admin/tra-gop') ? 'active' : '' %>">Trả góp linh động</a>
     <a href="/admin/doi-mat-khau" class="<%= currentPath === '/admin/doi-mat-khau' ? 'active' : '' %>">Đổi mật khẩu</a>
     <a href="/" target="_blank">Xem website &rarr;</a>
