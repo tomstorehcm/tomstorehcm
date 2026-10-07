@@ -33,10 +33,17 @@
   <nav class="category-nav" id="categoryNav" aria-label="Danh mục sản phẩm">
     <div class="category-nav-backdrop" id="navBackdrop"></div>
     <div class="container category-nav-inner">
-      <button type="button" class="nav-close-btn" id="navCloseBtn" aria-label="Đóng menu">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <a href="/#hot-deal" class="hot-deal-nav-link">🔥 Best Deal</a>
+      <div class="category-nav-mobile-head">
+        <img src="/images/logo/tom-logo.png" alt="TOMSTORE" class="category-nav-mobile-logo" />
+        <button type="button" class="nav-close-btn" id="navCloseBtn" aria-label="Đóng menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <a href="/thu-cu-doi-moi" class="hot-deal-nav-link <%= currentPath === '/thu-cu-doi-moi' ? 'active' : '' %>">TRADE IN - THU CŨ LÊN ĐỜI</a>
+      <% if (hasHotDeals) { %>
+        <span class="category-nav-sep" aria-hidden="true">|</span>
+        <a href="/#hot-deal" class="hot-deal-nav-link">🔥 Best Deal</a>
+      <% } %>
       <% navItems.forEach(function(item) { %>
         <span class="category-nav-sep" aria-hidden="true">|</span>
         <% if (item.type === 'group') { %>
@@ -47,10 +54,10 @@
               <svg class="nav-dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="nav-dropdown-menu">
+              <a href="/nhom/<%= item.key %>" class="<%= currentPath === '/nhom/' + item.key ? 'active' : '' %>">Xem tất cả</a>
               <% item.categories.forEach(function(cat) { %>
                 <a href="/danh-muc/<%= cat.slug %>" class="<%= currentPath === '/danh-muc/' + cat.slug ? 'active' : '' %>"><%= cat.nav_label || cat.name %></a>
               <% }); %>
-              <a href="/nhom/<%= item.key %>" class="<%= currentPath === '/nhom/' + item.key ? 'active' : '' %>">Xem tất cả</a>
             </div>
           </div>
         <% } else { %>
@@ -64,3 +71,55 @@
     </div>
   </nav>
 </header>
+<script>
+  // Tu dong thu gon thanh menu danh muc thanh nut hamburger moi khi noi
+  // dung (TRADE IN, Best Deal, cac danh muc...) khong du cho hien thanh 1
+  // hang -- khong con phu thuoc 1 moc px man hinh co dinh (truoc day la
+  // @media max-width:899px) ma dua tren chieu rong THAT su can co, nen van
+  // tu dong thu gon ca khi chi resize cua so hoac zoom trinh duyet ra, dung
+  // nhu yeu cau. Dung 1 ban do an hinh (clone noi dung, dat fixed ngoai man
+  // hinh) de luon do duoc chieu rong tu nhien can co, bat ke luc do thanh
+  // dang hien hang ngang hay da thu gon thanh drawer (2 trang thai nay co
+  // layout khac nhau nen khong the do truc tiep tren chinh .category-nav-inner).
+  (function () {
+    var nav = document.getElementById('categoryNav');
+    var navInner = nav ? nav.querySelector('.category-nav-inner') : null;
+    var menuToggle = document.getElementById('menuToggle');
+    if (!nav || !navInner || !menuToggle) return;
+
+    var measure = document.createElement('div');
+    measure.className = 'category-nav-measure';
+    measure.setAttribute('aria-hidden', 'true');
+    measure.innerHTML = navInner.innerHTML;
+    var measureCloseBtn = measure.querySelector('.nav-close-btn');
+    if (measureCloseBtn) measureCloseBtn.remove();
+    document.body.appendChild(measure);
+
+    function spacePx() {
+      var v = getComputedStyle(document.documentElement).getPropertyValue('--space-5');
+      return parseFloat(v) || 24;
+    }
+
+    function checkOverflow() {
+      var availableWidth = Math.min(window.innerWidth, 1800) - spacePx() * 2;
+      var neededWidth = measure.offsetWidth;
+      var isCompact = neededWidth > availableWidth;
+      nav.classList.toggle('is-compact', isCompact);
+      menuToggle.style.display = isCompact ? 'inline-flex' : 'none';
+      if (!isCompact && nav.classList.contains('is-open')) {
+        nav.classList.remove('is-open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('nav-open');
+      }
+    }
+
+    checkOverflow();
+    window.addEventListener('load', checkOverflow);
+
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkOverflow, 120);
+    });
+  })();
+</script>

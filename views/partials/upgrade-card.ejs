@@ -1,0 +1,22 @@
+<article class="product-card tradein-card">
+  <div class="product-card-image">
+    <% if (p.imageUrl) { %>
+      <img src="<%= p.imageUrl %>" alt="<%= p.name %>" loading="lazy" width="300" height="300" />
+    <% } else { %>
+      <span class="product-icon-placeholder"><%- categoryIcon('') %></span>
+    <% } %>
+  </div>
+  <div class="product-card-body">
+    <h3 class="product-name"><%= p.name %></h3>
+    <div class="product-price">
+      <span class="tradein-price-label">Giá đến</span>
+      <span class="price-current"><%= (p.isContactPrice || p.basePrice == null) ? 'Liên hệ' : formatVND(p.basePrice) %></span>
+    </div>
+    <% if (p.subsidy) { %>
+      <p class="tradein-subsidy-line">+ Trợ giá thêm đến <strong><%= formatVND(p.subsidy) %></strong></p>
+    <% } %>
+    <div class="tradein-card-actions">
+      <button type="button" class="btn btn-primary btn-sm btn-block upgrade-start-btn" data-upgrade-product-id="<%= p.id %>">Lên đời ngay</button>
+    </div>
+  </div>
+</article>
