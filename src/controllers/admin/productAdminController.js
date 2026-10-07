@@ -403,7 +403,11 @@ async function createProduct(req, res, next) {
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
       in_stock: req.body.outOfStock !== 'on',
       is_featured: req.body.isFeatured === 'on',
-      variant_group_label: (req.body.variantGroupLabel || '').trim() || null
+      variant_group_label: (req.body.variantGroupLabel || '').trim() || null,
+      trade_in_enabled: req.body.tradeInEnabled === 'on',
+      trade_in_subsidy: req.body.tradeInEnabled === 'on' && req.body.tradeInSubsidy
+        ? Number(String(req.body.tradeInSubsidy).replace(/\D/g, '')) || null
+        : null
     });
     const insertedId = insertedRaw && insertedRaw.id ? insertedRaw.id : insertedRaw;
 
@@ -497,7 +501,11 @@ async function updateProduct(req, res, next) {
       specs_json: JSON.stringify(parseSpecsText(req.body.specsText)),
       in_stock: req.body.outOfStock !== 'on',
       is_featured: req.body.isFeatured === 'on',
-      variant_group_label: (req.body.variantGroupLabel || '').trim() || null
+      variant_group_label: (req.body.variantGroupLabel || '').trim() || null,
+      trade_in_enabled: req.body.tradeInEnabled === 'on',
+      trade_in_subsidy: req.body.tradeInEnabled === 'on' && req.body.tradeInSubsidy
+        ? Number(String(req.body.tradeInSubsidy).replace(/\D/g, '')) || null
+        : null
     });
 
     const policyGroupId = req.body.policyGroupId ? Number(req.body.policyGroupId) : null;
