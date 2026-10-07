@@ -46,6 +46,18 @@ async function attachLocals(req, res, next) {
     res.locals.categories = categories;
     res.locals.categoriesById = Object.fromEntries(categories.map((c) => [c.id, c]));
     res.locals.navItems = buildNavItems(categories);
+    // Best Deal nav link only shows while at least one hot-deal product is
+    // currently active -- same "active" rule as homeController's hot deal
+    // section (is_hot_deal + not expired), but as a cheap existence check
+    // since every page load only needs the boolean, not the rows.
+    const now = new Date();
+    const hotDeal = await db('products')
+      .where('is_hot_deal', true)
+      .andWhere(function () {
+        this.whereNull('hot_deal_expires_at').orWhere('hot_deal_expires_at', '>', now);
+      })
+      .first('id');
+    res.locals.hasHotDeals = !!hotDeal;
     // getCartDetails self-heals stale session entries (e.g. products deleted
     // since the item was added), so the badge never disagrees with the cart page.
     const cart = await cartService.getCartDetails(req);
