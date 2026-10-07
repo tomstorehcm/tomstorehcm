@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Sản phẩm được lên đời</h1>
+    <span class="status-badge status-active"><%= enabledCount %> / <%= totalCount %> đang bật</span>
+  </div>
+  <p class="admin-hint">Tick chọn nhanh những sản phẩm đang bán được phép xuất hiện ở bước "Chọn máy lên đời" trong trang công khai Thu Cũ Đổi Mới, thay vì phải mở sửa từng sản phẩm một. Có thể nhập thêm "Trợ giá thêm" (tùy chọn) ngay tại đây -- ô này chỉ được lưu khi sản phẩm đó đang tick chọn.</p>
+
+  <% if (totalCount === 0) { %>
+    <p class="empty-state">Chưa có sản phẩm nào trong catalog.</p>
+  <% } else { %>
+    <form action="/admin/thu-cu/san-pham-len-doi" method="post" id="upgradeEligibleForm">
+      <div class="admin-bulk-toolbar">
+        <button type="button" class="btn btn-outline btn-sm" id="selectAllBtn">Chọn tất cả</button>
+        <button type="button" class="btn btn-outline btn-sm" id="deselectAllBtn">Bỏ chọn tất cả</button>
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+
+      <% sections.forEach(function(sec) { %>
+        <section class="admin-category-section">
+          <h2 class="admin-category-heading"><%= sec.category.name %></h2>
+          <div class="admin-table-scroll">
+            <table class="admin-table">
+              <thead><tr><th></th><th>Sản phẩm</th><th>Giá</th><th>Trợ giá thêm khi lên đời</th></tr></thead>
+              <tbody>
+                <% sec.products.forEach(function(p) { %>
+                  <tr>
+                    <td>
+                      <label class="checkbox-option">
+                        <input type="checkbox" class="upgrade-eligible-checkbox" name="tradeInEnabled_<%= p.id %>" <%= p.trade_in_enabled ? 'checked' : '' %> />
+                      </label>
+                    </td>
+                    <td>
+                      <% if (p.image_url) { %><img src="<%= p.image_url %>" alt="" class="admin-thumb-preview" width="40" height="40" style="display:inline-block; vertical-align:middle; margin-right:8px; width:40px; height:40px;" /><% } %>
+                      <%= p.name %>
+                    </td>
+                    <td><%= p.is_contact_price ? 'Liên hệ' : formatVND(p.sale_price && p.sale_price < p.price ? p.sale_price : p.price) %></td>
+                    <td><input type="text" inputmode="numeric" class="vnd-input" name="tradeInSubsidy_<%= p.id %>" value="<%= p.trade_in_subsidy || '' %>" placeholder="VNĐ" /></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      <% }); %>
+
+      <div class="admin-bulk-toolbar">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+    </form>
+  <% } %>
+</main>
+<script>
+  (function () {
+    var checkboxes = document.querySelectorAll('.upgrade-eligible-checkbox');
+    var selectAllBtn = document.getElementById('selectAllBtn');
+    var deselectAllBtn = document.getElementById('deselectAllBtn');
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', function () {
+        checkboxes.forEach(function (cb) { cb.checked = true; });
+      });
+    }
+    if (deselectAllBtn) {
+      deselectAllBtn.addEventListener('click', function () {
+        checkboxes.forEach(function (cb) { cb.checked = false; });
+      });
+    }
+  })();
+</script>
+</body>
+</html>

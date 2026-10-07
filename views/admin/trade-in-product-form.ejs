@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1><%= isEdit ? 'Sửa sản phẩm thu cũ' : 'Thêm sản phẩm thu cũ' %></h1>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="<%= isEdit ? '/admin/thu-cu/' + product.id + '/sua' : '/admin/thu-cu/moi' %>" method="post" enctype="multipart/form-data" class="admin-form" id="tradeInForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name">Tên sản phẩm *</label>
+        <input type="text" id="name" name="name" value="<%= product.name || '' %>" required maxlength="200" placeholder="VD: iPhone 16 Pro Max 256GB" />
+      </div>
+      <div class="form-group">
+        <label for="categoryId">Danh mục (để lọc theo tab trên trang công khai)</label>
+        <select id="categoryId" name="categoryId">
+          <option value="">(Không có danh mục)</option>
+          <% categories.forEach(function(c) { %>
+            <option value="<%= c.id %>" <%= Number(product.category_id) === c.id ? 'selected' : '' %>><%= c.name %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="subsidyAmount">Trợ giá thu cũ thêm (tùy chọn)</label>
+        <input type="text" inputmode="numeric" id="subsidyAmount" name="subsidyAmount" class="vnd-input" value="<%= product.subsidy_amount || '' %>" placeholder="VNĐ" />
+        <small>Hiện kèm dòng "Trợ giá thu cũ đến" trên thẻ sản phẩm ở trang công khai, không bắt buộc.</small>
+      </div>
+      <div class="form-group form-group-checkbox">
+        <label class="checkbox-option" style="margin-top: 28px;">
+          <input type="checkbox" name="isActive" <%= (typeof product.is_active === 'undefined' || product.is_active) ? 'checked' : '' %> />
+          Đang hiển thị trên trang công khai
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="imageFile">Ảnh sản phẩm</label>
+      <% if (product.image_url) { %>
+        <img src="<%= product.image_url %>" alt="" class="admin-banner-thumb" width="90" />
+        <input type="hidden" name="existingImageUrl" value="<%= product.image_url %>" />
+      <% } %>
+      <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" />
+      <small>Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
+    </div>
+
+    <h2 class="admin-form-subheading">Mức tình trạng máy &amp; giá thu</h2>
+    <p class="admin-hint">Tự thêm/xóa các mức tình trạng riêng cho sản phẩm này (vd "Máy đã kích hoạt", "Loại 1", "Loại 2"...), mỗi mức 1 giá thu khác nhau. Khách sẽ chọn 1 trong các mức này khi thu cũ.</p>
+
+    <% if (copySources.length > 0) { %>
+      <div class="tradein-copy-conditions">
+        <select id="copyConditionsSource">
+          <% copySources.forEach(function(s, i) { %>
+            <option value="<%= i %>"><%= s.name %> (<%= s.conditions.length %> mức)</option>
+          <% }); %>
+        </select>
+        <button type="button" id="copyConditionsBtn" class="btn btn-outline btn-sm">Copy mức tình trạng</button>
+      </div>
+      <p class="admin-hint">Chọn 1 sản phẩm thu cũ đã có sẵn bộ mức tình trạng giống máy này, bấm "Copy mức tình trạng" để tự điền (kể cả giá) — rồi chỉnh lại nếu có khác biệt. Sẽ thay thế toàn bộ các dòng đang có bên dưới.</p>
+      <script type="application/json" id="tradeInCopySourcesData"><%- JSON.stringify(copySources) %></script>
+    <% } %>
+
+    <div id="conditionRows" class="condition-rows">
+      <% conditions.forEach(function(c) { %>
+        <div class="condition-row-group">
+          <div class="condition-row">
+            <input type="text" name="conditionLabel" value="<%= c.label || '' %>" placeholder="VD: Loại 1" />
+            <input type="text" name="conditionDescription" value="<%= c.description || '' %>" placeholder="Mô tả ngắn (tùy chọn)" />
+            <input type="text" inputmode="numeric" class="price-input condition-price-input" name="conditionPrice" value="<%= c.price || '' %>" placeholder="Giá thu (VNĐ)" />
+            <button type="button" class="btn-remove condition-remove-btn" aria-label="Xóa dòng">&times;</button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+    <button type="button" id="addConditionRowBtn" class="btn btn-outline btn-sm">+ Thêm mức tình trạng</button>
+
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn-primary">Lưu</button>
+      <a href="/admin/thu-cu" class="btn btn-outline">Hủy</a>
+    </div>
+  </form>
+</main>
+<script>
+  (function () {
+    var conditionRows = document.getElementById('conditionRows');
+    var addBtn = document.getElementById('addConditionRowBtn');
+
+    function buildConditionRowGroup(row) {
+      row = row || {};
+      var group = document.createElement('div');
+      group.className = 'condition-row-group';
+      group.innerHTML =
+        '<div class="condition-row">' +
+        '<input type="text" name="conditionLabel" placeholder="VD: Loại 1" />' +
+        '<input type="text" name="conditionDescription" placeholder="Mô tả ngắn (tùy chọn)" />' +
+        '<input type="text" inputmode="numeric" class="price-input condition-price-input" name="conditionPrice" placeholder="Giá thu (VNĐ)" />' +
+        '<button type="button" class="btn-remove condition-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+        '</div>';
+      if (row.label) group.querySelector('[name="conditionLabel"]').value = row.label;
+      if (row.description) group.querySelector('[name="conditionDescription"]').value = row.description;
+      if (row.price) group.querySelector('[name="conditionPrice"]').value = formatWithDots(String(row.price));
+      return group;
+    }
+
+    if (addBtn && conditionRows) {
+      addBtn.addEventListener('click', function () {
+        conditionRows.appendChild(buildConditionRowGroup());
+      });
+    }
+
+    // "Copy muc tinh trang" tu 1 san pham thu cu khac da co san -- nhieu may
+    // co bo muc tinh trang + gia giong nhau nen copy nguyen roi chinh lai
+    // nhanh hon phai tu tay them tung dong. Thay the toan bo cac dong dang co.
+    var copySourcesDataEl = document.getElementById('tradeInCopySourcesData');
+    var copyBtn = document.getElementById('copyConditionsBtn');
+    var copySourceSelect = document.getElementById('copyConditionsSource');
+    if (copySourcesDataEl && copyBtn && copySourceSelect && conditionRows) {
+      var copySources = JSON.parse(copySourcesDataEl.textContent);
+      copyBtn.addEventListener('click', function () {
+        var hasExistingData = Array.prototype.some.call(
+          conditionRows.querySelectorAll('[name="conditionLabel"]'),
+          function (input) { return input.value.trim() !== ''; }
+        );
+        if (hasExistingData && !confirm('Thao tác này sẽ thay thế toàn bộ các dòng tình trạng đang có bên dưới. Tiếp tục?')) {
+          return;
+        }
+        var source = copySources[Number(copySourceSelect.value)];
+        if (!source) return;
+        conditionRows.innerHTML = '';
+        source.conditions.forEach(function (row) {
+          conditionRows.appendChild(buildConditionRowGroup(row));
+        });
+      });
+    }
+
+    var tradeInForm = document.getElementById('tradeInForm');
+
+    tradeInForm.addEventListener('click', function (e) {
+      if (e.target.classList.contains('condition-remove-btn')) {
+        e.target.closest('.condition-row-group').remove();
+      }
+    });
+
+    // Format "." ngăn cách hàng nghìn khi gõ giá thu, kể cả ở dòng thêm động
+    // -- admin.js chỉ format 1 lần lúc tải trang nên không áp dụng được cho
+    // dòng mới thêm sau đó, phải tự xử lý riêng ở đây giống product-form.ejs.
+    function digitsOnly(str) { return (str || '').replace(/\D/g, ''); }
+    function formatWithDots(str) { return digitsOnly(str).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+    document.querySelectorAll('.price-input').forEach(function (input) { input.value = formatWithDots(input.value); });
+
+    tradeInForm.addEventListener('input', function (e) {
+      if (!e.target.classList.contains('price-input')) return;
+      var input = e.target;
+      var cursorFromEnd = input.value.length - input.selectionStart;
+      input.value = formatWithDots(input.value);
+      var pos = Math.max(0, input.value.length - cursorFromEnd);
+      input.setSelectionRange(pos, pos);
+    });
+  })();
+</script>
+</body>
+</html>

@@ -7,15 +7,15 @@
 <body class="admin-body">
 <%- include('partials/sidebar') %>
 <main class="admin-main">
-  <h1>Chính sách bảo hành (trang)</h1>
-  <p class="admin-hint">Đây là trang bài viết công khai khách sẽ thấy khi bấm "Chính Sách Bảo Hành" ở menu hoặc cuối trang. Tự thêm/xóa/sửa mục (tab) tùy ý -- mỗi mục gõ nội dung tự do và chèn ảnh xen kẽ ngay trong bài viết. Lưu ý: mục này khác với "Chính sách" ở trên -- chỗ đó quản lý các dòng ngắn (icon + tiêu đề) hiển thị dưới giá sản phẩm, không phải trang này.</p>
+  <h1>Giới thiệu Thu cũ đổi mới (trang)</h1>
+  <p class="admin-hint">Đây là nội dung giới thiệu/chính sách hiện trên trang công khai "Thu Cũ Đổi Mới" (phía trên danh sách máy thu lại). Tự thêm/xóa/sửa mục tùy ý -- mỗi mục gõ nội dung tự do và chèn ảnh xen kẽ ngay trong bài viết.</p>
 
   <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
 
   <section class="admin-category-section">
     <h2 class="admin-category-heading">+ Thêm mục mới</h2>
-    <form action="/admin/bao-hanh" method="post" class="admin-inline-form">
-      <input type="text" name="title" placeholder="Tên mục, ví dụ: Điều kiện đổi trả" required maxlength="100" />
+    <form action="/admin/thu-cu/gioi-thieu" method="post" class="admin-inline-form">
+      <input type="text" name="title" placeholder="Tên mục, ví dụ: Điều kiện thu cũ đổi mới" required maxlength="100" />
       <button type="submit" class="btn btn-primary btn-sm">Thêm mục</button>
     </form>
   </section>
@@ -28,11 +28,11 @@
     <section class="admin-category-section">
       <div class="admin-header-row">
         <h2 class="admin-category-heading">Mục: <%= s.title %></h2>
-        <form action="/admin/bao-hanh/<%= s.id %>/xoa" method="post" onsubmit="return confirm('Xóa mục &quot;' + <%- JSON.stringify(s.title) %> + '&quot;? Nội dung mục này sẽ mất.');">
+        <form action="/admin/thu-cu/gioi-thieu/<%= s.id %>/xoa" method="post" onsubmit="return confirm('Xóa mục &quot;' + <%- JSON.stringify(s.title) %> + '&quot;? Nội dung mục này sẽ mất.');">
           <button type="submit" class="btn-link-danger">Xóa mục</button>
         </form>
       </div>
-      <form action="/admin/bao-hanh/<%= s.id %>/sua" method="post" class="admin-form installment-section-form" data-key="<%= s.id %>">
+      <form action="/admin/thu-cu/gioi-thieu/<%= s.id %>/sua" method="post" class="admin-form installment-section-form" data-key="<%= s.id %>">
         <div class="form-group">
           <label for="title-<%= s.id %>">Tiêu đề mục</label>
           <input type="text" id="title-<%= s.id %>" name="title" value="<%= s.title %>" maxlength="100" required />
@@ -82,7 +82,7 @@
                   if (!file) return;
                   var formData = new FormData();
                   formData.append('image', file);
-                  fetch('/admin/bao-hanh/anh', { method: 'POST', body: formData })
+                  fetch('/admin/thu-cu/gioi-thieu/anh', { method: 'POST', body: formData })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                       if (data.url) {

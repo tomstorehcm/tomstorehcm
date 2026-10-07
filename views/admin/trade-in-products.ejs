@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Sản phẩm thu cũ (Trade-in)</h1>
+    <a href="/admin/thu-cu/moi" class="btn btn-primary">+ Thêm sản phẩm thu cũ</a>
+  </div>
+  <p class="admin-hint">Danh sách máy TOMSTORE nhận thu lại, hiện ở trang công khai "Thu Cũ Đổi Mới". Mỗi sản phẩm tự có bộ mức tình trạng (vd Loại 1, Loại 2...) kèm giá thu riêng -- bấm "Sửa" để chỉnh. Tắt "Đang hiển thị" để tạm ẩn khỏi trang công khai mà không cần xóa.</p>
+
+  <% if (rows.length === 0) { %>
+    <p class="empty-state">Chưa có sản phẩm thu cũ nào. Thêm sản phẩm đầu tiên ở trên.</p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Số mức tình trạng</th><th>Trợ giá thêm</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          <% rows.forEach(function(p) { %>
+            <tr>
+              <td><%= p.name %></td>
+              <td><%= p.category_name %></td>
+              <td><%= p.condition_count %></td>
+              <td><%= p.subsidy_amount ? formatVND(p.subsidy_amount) : '-' %></td>
+              <td><span class="status-badge <%= p.is_active ? 'status-active' : 'status-inactive' %>"><%= p.is_active ? 'Đang hiển thị' : 'Đã ẩn' %></span></td>
+              <td class="admin-actions">
+                <a href="/admin/thu-cu/<%= p.id %>/sua" class="btn-link">Sửa</a>
+                <form action="/admin/thu-cu/<%= p.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm thu cũ &quot;' + <%- JSON.stringify(p.name) %> + '&quot;?');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</main>
+</body>
+</html>
