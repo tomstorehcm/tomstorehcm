@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span>Thu Cũ Đổi Mới</span></nav>
+    <div class="section-heading"><h1>Thu Cũ Đổi Mới</h1></div>
+
+    <% if (policySections.length > 0) { %>
+      <div class="installment-page tradein-intro">
+        <% if (policySections.length > 1) { %>
+          <div class="installment-tabs" id="tradeInPolicyTabs">
+            <% policySections.forEach(function(s, i) { %>
+              <button type="button" class="installment-tab <%= i === 0 ? 'active' : '' %>" data-target="tradein-policy-panel-<%= s.id %>"><%= s.title %></button>
+            <% }); %>
+          </div>
+        <% } %>
+        <% policySections.forEach(function(s, i) { %>
+          <section class="installment-block" id="tradein-policy-panel-<%= s.id %>" <%= i === 0 ? '' : 'hidden' %>>
+            <% if (s.content_html) { %>
+              <div class="installment-content"><%- s.content_html %></div>
+            <% } else { %>
+              <p class="empty-state">Nội dung đang được cập nhật.</p>
+            <% } %>
+          </section>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <div class="section-heading"><h2>Chọn máy bạn muốn thu cũ hoặc lên đời</h2></div>
+
+    <% if (tradeInProducts.length === 0) { %>
+      <p class="empty-state">Hiện chưa có sản phẩm thu cũ nào, vui lòng quay lại sau.</p>
+    <% } else if (tradeInCategories.length > 1) { %>
+      <div class="category-tabs" id="tradeInCategoryTabs">
+        <button type="button" class="category-tab active" data-target="tradein-cat-panel-all">Tất cả</button>
+        <% tradeInCategories.forEach(function(c) { %>
+          <button type="button" class="category-tab" data-target="tradein-cat-panel-<%= c.id %>"><%= c.name %></button>
+        <% }); %>
+      </div>
+      <div class="category-tab-panel" id="tradein-cat-panel-all">
+        <div class="product-grid tradein-grid">
+          <% tradeInProducts.forEach(function(p) { %>
+            <%- include('partials/tradein-card', { p: p }) %>
+          <% }); %>
+        </div>
+      </div>
+      <% tradeInCategories.forEach(function(c) { %>
+        <div class="category-tab-panel" id="tradein-cat-panel-<%= c.id %>" hidden>
+          <div class="product-grid tradein-grid">
+            <% tradeInProducts.filter(function(p) { return p.categoryId === c.id; }).forEach(function(p) { %>
+              <%- include('partials/tradein-card', { p: p }) %>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+      <script>
+        (function () {
+          var tabs = document.querySelectorAll('#tradeInCategoryTabs .category-tab');
+          var panels = document.querySelectorAll('.category-tab-panel');
+          tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+              tabs.forEach(function (t) { t.classList.remove('active'); });
+              panels.forEach(function (p) { p.hidden = true; });
+              tab.classList.add('active');
+              document.getElementById(tab.getAttribute('data-target')).hidden = false;
+            });
+          });
+        })();
+      </script>
+    <% } else { %>
+      <div class="product-grid tradein-grid">
+        <% tradeInProducts.forEach(function(p) { %>
+          <%- include('partials/tradein-card', { p: p }) %>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<!-- Modal: quy trình thu cũ đổi mới nhiều bước -->
+<div class="modal-overlay tradein-modal-overlay" id="tradeInModal" hidden>
+  <div class="modal-box tradein-modal-box">
+    <button type="button" class="modal-close" id="tradeInModalClose" aria-label="Đóng">&times;</button>
+
+    <div class="tradein-stepper" id="tradeInStepper"></div>
+
+    <div class="tradein-step" data-step="tradein-product" hidden>
+      <h3>Chọn máy thu cũ</h3>
+      <div class="category-tabs" id="tradeInProductCategoryTabs" hidden></div>
+      <div class="product-grid tradein-grid" id="tradeInProductGrid"></div>
+    </div>
+
+    <div class="tradein-step" data-step="condition">
+      <h3>Xác định tình trạng máy</h3>
+      <button type="button" class="btn btn-outline btn-sm tradein-step-back-link" data-tradein-back="tradein-product">&lsaquo; Quay lại bước 1</button>
+      <p class="tradein-step-product-name" id="tradeInStepProductName"></p>
+      <div class="tradein-condition-list" id="tradeInConditionList"></div>
+      <div class="tradein-modal-actions tradein-mode-actions">
+        <button type="button" class="btn btn-flow" id="tradeInConditionBothBtn" disabled>Thu cũ và lên đời</button>
+        <button type="button" class="btn btn-flow-outline" id="tradeInConditionOnlyBtn" disabled>Chỉ thu cũ</button>
+      </div>
+      <p class="tradein-condition-note">Giá trên có thể chênh lệch sau khi kiểm tra trực tiếp tại cửa hàng.</p>
+    </div>
+
+    <div class="tradein-step" data-step="upgrade-product" hidden>
+      <h3>Chọn máy lên đời</h3>
+      <div class="category-tabs" id="upgradeCategoryTabs" hidden></div>
+      <div class="product-grid tradein-grid" id="upgradeProductGrid"></div>
+      <div class="tradein-modal-actions">
+        <button type="button" class="btn btn-outline" data-tradein-back="condition">Quay lại</button>
+      </div>
+    </div>
+
+    <div class="tradein-step" data-step="contact" hidden>
+      <h3>Xác nhận thông tin đăng ký</h3>
+
+      <p class="tradein-confirm-label tradein-confirm-label-first">Sản phẩm muốn thu cũ</p>
+      <div class="tradein-confirm-card" id="tradeInConfirmTradeInCard"></div>
+
+      <div id="tradeInConfirmUpgradeBlock" hidden>
+        <p class="tradein-confirm-label">Sản phẩm muốn lên đời</p>
+        <div class="tradein-confirm-card" id="tradeInConfirmUpgradeCard"></div>
+        <div id="tradeInUpgradeVariantPickers"></div>
+      </div>
+
+      <div class="tradein-summary" id="tradeInFinalSummary"></div>
+      <form id="tradeInContactForm">
+        <div class="form-group">
+          <label for="tradeInCustomerName">Họ và tên *</label>
+          <input type="text" id="tradeInCustomerName" name="customerName" required maxlength="150" />
+        </div>
+        <div class="form-group">
+          <label for="tradeInPhone">Số điện thoại *</label>
+          <input type="tel" id="tradeInPhone" name="phone" placeholder="09xxxxxxxx" required />
+        </div>
+        <div class="form-group">
+          <label for="tradeInNote">Ghi chú (không bắt buộc)</label>
+          <textarea id="tradeInNote" name="note" rows="2" placeholder="Nhắn thêm nếu bạn cần..."></textarea>
+        </div>
+        <div class="form-errors" id="tradeInFormErrors" hidden></div>
+        <div class="tradein-modal-actions">
+          <button type="button" class="btn btn-outline" id="tradeInContactBackBtn">Quay lại</button>
+          <button type="submit" class="btn btn-primary">Gửi thông tin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="tradeInData"><%- JSON.stringify({
+  tradeInProducts: tradeInProducts,
+  tradeInCategories: tradeInCategories.map(function(c) { return { id: c.id, name: c.name }; }),
+  upgradeProducts: upgradeProducts,
+  upgradeCategories: upgradeCategories.map(function(c) { return { id: c.id, name: c.name }; })
+}) %></script>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('tradeInData').textContent);
+  var tradeInProducts = data.tradeInProducts;
+  var tradeInCategories = data.tradeInCategories;
+  var upgradeProducts = data.upgradeProducts;
+  var upgradeCategories = data.upgradeCategories;
+
+  var modal = document.getElementById('tradeInModal');
+  var modalBox = modal.querySelector('.modal-box');
+  var closeBtn = document.getElementById('tradeInModalClose');
+  var steps = document.querySelectorAll('.tradein-step');
+
+  var state = {};
+
+  function formatVND(n) {
+    return new Intl.NumberFormat('vi-VN').format(n) + '₫';
+  }
+
+  function showStep(name) {
+    steps.forEach(function (el) { el.hidden = el.getAttribute('data-step') !== name; });
+    state.currentStep = name;
+    updateStepper();
+    // Scroll ve dau khung modal moi khi doi buoc -- neu khong, buoc truoc
+    // (vd luoi chon may len doi dai) co the da bi cuon xuong, khien tieu de
+    // buoc moi hien ra sat ngay mep tren cua modal thay vi co khoang cach.
+    if (modalBox) modalBox.scrollTop = 0;
+  }
+
+  // Chi 1 luong duy nhat, giong y het ref cellphoneS: chon may thu cu (buoc
+  // nay luon coi la "da xong" ngay khi mo modal tu trang, vi khach da bam
+  // "Chon san pham" tren 1 the san pham cu the roi) -> xac dinh tinh trang
+  // may -> (neu chon "Thu cu va len doi") chon may len doi -> xac nhan
+  // thong tin dang ky (gom luon chon phien ban/mau cua may len doi).
+  var STEP_FLOW = [
+    { key: 'tradein-product', label: 'Chọn máy thu cũ' },
+    { key: 'condition', label: 'Xác định tình trạng máy' },
+    { key: 'upgrade-product', label: 'Chọn máy lên đời' },
+    { key: 'contact', label: 'Xác nhận thông tin đăng ký' }
+  ];
+
+  function renderStepper() {
+    var flow = STEP_FLOW;
+    var wrap = document.getElementById('tradeInStepper');
+    wrap.innerHTML = '';
+    flow.forEach(function (step, i) {
+      var item = document.createElement('div');
+      item.className = 'tradein-stepper-item';
+      item.setAttribute('data-step-key', step.key);
+
+      var circle = document.createElement('span');
+      circle.className = 'tradein-stepper-circle';
+      circle.textContent = i + 1;
+      item.appendChild(circle);
+
+      var label = document.createElement('span');
+      label.className = 'tradein-stepper-label';
+      label.textContent = step.label;
+      item.appendChild(label);
+
+      wrap.appendChild(item);
+
+      if (i < flow.length - 1) {
+        var line = document.createElement('span');
+        line.className = 'tradein-stepper-line';
+        wrap.appendChild(line);
+      }
+    });
+    updateStepper();
+  }
+
+  function updateStepper() {
+    var flow = STEP_FLOW;
+    var currentIndex = -1;
+    flow.forEach(function (s, i) { if (s.key === state.currentStep) currentIndex = i; });
+
+    var items = document.querySelectorAll('#tradeInStepper .tradein-stepper-item');
+    items.forEach(function (item, i) {
+      item.classList.remove('active', 'done');
+      if (i === currentIndex) item.classList.add('active');
+      else if (currentIndex >= 0 && i < currentIndex) item.classList.add('done');
+    });
+
+    var lines = document.querySelectorAll('#tradeInStepper .tradein-stepper-line');
+    lines.forEach(function (line, i) {
+      line.classList.toggle('done', currentIndex >= 0 && i < currentIndex);
+    });
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+  }
+
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.hidden) closeModal();
+  });
+
+  // ----- Bước "xác định tình trạng máy" -----
+  // Hien 1 danh sach dong ngang (khong phai luoi the), giong dung ref
+  // cellphoneS: moi dong la 1 nut full-width, nhan + mo ta ben trai, gia
+  // ben phai.
+  function renderConditionList(product) {
+    var wrap = document.getElementById('tradeInConditionList');
+    wrap.innerHTML = '';
+    product.conditions.forEach(function (c) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'tradein-condition-row';
+
+      var textWrap = document.createElement('span');
+      textWrap.className = 'tradein-condition-row-text';
+
+      var labelEl = document.createElement('strong');
+      labelEl.className = 'tradein-condition-row-label';
+      labelEl.textContent = c.label + (c.description ? ': ' : '');
+      textWrap.appendChild(labelEl);
+
+      if (c.description) {
+        var descEl = document.createElement('span');
+        descEl.className = 'tradein-condition-row-desc';
+        descEl.textContent = c.description;
+        textWrap.appendChild(descEl);
+      }
+      row.appendChild(textWrap);
+
+      var priceEl = document.createElement('span');
+      priceEl.className = 'tradein-condition-row-price';
+      priceEl.textContent = formatVND(c.price);
+      row.appendChild(priceEl);
+
+      row.addEventListener('click', function () {
+        wrap.querySelectorAll('.tradein-condition-row').forEach(function (el) { el.classList.remove('active'); });
+        row.classList.add('active');
+        state.condition = c;
+        document.getElementById('tradeInConditionBothBtn').disabled = false;
+        document.getElementById('tradeInConditionOnlyBtn').disabled = false;
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  // Chon san pham tu luoi tren trang (buoc 1 coi nhu da xong), mo modal
+  // thang vao buoc "xac dinh tinh trang may".
+  function openModal(productId) {
+    var product = tradeInProducts.find(function (p) { return p.id === productId; });
+    if (!product) return;
+
+    state.mode = null;
+    state.tradeInProduct = product;
+    state.condition = null;
+    state.upgradeProduct = null;
+    state.group = null;
+    state.variant = null;
+    state.color = null;
+
+    document.getElementById('tradeInStepProductName').textContent = product.name;
+    renderConditionList(product);
+    document.getElementById('tradeInConditionBothBtn').disabled = true;
+    document.getElementById('tradeInConditionOnlyBtn').disabled = true;
+
+    modal.hidden = false;
+    renderStepper();
+    showStep('condition');
+  }
+
+  // Ca the san pham (khong chi rieng nut "Chon san pham") deu bam duoc --
+  // click vao nut cung se bubble len toi listener cua the, nen chi can gan
+  // 1 listener duy nhat o day, khong trung lap.
+  document.querySelectorAll('.tradein-card[data-trade-in-product-id]').forEach(function (card) {
+    card.addEventListener('click', function () {
+      openModal(Number(card.getAttribute('data-trade-in-product-id')));
+    });
+  });
+
+  // Sau khi xac dinh tinh trang may, cho chon tiep "Thu cu va len doi" hoac
+  // "Chi thu cu" -- giong het 2 nut cung dang bo tron trong ref.
+  document.getElementById('tradeInConditionBothBtn').addEventListener('click', function () {
+    state.mode = 'len_doi';
+    renderUpgradeProductStep();
+    showStep('upgrade-product');
+  });
+
+  document.getElementById('tradeInConditionOnlyBtn').addEventListener('click', function () {
+    state.mode = 'thu_cu';
+    state.upgradeProduct = null;
+    renderFinalSummary();
+    showStep('contact');
+  });
+
+  // ----- Step 2: chọn máy lên đời -----
+  function renderUpgradeProductStep() {
+    var tabsWrap = document.getElementById('upgradeCategoryTabs');
+    var grid = document.getElementById('upgradeProductGrid');
+    tabsWrap.innerHTML = '';
+
+    function renderGrid(categoryId) {
+      grid.innerHTML = '';
+      var list = categoryId
+        ? upgradeProducts.filter(function (p) { return String(p.categoryId) === String(categoryId); })
+        : upgradeProducts;
+
+      if (list.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'empty-state';
+        empty.textContent = 'Không có sản phẩm nào trong danh mục này.';
+        grid.appendChild(empty);
+        return;
+      }
+
+      list.forEach(function (p) {
+        var card = document.createElement('article');
+        card.className = 'product-card tradein-card';
+
+        var imageWrap = document.createElement('div');
+        imageWrap.className = 'product-card-image';
+        if (p.imageUrl) {
+          var img = document.createElement('img');
+          img.src = p.imageUrl;
+          img.alt = p.name;
+          img.loading = 'lazy';
+          img.width = 300;
+          img.height = 300;
+          imageWrap.appendChild(img);
+        } else {
+          imageWrap.innerHTML = '<span class="product-icon-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>';
+        }
+        card.appendChild(imageWrap);
+
+        var body = document.createElement('div');
+        body.className = 'product-card-body';
+
+        var nameEl = document.createElement('h3');
+        nameEl.className = 'product-name';
+        nameEl.textContent = p.name;
+        body.appendChild(nameEl);
+
+        var priceWrap = document.createElement('div');
+        priceWrap.className = 'product-price';
+        var priceEl = document.createElement('span');
+        priceEl.className = 'price-current';
+        priceEl.textContent = (p.isContactPrice || p.basePrice == null) ? 'Liên hệ' : formatVND(p.basePrice);
+        priceWrap.appendChild(priceEl);
+        body.appendChild(priceWrap);
+
+        if (p.subsidy) {
+          var subsidyEl = document.createElement('p');
+          subsidyEl.className = 'tradein-subsidy-line';
+          subsidyEl.innerHTML = '+ Trợ giá thêm <strong>' + formatVND(p.subsidy) + '</strong>';
+          body.appendChild(subsidyEl);
+        }
+
+        card.appendChild(body);
+        card.addEventListener('click', function () {
+          selectUpgradeProduct(p);
+          renderFinalSummary();
+          showStep('contact');
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    if (upgradeCategories.length > 1) {
+      tabsWrap.hidden = false;
+      var allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.className = 'category-tab active';
+      allBtn.textContent = 'Tất cả';
+      allBtn.addEventListener('click', function () {
+        tabsWrap.querySelectorAll('.category-tab').forEach(function (t) { t.classList.remove('active'); });
+        allBtn.classList.add('active');
+        renderGrid(null);
+      });
+      tabsWrap.appendChild(allBtn);
+
+      upgradeCategories.forEach(function (c) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'category-tab';
+        btn.textContent = c.name;
+        btn.addEventListener('click', function () {
+          tabsWrap.querySelectorAll('.category-tab').forEach(function (t) { t.classList.remove('active'); });
+          btn.classList.add('active');
+          renderGrid(c.id);
+        });
+        tabsWrap.appendChild(btn);
+      });
+    } else {
+      tabsWrap.hidden = true;
+    }
+
+    renderGrid(null);
+  }
+
+  // ----- Luồng "upgrade-first": chọn máy muốn thu cũ (sau khi đã chọn máy lên đời) -----
+  function renderTradeInProductStep() {
+    var tabsWrap = document.getElementById('tradeInProductCategoryTabs');
+    var grid = document.getElementById('tradeInProductGrid');
+    tabsWrap.innerHTML = '';
+
+    function renderGrid(categoryId) {
+      grid.innerHTML = '';
+      var list = categoryId
+        ? tradeInProducts.filter(function (p) { return String(p.categoryId) === String(categoryId); })
+        : tradeInProducts;
+
+      if (list.length === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'empty-state';
+        empty.textContent = 'Không có sản phẩm nào trong danh mục này.';
+        grid.appendChild(empty);
+        return;
+      }
+
+      list.forEach(function (p) {
+        var card = document.createElement('article');
+        card.className = 'product-card tradein-card';
+
+        var imageWrap = document.createElement('div');
+        imageWrap.className = 'product-card-image';
+        if (p.imageUrl) {
+          var img = document.createElement('img');
+          img.src = p.imageUrl;
+          img.alt = p.name;
+          img.loading = 'lazy';
+          img.width = 300;
+          img.height = 300;
+          imageWrap.appendChild(img);
+        } else {
+          imageWrap.innerHTML = '<span class="product-icon-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>';
+        }
+        card.appendChild(imageWrap);
+
+        var body = document.createElement('div');
+        body.className = 'product-card-body';
+
+        var nameEl = document.createElement('h3');
+        nameEl.className = 'product-name';
+        nameEl.textContent = p.name;
+        body.appendChild(nameEl);
+
+        var priceWrap = document.createElement('div');
+        priceWrap.className = 'product-price';
+        var labelEl = document.createElement('span');
+        labelEl.className = 'tradein-price-label';
+        labelEl.textContent = 'Giá thu đến';
+        priceWrap.appendChild(labelEl);
+        var priceEl = document.createElement('span');
+        priceEl.className = 'price-current';
+        priceEl.textContent = formatVND(p.maxPrice);
+        priceWrap.appendChild(priceEl);
+        body.appendChild(priceWrap);
+
+        if (p.subsidyAmount) {
+          var subsidyEl = document.createElement('p');
+          subsidyEl.className = 'tradein-subsidy-line';
+          subsidyEl.innerHTML = '+ Trợ giá thu cũ đến <strong>' + formatVND(p.subsidyAmount) + '</strong>';
+          body.appendChild(subsidyEl);
+        }
+
+        card.appendChild(body);
+        card.addEventListener('click', function () {
+          selectTradeInProduct(p);
+        });
+        grid.appendChild(card);
+      });
+    }
+
+    if (tradeInCategories.length > 1) {
+      tabsWrap.hidden = false;
+      var allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.className = 'category-tab active';
+      allBtn.textContent = 'Tất cả';
+      allBtn.addEventListener('click', function () {
+        tabsWrap.querySelectorAll('.category-tab').forEach(function (t) { t.classList.remove('active'); });
+        allBtn.classList.add('active');
+        renderGrid(null);
+      });
+      tabsWrap.appendChild(allBtn);
+
+      tradeInCategories.forEach(function (c) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'category-tab';
+        btn.textContent = c.name;
+        btn.addEventListener('click', function () {
+          tabsWrap.querySelectorAll('.category-tab').forEach(function (t) { t.classList.remove('active'); });
+          btn.classList.add('active');
+          renderGrid(c.id);
+        });
+        tabsWrap.appendChild(btn);
+      });
+    } else {
+      tabsWrap.hidden = true;
+    }
+
+    renderGrid(null);
+  }
+
+  function selectTradeInProduct(p) {
+    state.tradeInProduct = p;
+    state.condition = null;
+    document.getElementById('tradeInStepProductName').textContent = p.name;
+    renderConditionList(p);
+    document.getElementById('tradeInConditionBothBtn').disabled = true;
+    document.getElementById('tradeInConditionOnlyBtn').disabled = true;
+    showStep('condition');
+  }
+
+  // ----- Step 3: chọn phiên bản/màu máy lên đời -----
+  function colorsForVariant(p, v) {
+    return (v && v.colors && v.colors.length > 0) ? v.colors : p.generalColors;
+  }
+
+  function getUpgradePrice() {
+    var p = state.upgradeProduct;
+    if (!p) return null;
+    if (state.color && state.color.price != null) return state.color.price;
+    if (state.variant) return state.variant.price;
+    return p.basePrice;
+  }
+
+  function renderOptionButtons(items, container, getLabel, getDisabled, onSelect) {
+    container.innerHTML = '';
+    items.forEach(function (item, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'variant-option' + (i === 0 ? ' active' : '');
+      btn.textContent = getLabel(item);
+      if (getDisabled(item)) btn.disabled = true;
+      btn.addEventListener('click', function () {
+        container.querySelectorAll('.variant-option').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        onSelect(item);
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function selectUpgradeProduct(p) {
+    state.upgradeProduct = p;
+    state.group = null;
+    state.variant = null;
+    state.color = null;
+
+    var wrap = document.getElementById('tradeInUpgradeVariantPickers');
+    wrap.innerHTML = '';
+
+    var hasGroups = p.variantGroups && p.variantGroups.length > 0;
+    var hasVariants = !hasGroups && p.variants && p.variants.length > 0;
+
+    function renderColorPicker(colors) {
+      var existing = wrap.querySelector('.color-picker');
+      if (existing) existing.remove();
+      if (!colors || colors.length === 0) {
+        state.color = null;
+        renderFinalSummary();
+        return;
+      }
+      state.color = colors[0];
+      var div = document.createElement('div');
+      div.className = 'color-picker';
+      var label = document.createElement('label');
+      var labelText = document.createTextNode('Màu sắc');
+      label.appendChild(labelText);
+      var nameSpan = document.createElement('span');
+      nameSpan.textContent = colors[0].name || '';
+      label.appendChild(nameSpan);
+      div.appendChild(label);
+
+      var optsWrap = document.createElement('div');
+      optsWrap.className = 'color-options';
+      colors.forEach(function (c, i) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'color-option' + (i === 0 ? ' active' : '');
+        btn.style.backgroundColor = c.hex || '#ccc';
+        btn.title = c.name;
+        if (!c.inStock) btn.disabled = true;
+        btn.addEventListener('click', function () {
+          optsWrap.querySelectorAll('.color-option').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          nameSpan.textContent = c.name;
+          state.color = c;
+          renderFinalSummary();
+        });
+        optsWrap.appendChild(btn);
+      });
+      div.appendChild(optsWrap);
+      wrap.appendChild(div);
+    }
+
+    function selectVariant(v) {
+      state.variant = v;
+      renderColorPicker(colorsForVariant(p, v));
+      renderFinalSummary();
+    }
+
+    if (hasGroups) {
+      var groupPicker = document.createElement('div');
+      groupPicker.className = 'variant-picker';
+      var groupLabel = document.createElement('label');
+      groupLabel.textContent = p.variantGroupLabel || 'Phiên bản';
+      groupPicker.appendChild(groupLabel);
+      var groupOpts = document.createElement('div');
+      groupOpts.className = 'variant-options';
+      groupPicker.appendChild(groupOpts);
+      wrap.appendChild(groupPicker);
+
+      var variantPicker = document.createElement('div');
+      variantPicker.className = 'variant-picker';
+      var variantLabelEl = document.createElement('label');
+      variantLabelEl.textContent = 'Dung lượng';
+      variantPicker.appendChild(variantLabelEl);
+      var variantOpts = document.createElement('div');
+      variantOpts.className = 'variant-options';
+      variantPicker.appendChild(variantOpts);
+      wrap.appendChild(variantPicker);
+
+      function selectGroup(g) {
+        state.group = g;
+        renderOptionButtons(g.variants, variantOpts, function (v) { return v.label; }, function (v) { return !v.inStock; }, selectVariant);
+        if (g.variants.length > 0) selectVariant(g.variants[0]);
+        else { state.variant = null; renderColorPicker([]); }
+      }
+
+      renderOptionButtons(p.variantGroups, groupOpts, function (g) { return g.name; }, function () { return false; }, selectGroup);
+      if (p.variantGroups.length > 0) selectGroup(p.variantGroups[0]);
+    } else if (hasVariants) {
+      var vPicker = document.createElement('div');
+      vPicker.className = 'variant-picker';
+      var vLabel = document.createElement('label');
+      vLabel.textContent = 'Dung lượng';
+      vPicker.appendChild(vLabel);
+      var vOpts = document.createElement('div');
+      vOpts.className = 'variant-options';
+      vPicker.appendChild(vOpts);
+      wrap.appendChild(vPicker);
+
+      renderOptionButtons(p.variants, vOpts, function (v) { return v.label; }, function (v) { return !v.inStock; }, selectVariant);
+      if (p.variants.length > 0) selectVariant(p.variants[0]);
+    } else {
+      renderColorPicker(p.generalColors);
+    }
+
+    renderFinalSummary();
+  }
+
+  function summaryRow(label, value, emphasize) {
+    var row = document.createElement('div');
+    row.className = 'tradein-summary-row' + (emphasize ? ' tradein-summary-row-total' : '');
+    var labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+    var valueStrong = document.createElement('strong');
+    valueStrong.textContent = value;
+    row.appendChild(labelSpan);
+    row.appendChild(valueStrong);
+    return row;
+  }
+
+  // The nho gon the "san pham muon thu cu"/"san pham muon len doi" o buoc
+  // xac nhan cuoi, kem nut "Chon san pham khac" quay lai dung buoc de doi.
+  function confirmCardRow(title, priceText, backStep) {
+    var row = document.createElement('div');
+    row.className = 'tradein-confirm-card-row';
+
+    var info = document.createElement('div');
+    info.className = 'tradein-confirm-card-info';
+    var nameEl = document.createElement('p');
+    nameEl.className = 'tradein-confirm-card-name';
+    nameEl.textContent = title;
+    info.appendChild(nameEl);
+    var priceEl = document.createElement('p');
+    priceEl.className = 'tradein-confirm-card-price';
+    priceEl.textContent = priceText;
+    info.appendChild(priceEl);
+    row.appendChild(info);
+
+    var changeBtn = document.createElement('button');
+    changeBtn.type = 'button';
+    changeBtn.className = 'btn btn-outline btn-sm';
+    changeBtn.textContent = 'Chọn sản phẩm khác';
+    changeBtn.addEventListener('click', function () {
+      // Luoi buoc 1 (#tradeInProductGrid) chi duoc dung JS render khi can
+      // quay lai doi may -- phai render lai moi lan, neu khong luoi se trong
+      // trang (chua bao gio duoc ve) khi khach bam "Chon san pham khac".
+      if (backStep === 'tradein-product') renderTradeInProductStep();
+      showStep(backStep);
+    });
+    row.appendChild(changeBtn);
+
+    return row;
+  }
+
+  // ----- Bước xác nhận thông tin: gồm cả tóm tắt máy thu cũ/lên đời (kèm
+  // chọn phiên bản/màu nếu có) và bảng tính tiền, giống hệt ref cellphoneS -----
+  function renderFinalSummary() {
+    var tradeInCardEl = document.getElementById('tradeInConfirmTradeInCard');
+    tradeInCardEl.innerHTML = '';
+    tradeInCardEl.appendChild(confirmCardRow(
+      state.tradeInProduct.name + ' - ' + state.condition.label,
+      formatVND(state.condition.price),
+      'tradein-product'
+    ));
+
+    var upgradeBlock = document.getElementById('tradeInConfirmUpgradeBlock');
+    var upgradeCardEl = document.getElementById('tradeInConfirmUpgradeCard');
+    var newPrice = null;
+    var isContact = false;
+
+    if (state.mode === 'len_doi' && state.upgradeProduct) {
+      upgradeBlock.hidden = false;
+      var p = state.upgradeProduct;
+      var variantLabel = [state.variant ? state.variant.label : null, state.color ? state.color.name : null].filter(Boolean).join(' / ');
+      newPrice = getUpgradePrice();
+      isContact = p.isContactPrice || newPrice == null;
+
+      upgradeCardEl.innerHTML = '';
+      upgradeCardEl.appendChild(confirmCardRow(
+        p.name + (variantLabel ? ' (' + variantLabel + ')' : ''),
+        isContact ? 'Liên hệ' : formatVND(newPrice),
+        'upgrade-product'
+      ));
+    } else {
+      upgradeBlock.hidden = true;
+      upgradeCardEl.innerHTML = '';
+    }
+
+    var el = document.getElementById('tradeInFinalSummary');
+    el.innerHTML = '';
+    el.appendChild(summaryRow('Giá thu cũ', formatVND(state.condition.price)));
+
+    if (state.mode === 'len_doi' && state.upgradeProduct) {
+      var up = state.upgradeProduct;
+      el.appendChild(summaryRow('Giá máy mới', isContact ? 'Liên hệ' : formatVND(newPrice)));
+      if (up.subsidy) el.appendChild(summaryRow('Trợ giá thêm', formatVND(up.subsidy)));
+
+      if (!isContact) {
+        var diff = newPrice - (state.condition.price + (up.subsidy || 0));
+        el.appendChild(summaryRow(diff > 0 ? 'Cần thanh toán thêm' : 'Được hoàn lại', formatVND(Math.abs(diff)), true));
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-tradein-back]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = btn.getAttribute('data-tradein-back');
+      if (target === 'tradein-product') renderTradeInProductStep();
+      showStep(target);
+    });
+  });
+
+  document.getElementById('tradeInContactBackBtn').addEventListener('click', function () {
+    showStep(state.mode === 'len_doi' ? 'upgrade-product' : 'condition');
+  });
+
+  var contactForm = document.getElementById('tradeInContactForm');
+  contactForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var errorsEl = document.getElementById('tradeInFormErrors');
+    errorsEl.hidden = true;
+    errorsEl.innerHTML = '';
+
+    var params = new URLSearchParams();
+    params.append('mode', state.mode);
+    params.append('tradeInProductId', state.tradeInProduct.id);
+    params.append('tradeInConditionId', state.condition.id);
+    params.append('customerName', document.getElementById('tradeInCustomerName').value);
+    params.append('phone', document.getElementById('tradeInPhone').value);
+    params.append('note', document.getElementById('tradeInNote').value);
+    if (state.mode === 'len_doi' && state.upgradeProduct) {
+      params.append('upgradeProductId', state.upgradeProduct.id);
+      if (state.variant) params.append('upgradeVariantId', state.variant.id);
+      if (state.color) params.append('upgradeColorId', state.color.id);
+    }
+
+    var submitBtn = contactForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    fetch('/thu-cu-doi-moi', {
+      method: 'POST',
+      body: params,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        submitBtn.disabled = false;
+        if (result.ok) {
+          window.location.href = result.redirectUrl;
+          return;
+        }
+        var ul = document.createElement('ul');
+        (result.errors || []).forEach(function (err) {
+          var li = document.createElement('li');
+          li.textContent = err.msg;
+          ul.appendChild(li);
+        });
+        errorsEl.appendChild(ul);
+        errorsEl.hidden = false;
+      })
+      .catch(function () {
+        submitBtn.disabled = false;
+        errorsEl.textContent = 'Có lỗi xảy ra, vui lòng thử lại.';
+        errorsEl.hidden = false;
+      });
+  });
+
+  if (document.querySelectorAll('.installment-tab').length > 0) {
+    var introTabs = document.querySelectorAll('#tradeInPolicyTabs .installment-tab');
+    var introPanels = document.querySelectorAll('.tradein-intro .installment-block');
+    introTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        introTabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+        var targetId = tab.getAttribute('data-target');
+        introPanels.forEach(function (panel) { panel.hidden = panel.id !== targetId; });
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <div class="order-confirmation">
+      <div class="order-confirmation-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h1>Đã gửi yêu cầu thu cũ đổi mới!</h1>
+      <p>Mã yêu cầu của bạn: <strong><%= request.request_code %></strong></p>
+
+      <div class="order-instructions">
+        <h2>Bước tiếp theo</h2>
+        <ul>
+          <li>TOMSTORE sẽ gọi lại theo số điện thoại bạn đã để lại để xác nhận và hẹn lịch kiểm tra máy.</li>
+          <li>Giá thu cuối cùng sẽ được chốt sau khi kiểm tra máy trực tiếp.</li>
+          <li>Thời gian liên hệ thường trong giờ hành chính, sớm nhất có thể.</li>
+        </ul>
+      </div>
+
+      <table class="cart-table">
+        <thead><tr><th>Nội dung</th><th>Chi tiết</th></tr></thead>
+        <tbody>
+          <tr><td>Hình thức</td><td><%= request.mode === 'len_doi' ? 'Thu cũ - Lên đời' : 'Chỉ thu cũ' %></td></tr>
+          <tr><td>Máy thu cũ</td><td><%= request.trade_in_product_name %> - <%= request.trade_in_condition_label %></td></tr>
+          <tr><td>Giá thu cũ</td><td><%= formatVND(request.trade_in_price) %></td></tr>
+          <% if (request.mode === 'len_doi' && request.upgrade_product_name) { %>
+            <tr>
+              <td>Máy lên đời</td>
+              <td>
+                <%= request.upgrade_product_name %>
+                <% if (request.upgrade_variant_label || request.upgrade_color_name) { %>
+                  (<%= [request.upgrade_variant_label, request.upgrade_color_name].filter(Boolean).join(' / ') %>)
+                <% } %>
+              </td>
+            </tr>
+            <% if (request.upgrade_price !== null && request.upgrade_price !== undefined) { %>
+              <tr><td>Giá máy mới</td><td><%= formatVND(request.upgrade_price) %></td></tr>
+            <% } %>
+            <% if (request.upgrade_subsidy) { %>
+              <tr><td>Trợ giá thêm</td><td><%= formatVND(request.upgrade_subsidy) %></td></tr>
+            <% } %>
+          <% } %>
+        </tbody>
+      </table>
+
+      <a href="/" class="btn btn-primary btn-lg">Tiếp tục xem sản phẩm</a>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+</body>
+</html>
