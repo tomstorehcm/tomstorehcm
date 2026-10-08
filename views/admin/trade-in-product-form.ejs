@@ -12,6 +12,37 @@
     <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
   <% } %>
 
+  <%
+    // Bang mau dung san (giong het trang Them san pham) de dong Mau o day
+    // dung chung 1 bang mau quen thuoc voi admin.
+    var PRESET_COLORS = [
+      { hex: '#1d1d1f', name: 'Đen' },
+      { hex: '#2b2b2d', name: 'Xám Đậm' },
+      { hex: '#4b4b4d', name: 'Xám' },
+      { hex: '#e3e4e5', name: 'Bạc' },
+      { hex: '#f5f5f0', name: 'Trắng' },
+      { hex: '#8f8a81', name: 'Titan Tự Nhiên' },
+      { hex: '#3c4a5c', name: 'Titan Xanh' },
+      { hex: '#cbb994', name: 'Titan Sa Mạc' },
+      { hex: '#f0e2d0', name: 'Vàng' },
+      { hex: '#f4c8bc', name: 'Vàng Hồng' },
+      { hex: '#e8d44d', name: 'Vàng Chanh' },
+      { hex: '#e8622c', name: 'Cam' },
+      { hex: '#a41e22', name: 'Đỏ' },
+      { hex: '#f0c6ce', name: 'Hồng' },
+      { hex: '#5f4b6e', name: 'Tím' },
+      { hex: '#4b3c5e', name: 'Tím Đậm' },
+      { hex: '#3f5a75', name: 'Xanh Dương' },
+      { hex: '#2d2d6b', name: 'Xanh Navy' },
+      { hex: '#1c4966', name: 'Xanh Biển' },
+      { hex: '#4c5c48', name: 'Xanh Lá' },
+      { hex: '#2f6b5e', name: 'Xanh Ngọc' },
+      { hex: '#a8d8b9', name: 'Xanh Bạc Hà' },
+      { hex: '#d9cbb3', name: 'Be' },
+      { hex: '#6b4423', name: 'Nâu' }
+    ];
+  %>
+
   <form action="<%= isEdit ? '/admin/thu-cu/' + product.id + '/sua' : '/admin/thu-cu/moi' %>" method="post" enctype="multipart/form-data" class="admin-form" id="tradeInForm">
     <div class="form-row">
       <div class="form-group">
@@ -53,35 +84,102 @@
       <small>Ảnh sẽ tự crop về kích thước 1000 × 1000px.</small>
     </div>
 
-    <h2 class="admin-form-subheading">Mức tình trạng máy &amp; giá thu</h2>
-    <p class="admin-hint">Tự thêm/xóa các mức tình trạng riêng cho sản phẩm này (vd "Máy đã kích hoạt", "Loại 1", "Loại 2"...), mỗi mức 1 giá thu khác nhau. Khách sẽ chọn 1 trong các mức này khi thu cũ.</p>
+    <div class="form-group form-group-checkbox">
+      <label class="checkbox-option" id="hasVariantsLabel">
+        <input type="checkbox" id="hasVariantsToggle" name="hasVariants" <%= product.has_variants ? 'checked' : '' %> />
+        Sản phẩm này có nhiều Dung lượng / Màu, mỗi tổ hợp 1 giá thu khác nhau
+      </label>
+      <small>Bật mục này nếu máy có nhiều phiên bản dung lượng/màu mà giá thu khác nhau giữa các phiên bản. Nếu tắt, chỉ cần khai báo Mức tình trạng máy &amp; giá thu như bình thường bên dưới. Dung lượng/Màu không bắt buộc — có thể bật mục này mà không thêm dung lượng/màu nào, khi đó dùng nút "+ Thêm giá" ở từng dòng Mức tình trạng để nhập giá trực tiếp.</small>
+    </div>
 
-    <% if (copySources.length > 0) { %>
-      <div class="tradein-copy-conditions">
-        <select id="copyConditionsSource">
-          <% copySources.forEach(function(s, i) { %>
-            <option value="<%= i %>"><%= s.name %> (<%= s.conditions.length %> mức)</option>
-          <% }); %>
-        </select>
-        <button type="button" id="copyConditionsBtn" class="btn btn-outline btn-sm">Copy mức tình trạng</button>
-      </div>
-      <p class="admin-hint">Chọn 1 sản phẩm thu cũ đã có sẵn bộ mức tình trạng giống máy này, bấm "Copy mức tình trạng" để tự điền (kể cả giá) — rồi chỉnh lại nếu có khác biệt. Sẽ thay thế toàn bộ các dòng đang có bên dưới.</p>
-      <script type="application/json" id="tradeInCopySourcesData"><%- JSON.stringify(copySources) %></script>
-    <% } %>
+    <h2 class="admin-form-subheading">Mức tình trạng máy<span id="conditionPriceHeadingSuffix"> &amp; giá thu</span></h2>
+    <p class="admin-hint" id="conditionSimpleHint">Tự thêm/xóa các mức tình trạng riêng cho sản phẩm này (vd "Máy đã kích hoạt", "Loại 1", "Loại 2"...), mỗi mức 1 giá thu khác nhau. Khách sẽ chọn 1 trong các mức này khi thu cũ.</p>
+    <p class="admin-hint" id="conditionVariantHint" hidden>Nếu có thêm Dung lượng/Màu ở mục "Dung lượng &amp; Màu" bên dưới, chỉ cần nhập Nhãn/Mô tả ở đây — giá sẽ nhập ở từng dòng Màu. Nếu KHÔNG thêm Dung lượng/Màu nào, bấm nút "+ Thêm giá" trên từng dòng để nhập giá trực tiếp, giống chế độ đơn giản.</p>
+
+    <div id="tradeInCopyConditionsWrap">
+      <% if (copySources.length > 0) { %>
+        <div class="tradein-copy-conditions">
+          <select id="copyConditionsSource">
+            <% copySources.forEach(function(s, i) { %>
+              <option value="<%= i %>"><%= s.name %> (<%= s.conditions.length %> mức)</option>
+            <% }); %>
+          </select>
+          <button type="button" id="copyConditionsBtn" class="btn btn-outline btn-sm">Copy mức tình trạng</button>
+        </div>
+        <p class="admin-hint">Chọn 1 sản phẩm thu cũ đã có sẵn bộ mức tình trạng giống máy này, bấm "Copy mức tình trạng" để tự điền (kể cả giá) — rồi chỉnh lại nếu có khác biệt. Sẽ thay thế toàn bộ các dòng đang có bên dưới.</p>
+        <script type="application/json" id="tradeInCopySourcesData"><%- JSON.stringify(copySources) %></script>
+      <% } %>
+    </div>
 
     <div id="conditionRows" class="condition-rows">
+      <%
+        // Dung luong/Mau gio la TUY CHON ke ca khi bat has_variants -- neu
+        // san pham chua co Dung luong nao, dong Tinh trang can duoc phep nhap
+        // gia rieng (qua nut "+ Them gia"). O gia chi an san khi dang o che
+        // do has_variants VA chua co gia san -- co gia roi (vd sua lai 1 san
+        // pham) thi hien luon, danh dau "price-revealed" de JS khong an lai.
+      %>
       <% conditions.forEach(function(c) { %>
+        <% var priceAlreadySet = c.price != null && c.price !== ''; %>
+        <% var shouldHidePriceWrap = !!product.has_variants && !priceAlreadySet; %>
         <div class="condition-row-group">
           <div class="condition-row">
             <input type="text" name="conditionLabel" value="<%= c.label || '' %>" placeholder="VD: Loại 1" />
             <input type="text" name="conditionDescription" value="<%= c.description || '' %>" placeholder="Mô tả ngắn (tùy chọn)" />
-            <input type="text" inputmode="numeric" class="price-input condition-price-input" name="conditionPrice" value="<%= c.price || '' %>" placeholder="Giá thu (VNĐ)" />
+            <span class="condition-price-wrap<%= (product.has_variants && priceAlreadySet) ? ' price-revealed' : '' %>" <%= shouldHidePriceWrap ? 'hidden' : '' %>>
+              <input type="text" inputmode="numeric" class="price-input condition-price-input" name="conditionPrice" value="<%= c.price || '' %>" placeholder="Giá thu (VNĐ)" />
+            </span>
+            <button type="button" class="btn btn-outline btn-sm condition-add-price-btn" <%= shouldHidePriceWrap ? '' : 'hidden' %>>+ Thêm giá</button>
             <button type="button" class="btn-remove condition-remove-btn" aria-label="Xóa dòng">&times;</button>
           </div>
         </div>
       <% }); %>
     </div>
     <button type="button" id="addConditionRowBtn" class="btn btn-outline btn-sm">+ Thêm mức tình trạng</button>
+
+    <div id="tradeInVariantSection" hidden>
+      <h2 class="admin-form-subheading">Dung lượng &amp; Màu</h2>
+      <p class="admin-hint">Không bắt buộc — bỏ trống nếu máy không cần phân loại theo dung lượng/màu (dùng nút "+ Thêm giá" ở mục Mức tình trạng phía trên thay thế). Nếu có: giống cách nhập ở trang Thêm sản phẩm, mỗi Dung lượng có danh sách Màu riêng, nhập giá thu ngay tại dòng Màu — mỗi dòng Màu có 1 ô giá cho từng Mức tình trạng máy đã khai báo ở trên. Ô giá nào để trống nghĩa là tổ hợp đó không thu.</p>
+      <div id="storageGroupRows" class="storage-group-rows">
+        <% (storageGroups || []).forEach(function(sg) { %>
+          <div class="storage-group-row">
+            <div class="storage-group-header">
+              <input type="text" class="storage-row-label" name="storageRowLabel" value="<%= sg.label || '' %>" placeholder="VD: 128GB" />
+              <button type="button" class="btn-remove storage-group-remove-btn" aria-label="Xóa dung lượng">&times;</button>
+            </div>
+            <div class="storage-group-colors">
+              <% (sg.colors || []).forEach(function(c) { %>
+                <% var cHex = c.hex || PRESET_COLORS[0].hex; %>
+                <div class="color-option-row">
+                  <details class="color-swatch-picker">
+                    <summary class="color-hex-swatch" style="background-color: <%= cHex %>;"></summary>
+                    <div class="color-swatch-grid">
+                      <% PRESET_COLORS.forEach(function(preset) { %>
+                        <button type="button" class="color-swatch-option <%= cHex === preset.hex ? 'active' : '' %>" data-hex="<%= preset.hex %>" style="background-color: <%= preset.hex %>;" title="<%= preset.name %>"></button>
+                      <% }); %>
+                    </div>
+                  </details>
+                  <input type="hidden" name="colorRowHex" class="color-row-hex-input" value="<%= cHex %>" />
+                  <input type="text" class="color-row-label" name="colorRowLabel" value="<%= c.label || '' %>" placeholder="VD: Đen" />
+                  <input type="hidden" name="colorRowStorageIndex" class="color-row-storage-index-input" value="" />
+                  <div class="color-condition-prices">
+                    <% conditions.forEach(function(cond, kIdx) { %>
+                      <div class="color-condition-price">
+                        <span class="color-condition-price-label"><%= cond.label %></span>
+                        <input type="text" inputmode="numeric" class="price-input variant-price-cell" data-k="<%= kIdx %>" placeholder="—" value="<%= (c.prices && c.prices[kIdx] != null) ? c.prices[kIdx] : '' %>" />
+                      </div>
+                    <% }); %>
+                  </div>
+                  <button type="button" class="btn-remove color-remove-btn" aria-label="Xóa màu">&times;</button>
+                </div>
+              <% }); %>
+              <button type="button" class="btn btn-outline btn-sm add-color-to-storage-btn">+ Thêm màu cho dung lượng này</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+      <button type="button" id="addStorageGroupBtn" class="btn btn-outline btn-sm">+ Thêm dung lượng</button>
+    </div>
 
     <div class="admin-form-actions">
       <button type="submit" class="btn btn-primary">Lưu</button>
@@ -93,6 +191,7 @@
   (function () {
     var conditionRows = document.getElementById('conditionRows');
     var addBtn = document.getElementById('addConditionRowBtn');
+    var tradeInForm = document.getElementById('tradeInForm');
 
     function buildConditionRowGroup(row) {
       row = row || {};
@@ -102,7 +201,10 @@
         '<div class="condition-row">' +
         '<input type="text" name="conditionLabel" placeholder="VD: Loại 1" />' +
         '<input type="text" name="conditionDescription" placeholder="Mô tả ngắn (tùy chọn)" />' +
+        '<span class="condition-price-wrap">' +
         '<input type="text" inputmode="numeric" class="price-input condition-price-input" name="conditionPrice" placeholder="Giá thu (VNĐ)" />' +
+        '</span>' +
+        '<button type="button" class="btn btn-outline btn-sm condition-add-price-btn" hidden>+ Thêm giá</button>' +
         '<button type="button" class="btn-remove condition-remove-btn" aria-label="Xóa dòng">&times;</button>' +
         '</div>';
       if (row.label) group.querySelector('[name="conditionLabel"]').value = row.label;
@@ -120,6 +222,7 @@
     // "Copy muc tinh trang" tu 1 san pham thu cu khac da co san -- nhieu may
     // co bo muc tinh trang + gia giong nhau nen copy nguyen roi chinh lai
     // nhanh hon phai tu tay them tung dong. Thay the toan bo cac dong dang co.
+    // Chi ap dung cho che do don gian (khong co_variants) -- xem toggle ben duoi.
     var copySourcesDataEl = document.getElementById('tradeInCopySourcesData');
     var copyBtn = document.getElementById('copyConditionsBtn');
     var copySourceSelect = document.getElementById('copyConditionsSource');
@@ -142,8 +245,6 @@
       });
     }
 
-    var tradeInForm = document.getElementById('tradeInForm');
-
     tradeInForm.addEventListener('click', function (e) {
       if (e.target.classList.contains('condition-remove-btn')) {
         e.target.closest('.condition-row-group').remove();
@@ -153,6 +254,9 @@
     // Format "." ngăn cách hàng nghìn khi gõ giá thu, kể cả ở dòng thêm động
     // -- admin.js chỉ format 1 lần lúc tải trang nên không áp dụng được cho
     // dòng mới thêm sau đó, phải tự xử lý riêng ở đây giống product-form.ejs.
+    // Dung chung cho ca o gia dieu kien (.condition-price-input) lan o gia
+    // trong bang ma tran (.variant-price-cell), vi ca 2 deu mang class
+    // ".price-input" va listener nay duoc delegate tren toan bo form.
     function digitsOnly(str) { return (str || '').replace(/\D/g, ''); }
     function formatWithDots(str) { return digitsOnly(str).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 
@@ -165,6 +269,237 @@
       input.value = formatWithDots(input.value);
       var pos = Math.max(0, input.value.length - cursorFromEnd);
       input.setSelectionRange(pos, pos);
+    });
+
+    // ===== Mục "có nhiều Dung lượng / Màu" (has_variants) =====
+    // Giao dien nhap gio giong het trang Them san pham: moi Dung luong
+    // (.storage-group-row) co 1 danh sach Mau rieng long ben trong
+    // (.storage-group-colors), gia nhap thang tai dong Mau -- moi dong Mau
+    // co 1 o gia cho tung Muc tinh trang da khai bao o tren (khong qua bang
+    // ma tran rieng nua).
+    var hasVariantsCheckbox = document.getElementById('hasVariantsToggle');
+    var variantSection = document.getElementById('tradeInVariantSection');
+    var copyConditionsWrap = document.getElementById('tradeInCopyConditionsWrap');
+    var conditionPriceHeadingSuffix = document.getElementById('conditionPriceHeadingSuffix');
+    var conditionSimpleHint = document.getElementById('conditionSimpleHint');
+    var conditionVariantHint = document.getElementById('conditionVariantHint');
+    var storageGroupRowsWrap = document.getElementById('storageGroupRows');
+    var addStorageGroupBtn = document.getElementById('addStorageGroupBtn');
+
+    // Bang mau dung san, dung chung voi trang Them san pham (xem khoi <%  %>
+    // PRESET_COLORS o dau file cho ban server-render).
+    var PRESET_COLORS = [
+      ['#1d1d1f', 'Đen'], ['#2b2b2d', 'Xám Đậm'], ['#4b4b4d', 'Xám'], ['#e3e4e5', 'Bạc'],
+      ['#f5f5f0', 'Trắng'], ['#8f8a81', 'Titan Tự Nhiên'], ['#3c4a5c', 'Titan Xanh'], ['#cbb994', 'Titan Sa Mạc'],
+      ['#f0e2d0', 'Vàng'], ['#f4c8bc', 'Vàng Hồng'], ['#e8d44d', 'Vàng Chanh'], ['#e8622c', 'Cam'],
+      ['#a41e22', 'Đỏ'], ['#f0c6ce', 'Hồng'], ['#5f4b6e', 'Tím'], ['#4b3c5e', 'Tím Đậm'],
+      ['#3f5a75', 'Xanh Dương'], ['#2d2d6b', 'Xanh Navy'], ['#1c4966', 'Xanh Biển'], ['#4c5c48', 'Xanh Lá'],
+      ['#2f6b5e', 'Xanh Ngọc'], ['#a8d8b9', 'Xanh Bạc Hà'], ['#d9cbb3', 'Be'], ['#6b4423', 'Nâu']
+    ];
+
+    function updateVariantModeVisibility() {
+      var on = hasVariantsCheckbox.checked;
+      variantSection.hidden = !on;
+      copyConditionsWrap.hidden = on;
+      conditionPriceHeadingSuffix.hidden = on;
+      conditionSimpleHint.hidden = on;
+      conditionVariantHint.hidden = !on;
+      // Moi dong Tinh trang: neu da duoc danh dau "price-revealed" (admin da
+      // bam "+ Them giá", hoac dong nay von da co san gia luc tai trang) thi
+      // giu nguyen o gia dang hien, khong an lai -- chi an/hien theo che do
+      // "on" cho cac dong CHUA duoc "mo khoa" gia. KHONG con disable input
+      // nua (input disabled se bi loai khoi du lieu submit, lam lech vi tri
+      // mang trong parseConditionRows() phia server) -- chi dung "hidden".
+      document.querySelectorAll('.condition-row').forEach(function (row) {
+        var wrap = row.querySelector('.condition-price-wrap');
+        var addPriceBtn = row.querySelector('.condition-add-price-btn');
+        if (!wrap) return;
+        if (wrap.classList.contains('price-revealed')) {
+          if (addPriceBtn) addPriceBtn.hidden = true;
+          return;
+        }
+        wrap.hidden = on;
+        if (addPriceBtn) addPriceBtn.hidden = !on;
+      });
+    }
+    hasVariantsCheckbox.addEventListener('change', updateVariantModeVisibility);
+    updateVariantModeVisibility();
+
+    function currentConditionLabels() {
+      return Array.prototype.map.call(
+        conditionRows.querySelectorAll('[name="conditionLabel"]'),
+        function (input) { return input.value.trim() || '(chưa đặt tên)'; }
+      );
+    }
+
+    // Ve lai cac o gia cua 1 dong Mau cho khop voi so luong/ten Muc tinh
+    // trang hien tai -- giu lai gia tri cu (theo VI TRI k) truoc khi xoa, vi
+    // khi them/bot/doi ten 1 Muc tinh trang thi MOI dong Mau dang co tren
+    // trang can duoc lam moi lai cho dung.
+    function refreshColorPriceCells(colorRow, labels) {
+      var pricesWrap = colorRow.querySelector('.color-condition-prices');
+      var existing = {};
+      pricesWrap.querySelectorAll('.variant-price-cell').forEach(function (input) {
+        var k = input.getAttribute('data-k');
+        if (input.value.trim() !== '') existing[k] = digitsOnly(input.value);
+      });
+      pricesWrap.innerHTML = '';
+      labels.forEach(function (label, kIdx) {
+        var cell = document.createElement('div');
+        cell.className = 'color-condition-price';
+        var lbl = document.createElement('span');
+        lbl.className = 'color-condition-price-label';
+        lbl.textContent = label;
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.className = 'price-input variant-price-cell';
+        input.placeholder = '—';
+        input.setAttribute('data-k', kIdx);
+        if (existing[kIdx]) input.value = formatWithDots(existing[kIdx]);
+        cell.appendChild(lbl);
+        cell.appendChild(input);
+        pricesWrap.appendChild(cell);
+      });
+    }
+    function refreshAllColorPriceCells() {
+      var labels = currentConditionLabels();
+      document.querySelectorAll('.color-option-row').forEach(function (row) {
+        refreshColorPriceCells(row, labels);
+      });
+    }
+
+    function buildColorOptionRow(value) {
+      value = value || {};
+      var hex = value.hex || PRESET_COLORS[0][0];
+      var swatchButtons = PRESET_COLORS.map(function (p) {
+        return '<button type="button" class="color-swatch-option' + (hex === p[0] ? ' active' : '') + '" data-hex="' + p[0] + '" style="background-color: ' + p[0] + ';" title="' + p[1] + '"></button>';
+      }).join('');
+      var row = document.createElement('div');
+      row.className = 'color-option-row';
+      row.innerHTML =
+        '<details class="color-swatch-picker">' +
+        '<summary class="color-hex-swatch" style="background-color: ' + hex + ';"></summary>' +
+        '<div class="color-swatch-grid">' + swatchButtons + '</div>' +
+        '</details>' +
+        '<input type="hidden" name="colorRowHex" class="color-row-hex-input" value="' + hex + '" />' +
+        '<input type="text" class="color-row-label" name="colorRowLabel" placeholder="VD: Đen" />' +
+        '<input type="hidden" name="colorRowStorageIndex" class="color-row-storage-index-input" value="" />' +
+        '<div class="color-condition-prices"></div>' +
+        '<button type="button" class="btn-remove color-remove-btn" aria-label="Xóa màu">&times;</button>';
+      if (value.label) row.querySelector('.color-row-label').value = value.label;
+      refreshColorPriceCells(row, currentConditionLabels());
+      return row;
+    }
+
+    function buildStorageGroupRow(value) {
+      value = value || {};
+      var group = document.createElement('div');
+      group.className = 'storage-group-row';
+      group.innerHTML =
+        '<div class="storage-group-header">' +
+        '<input type="text" class="storage-row-label" name="storageRowLabel" placeholder="VD: 128GB" />' +
+        '<button type="button" class="btn-remove storage-group-remove-btn" aria-label="Xóa dung lượng">&times;</button>' +
+        '</div>' +
+        '<div class="storage-group-colors"></div>' +
+        '<button type="button" class="btn btn-outline btn-sm add-color-to-storage-btn">+ Thêm màu cho dung lượng này</button>';
+      if (value.label) group.querySelector('.storage-row-label').value = value.label;
+      return group;
+    }
+
+    if (addStorageGroupBtn && storageGroupRowsWrap) {
+      addStorageGroupBtn.addEventListener('click', function () {
+        storageGroupRowsWrap.appendChild(buildStorageGroupRow());
+      });
+    }
+
+    tradeInForm.addEventListener('click', function (e) {
+      if (e.target.classList.contains('storage-group-remove-btn')) {
+        e.target.closest('.storage-group-row').remove();
+        return;
+      }
+      if (e.target.classList.contains('color-remove-btn')) {
+        e.target.closest('.color-option-row').remove();
+        return;
+      }
+      if (e.target.classList.contains('add-color-to-storage-btn')) {
+        var colorsWrap = e.target.closest('.storage-group-row').querySelector('.storage-group-colors');
+        colorsWrap.appendChild(buildColorOptionRow());
+        return;
+      }
+      if (e.target.classList.contains('color-swatch-option')) {
+        var picker = e.target.closest('.color-swatch-picker');
+        var hex = e.target.getAttribute('data-hex');
+        picker.closest('.color-option-row').querySelector('.color-row-hex-input').value = hex;
+        picker.querySelector('summary').style.backgroundColor = hex;
+        picker.querySelectorAll('.color-swatch-option').forEach(function (btn) {
+          btn.classList.toggle('active', btn === e.target);
+        });
+        picker.open = false;
+        return;
+      }
+      if (e.target.classList.contains('condition-add-price-btn')) {
+        var priceRow = e.target.closest('.condition-row');
+        var priceWrap = priceRow.querySelector('.condition-price-wrap');
+        priceWrap.classList.add('price-revealed');
+        priceWrap.hidden = false;
+        e.target.hidden = true;
+        var priceInput = priceWrap.querySelector('input');
+        if (priceInput) priceInput.focus();
+        return;
+      }
+      if (e.target.classList.contains('condition-remove-btn') && hasVariantsCheckbox.checked) {
+        refreshAllColorPriceCells();
+      }
+    });
+
+    // Them 1 Muc tinh trang moi: goi lai updateVariantModeVisibility() de an +
+    // disable o "Gia thu" cua CHINH dong vua them (ham nay quet lai TOAN BO
+    // .condition-price-wrap dang co, ke ca dong moi -- dong cu da duoc an luc
+    // tai trang/bam checkbox nhung dong moi them sau do thi chua), va neu dang
+    // o che do has_variants thi moi dong Mau dang co can duoc them luon 1 o
+    // gia tuong ung voi dong Tinh trang vua them.
+    addBtn.addEventListener('click', function () {
+      updateVariantModeVisibility();
+      if (hasVariantsCheckbox.checked) refreshAllColorPriceCells();
+    });
+
+    // Doi ten 1 Muc tinh trang (blur ra khoi o nhap) thi lam moi lai nhan
+    // cac o gia cho dung ten moi, khong can bam nut thu cong.
+    tradeInForm.addEventListener('focusout', function (e) {
+      if (!hasVariantsCheckbox.checked) return;
+      if (e.target.name === 'conditionLabel') refreshAllColorPriceCells();
+    });
+
+    // Luc submit: gan lai colorRowStorageIndex theo vi tri dong Dung luong
+    // cha hien tai (dung pattern "colorVariantIndex" cua product-form.ejs),
+    // va bom cac o gia (co "name" rieng de khoi gui rac) thanh 3 hidden input
+    // song song (colorIndex/conditionIndex/value) theo dung thu tu dong Mau
+    // xuat hien tren form -- khop voi parseVariantPriceRows() phia server.
+    tradeInForm.addEventListener('submit', function () {
+      if (!hasVariantsCheckbox.checked) return;
+      var allStorageGroups = tradeInForm.querySelectorAll('.storage-group-row');
+      tradeInForm.querySelectorAll('.color-option-row').forEach(function (row, colorIndex) {
+        var storageGroup = row.closest('.storage-group-row');
+        var storageIndex = Array.prototype.indexOf.call(allStorageGroups, storageGroup);
+        row.querySelector('.color-row-storage-index-input').value = storageIndex;
+
+        row.querySelectorAll('.variant-price-cell').forEach(function (input) {
+          if (input.value.trim() === '') return;
+          var kIdx = input.getAttribute('data-k');
+          [
+            ['variantPriceColorIndex', colorIndex],
+            ['variantPriceConditionIndex', kIdx],
+            ['variantPriceValue', digitsOnly(input.value)]
+          ].forEach(function (f) {
+            var hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = f[0];
+            hidden.value = f[1];
+            tradeInForm.appendChild(hidden);
+          });
+        });
+      });
     });
   })();
 </script>
