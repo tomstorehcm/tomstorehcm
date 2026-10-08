@@ -14,18 +14,54 @@ async function loadTradeInProductsData() {
   const conditions = productIds.length
     ? await db('trade_in_conditions').whereIn('trade_in_product_id', productIds).orderBy(['trade_in_product_id', 'sort_order', 'id'])
     : [];
+  // Du lieu cho che do "co nhieu dung luong/mau" (has_variants) -- gia thuc
+  // nam o trade_in_variant_prices theo tung to hop (dung luong, mau, tinh
+  // trang), khong con nam tren trade_in_conditions.price nua.
+  const storages = productIds.length
+    ? await db('trade_in_storage_options').whereIn('trade_in_product_id', productIds).orderBy(['trade_in_product_id', 'sort_order', 'id'])
+    : [];
+  const colors = productIds.length
+    ? await db('trade_in_color_options').whereIn('trade_in_product_id', productIds).orderBy(['trade_in_product_id', 'sort_order', 'id'])
+    : [];
+  const variantPrices = productIds.length
+    ? await db('trade_in_variant_prices').whereIn('trade_in_product_id', productIds)
+    : [];
 
   return products.map((p) => {
     const ownConditions = conditions.filter((c) => c.trade_in_product_id === p.id);
-    const maxPrice = ownConditions.reduce((max, c) => Math.max(max, c.price), 0);
+    const ownStorages = storages.filter((s) => s.trade_in_product_id === p.id);
+    const ownColors = colors.filter((c) => c.trade_in_product_id === p.id);
+    const ownVariantPrices = variantPrices.filter((vp) => vp.trade_in_product_id === p.id);
+
+    // Dung luong/Mau gio la TUY CHON ke ca khi has_variants=true (admin co
+    // the bam "+ Them gia" de nhap thang vao tung Tinh trang thay vi phai co
+    // bang gia to hop) -- nen lay max ca 2 nguon, khong chi dua vao
+    // has_variants nua.
+    const maxPrice = Math.max(
+      ownVariantPrices.reduce((max, vp) => Math.max(max, vp.price), 0),
+      ownConditions.reduce((max, c) => Math.max(max, c.price || 0), 0)
+    );
+
     return {
       id: p.id,
       categoryId: p.category_id,
       name: p.name,
       imageUrl: p.image_url,
       subsidyAmount: p.subsidy_amount,
+      hasVariants: !!p.has_variants,
       maxPrice,
-      conditions: ownConditions.map((c) => ({ id: c.id, label: c.label, description: c.description, price: c.price }))
+      conditions: ownConditions.map((c) => ({ id: c.id, label: c.label, description: c.description, price: c.price })),
+      storages: ownStorages.map((s) => ({ id: s.id, label: s.label })),
+      // storageId: moi Mau gio thuoc rieng 1 Dung luong (nhap long nhau o
+      // trang admin, giong product_colors.variant_id) -- client dung de chi
+      // hien Mau phu hop sau khi khach da chon Dung luong.
+      colors: ownColors.map((c) => ({ id: c.id, label: c.label, hex: c.hex_code, storageId: c.storage_option_id })),
+      variantPrices: ownVariantPrices.map((vp) => ({
+        storageId: vp.storage_option_id,
+        colorId: vp.color_option_id,
+        conditionId: vp.trade_in_condition_id,
+        price: vp.price
+      }))
     };
   });
 }
@@ -150,6 +186,56 @@ async function submitTradeInRequest(req, res, next) {
       return res.status(400).json({ ok: false, errors: [{ msg: 'Sản phẩm hoặc tình trạng máy không hợp lệ.' }] });
     }
 
+    // San pham co "has_variants" (nhieu dung luong/mau): gia thuc khong nam
+    // o tradeInCondition.price (luon NULL trong truong hop nay) ma phai tra
+    // cuu lai trong trade_in_variant_prices theo dung 3 id khach gui len --
+    // giong tinh than re-validate gia tu DB da ap dung cho phan "len doi".
+    let tradeInPrice = tradeInCondition.price;
+    let storageOption = null;
+    let colorOption = null;
+
+    // Dung luong/Mau gio la TUY CHON ke ca khi has_variants=true -- chi tra
+    // cuu bang gia to hop khi san pham THUC SU co khai bao Dung luong nao,
+    // con khong thi dung thang gia rieng cua tinh trang (tradeInCondition.price,
+    // duoc nhap qua nut "+ Them gia" o admin, bat buoc khong null nho
+    // validate phia admin).
+    if (tradeInProduct.has_variants) {
+      const hasStorageOptions = await db('trade_in_storage_options')
+        .where('trade_in_product_id', tradeInProduct.id)
+        .first();
+
+      if (hasStorageOptions) {
+        storageOption = req.body.tradeInStorageOptionId
+          ? await db('trade_in_storage_options')
+            .where({ id: Number(req.body.tradeInStorageOptionId), trade_in_product_id: tradeInProduct.id })
+            .first()
+          : null;
+        colorOption = req.body.tradeInColorOptionId
+          ? await db('trade_in_color_options')
+            .where({ id: Number(req.body.tradeInColorOptionId), trade_in_product_id: tradeInProduct.id })
+            .first()
+          : null;
+        if (!storageOption || !colorOption) {
+          return res.status(400).json({ ok: false, errors: [{ msg: 'Vui lòng chọn dung lượng và màu máy thu cũ.' }] });
+        }
+
+        const variantPrice = await db('trade_in_variant_prices')
+          .where({
+            trade_in_product_id: tradeInProduct.id,
+            storage_option_id: storageOption.id,
+            color_option_id: colorOption.id,
+            trade_in_condition_id: tradeInCondition.id
+          })
+          .first();
+        if (!variantPrice) {
+          return res.status(400).json({ ok: false, errors: [{ msg: 'Tổ hợp dung lượng/màu/tình trạng này chưa có giá, vui lòng chọn lại.' }] });
+        }
+        tradeInPrice = variantPrice.price;
+      } else if (tradeInCondition.price == null) {
+        return res.status(400).json({ ok: false, errors: [{ msg: 'Mức tình trạng này chưa có giá, vui lòng liên hệ cửa hàng.' }] });
+      }
+    }
+
     const mode = req.body.mode;
     let upgrade = null;
 
@@ -201,7 +287,9 @@ async function submitTradeInRequest(req, res, next) {
       trade_in_product_name: tradeInProduct.name,
       trade_in_condition_id: tradeInCondition.id,
       trade_in_condition_label: tradeInCondition.label,
-      trade_in_price: tradeInCondition.price,
+      trade_in_price: tradeInPrice,
+      trade_in_storage_label: storageOption ? storageOption.label : null,
+      trade_in_color_label: colorOption ? colorOption.label : null,
       note: (req.body.note || '').trim() || null,
       ...(upgrade || {})
     });
