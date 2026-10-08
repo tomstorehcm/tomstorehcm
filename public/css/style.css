@@ -1323,6 +1323,32 @@ label.gallery-pick-btn { display: inline-flex; cursor: pointer; width: fit-conte
 .tradein-copy-conditions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
 .tradein-copy-conditions select { flex: 1 1 260px; height: 38px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 14px; }
 
+/* ===== Admin: trade-in "co nhieu Dung luong / Mau" (has_variants) ===== */
+/* 1 khoi Dung luong: dong tieu de (ten + nut xoa) + danh sach Mau long ben
+   trong -- giong het cach trang Them san pham lam voi Dung luong/Mau. */
+.storage-group-row { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-3); background: var(--color-bg-alt); }
+.storage-group-header { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+.storage-group-header input[type="text"] { height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px; font-weight: 600; background: #fff; }
+.storage-group-colors { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+
+/* 1 dong Mau: swatch chon mau (giong trang San pham) + ten mau + 1 o gia cho
+   moi Muc tinh trang + nut xoa, bao boc trong the trang de phan biet voi nen
+   xam cua khoi Dung luong cha. */
+.color-option-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
+.color-option-row .color-row-label { height: 40px; width: 160px; flex: 0 0 160px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px; }
+.color-option-row .color-remove-btn { margin-left: auto; }
+
+.color-condition-prices { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: 1 1 260px; }
+.color-condition-price { display: flex; align-items: center; gap: var(--space-1); background: var(--color-bg-alt); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
+.color-condition-price-label { font-size: 12px; color: var(--color-text-muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Nut "+ Them dung luong" la phan tu cuoi cung cua khoi "co nhieu Dung
+   luong/Mau" (dinh ngay truoc khoi nut Luu/Huy), dinh sat vao nhau vi
+   .admin-form-actions chua co margin-top rieng -- them khoang cach duoi nut
+   nay cho thoang, giong dung cach da xu ly cho #addConditionRowBtn. */
+#addStorageGroupBtn { margin-bottom: var(--space-4); }
+.color-condition-price .variant-price-cell { width: 100px; height: 34px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
+
 /* ===== Admin: bulk-select toolbar (vd "San pham duoc len doi") ===== */
 .admin-bulk-toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .admin-bulk-toolbar .btn-primary { margin-left: auto; }
