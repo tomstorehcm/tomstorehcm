@@ -100,6 +100,7 @@
       <h3>Xác định tình trạng máy</h3>
       <button type="button" class="btn btn-outline btn-sm tradein-step-back-link" data-tradein-back="tradein-product">&lsaquo; Quay lại bước 1</button>
       <p class="tradein-step-product-name" id="tradeInStepProductName"></p>
+      <div id="tradeInVariantPickers" hidden></div>
       <div class="tradein-condition-list" id="tradeInConditionList"></div>
       <div class="tradein-modal-actions tradein-mode-actions">
         <button type="button" class="btn btn-flow" id="tradeInConditionBothBtn" disabled>Thu cũ và lên đời</button>
@@ -130,6 +131,7 @@
       </div>
 
       <div class="tradein-summary" id="tradeInFinalSummary"></div>
+      <p class="tradein-condition-note">Giá trên có thể chênh lệch sau khi kiểm tra trực tiếp tại cửa hàng.</p>
       <form id="tradeInContactForm">
         <div class="form-group">
           <label for="tradeInCustomerName">Họ và tên *</label>
@@ -264,11 +266,25 @@
   // ----- Bước "xác định tình trạng máy" -----
   // Hien 1 danh sach dong ngang (khong phai luoi the), giong dung ref
   // cellphoneS: moi dong la 1 nut full-width, nhan + mo ta ben trai, gia
-  // ben phai.
-  function renderConditionList(product) {
+  // ben phai. Dung chung cho ca che do thuong (items = product.conditions,
+  // gia da co san tren tung muc) lan che do "co nhieu Dung luong/Mau"
+  // (items duoc tinh lai theo to hop dung luong+mau dang chon, xem
+  // renderVariantPickers ben duoi).
+  function renderConditionRows(items) {
     var wrap = document.getElementById('tradeInConditionList');
     wrap.innerHTML = '';
-    product.conditions.forEach(function (c) {
+    document.getElementById('tradeInConditionBothBtn').disabled = true;
+    document.getElementById('tradeInConditionOnlyBtn').disabled = true;
+
+    if (items.length === 0) {
+      var empty = document.createElement('p');
+      empty.className = 'empty-state';
+      empty.textContent = 'Chưa có giá cho lựa chọn này, vui lòng chọn dung lượng/màu khác.';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    items.forEach(function (c) {
       var row = document.createElement('button');
       row.type = 'button';
       row.className = 'tradein-condition-row';
@@ -305,6 +321,102 @@
     });
   }
 
+  function renderConditionList(product) {
+    // Che do thuong: moi muc tinh trang da mang san gia cua no.
+    renderConditionRows(product.conditions);
+  }
+
+  // Che do "co nhieu Dung luong/Mau" (product.hasVariants): truoc khi hien
+  // danh sach tinh trang, khach phai chon Dung luong + Mau -- gia cua tung
+  // muc tinh trang duoc tra cuu lai trong product.variantPrices theo dung to
+  // hop (storageId, colorId) dang chon. Tai su dung CSS ".variant-picker"/
+  // ".color-picker" dung y het buoc chon may len doi, cho dong bo giao dien.
+  // Moi Mau gio thuoc rieng 1 Dung luong (c.storageId) -- danh sach Mau phai
+  // duoc ve lai moi khi doi Dung luong, chi hien dung cac Mau thuoc Dung
+  // luong dang chon.
+  function renderVariantPickers(product) {
+    var wrap = document.getElementById('tradeInVariantPickers');
+    wrap.innerHTML = '';
+    wrap.hidden = false;
+    state.storage = null;
+    state.colorOption = null;
+
+    var colorPickerEl = null;
+
+    function computeConditionRows() {
+      if (!state.storage || !state.colorOption) { renderConditionRows([]); return; }
+      var items = product.variantPrices
+        .filter(function (vp) { return vp.storageId === state.storage.id && vp.colorId === state.colorOption.id; })
+        .map(function (vp) {
+          var cond = product.conditions.find(function (c) { return c.id === vp.conditionId; });
+          return cond ? { id: cond.id, label: cond.label, description: cond.description, price: vp.price } : null;
+        })
+        .filter(Boolean);
+      renderConditionRows(items);
+    }
+
+    function renderColorPicker() {
+      if (colorPickerEl) { colorPickerEl.remove(); colorPickerEl = null; }
+      var colorsForStorage = state.storage
+        ? product.colors.filter(function (c) { return c.storageId === state.storage.id; })
+        : [];
+      state.colorOption = colorsForStorage.length > 0 ? colorsForStorage[0] : null;
+
+      if (colorsForStorage.length === 0) { computeConditionRows(); return; }
+
+      var cPicker = document.createElement('div');
+      cPicker.className = 'color-picker';
+      var cLabel = document.createElement('label');
+      cLabel.appendChild(document.createTextNode('Màu sắc'));
+      var cNameSpan = document.createElement('span');
+      cNameSpan.textContent = colorsForStorage[0].label || '';
+      cLabel.appendChild(cNameSpan);
+      cPicker.appendChild(cLabel);
+
+      var cOpts = document.createElement('div');
+      cOpts.className = 'color-options';
+      colorsForStorage.forEach(function (c, i) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'color-option' + (i === 0 ? ' active' : '');
+        btn.style.backgroundColor = c.hex || '#ccc';
+        btn.title = c.label;
+        btn.addEventListener('click', function () {
+          cOpts.querySelectorAll('.color-option').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          cNameSpan.textContent = c.label;
+          state.colorOption = c;
+          computeConditionRows();
+        });
+        cOpts.appendChild(btn);
+      });
+      cPicker.appendChild(cOpts);
+      wrap.appendChild(cPicker);
+      colorPickerEl = cPicker;
+      computeConditionRows();
+    }
+
+    if (product.storages.length > 0) {
+      var sPicker = document.createElement('div');
+      sPicker.className = 'variant-picker';
+      var sLabel = document.createElement('label');
+      sLabel.textContent = 'Dung lượng';
+      sPicker.appendChild(sLabel);
+      var sOpts = document.createElement('div');
+      sOpts.className = 'variant-options';
+      sPicker.appendChild(sOpts);
+      wrap.appendChild(sPicker);
+
+      renderOptionButtons(product.storages, sOpts, function (s) { return s.label; }, function () { return false; }, function (s) {
+        state.storage = s;
+        renderColorPicker();
+      });
+      state.storage = product.storages[0];
+    }
+
+    renderColorPicker();
+  }
+
   // Chon san pham tu luoi tren trang (buoc 1 coi nhu da xong), mo modal
   // thang vao buoc "xac dinh tinh trang may".
   function openModal(productId) {
@@ -318,11 +430,20 @@
     state.group = null;
     state.variant = null;
     state.color = null;
+    state.storage = null;
+    state.colorOption = null;
 
     document.getElementById('tradeInStepProductName').textContent = product.name;
-    renderConditionList(product);
-    document.getElementById('tradeInConditionBothBtn').disabled = true;
-    document.getElementById('tradeInConditionOnlyBtn').disabled = true;
+    // Dung "product.storages.length > 0" de quyet dinh hien bo chon Dung
+    // luong/Mau hay khong -- KHONG dung "hasVariants" nua, vi gio hasVariants
+    // co the bat ma san pham khong co Dung luong/Mau nao (dung gia rieng theo
+    // tinh trang qua nut "+ Them gia" o admin, giong y het che do don gian).
+    if (product.storages.length > 0) {
+      renderVariantPickers(product);
+    } else {
+      document.getElementById('tradeInVariantPickers').hidden = true;
+      renderConditionList(product);
+    }
 
     modal.hidden = false;
     renderStepper();
@@ -566,10 +687,15 @@
   function selectTradeInProduct(p) {
     state.tradeInProduct = p;
     state.condition = null;
+    state.storage = null;
+    state.colorOption = null;
     document.getElementById('tradeInStepProductName').textContent = p.name;
-    renderConditionList(p);
-    document.getElementById('tradeInConditionBothBtn').disabled = true;
-    document.getElementById('tradeInConditionOnlyBtn').disabled = true;
+    if (p.storages.length > 0) {
+      renderVariantPickers(p);
+    } else {
+      document.getElementById('tradeInVariantPickers').hidden = true;
+      renderConditionList(p);
+    }
     showStep('condition');
   }
 
@@ -763,8 +889,14 @@
   function renderFinalSummary() {
     var tradeInCardEl = document.getElementById('tradeInConfirmTradeInCard');
     tradeInCardEl.innerHTML = '';
+    var tradeInTitleParts = [state.tradeInProduct.name];
+    if (state.tradeInProduct.hasVariants) {
+      var variantExtra = [state.storage ? state.storage.label : null, state.colorOption ? state.colorOption.label : null].filter(Boolean).join(' / ');
+      if (variantExtra) tradeInTitleParts.push(variantExtra);
+    }
+    tradeInTitleParts.push(state.condition.label);
     tradeInCardEl.appendChild(confirmCardRow(
-      state.tradeInProduct.name + ' - ' + state.condition.label,
+      tradeInTitleParts.join(' - '),
       formatVND(state.condition.price),
       'tradein-product'
     ));
@@ -831,6 +963,10 @@
     params.append('mode', state.mode);
     params.append('tradeInProductId', state.tradeInProduct.id);
     params.append('tradeInConditionId', state.condition.id);
+    if (state.tradeInProduct.hasVariants) {
+      if (state.storage) params.append('tradeInStorageOptionId', state.storage.id);
+      if (state.colorOption) params.append('tradeInColorOptionId', state.colorOption.id);
+    }
     params.append('customerName', document.getElementById('tradeInCustomerName').value);
     params.append('phone', document.getElementById('tradeInPhone').value);
     params.append('note', document.getElementById('tradeInNote').value);
