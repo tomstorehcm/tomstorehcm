@@ -1302,9 +1302,13 @@ label.gallery-pick-btn { display: inline-flex; cursor: pointer; width: fit-conte
 .tradein-summary-row-total strong { color: var(--color-accent); font-size: 16px; }
 
 /* ===== Admin: trade-in condition rows (vd san pham-form) ===== */
+/* Form them/sua san pham thu cu rong hon .admin-form mac dinh (640px) --
+   ban thiet ke ban dau hep qua lam o "Mo ta ngan" bi cham, go vao khong
+   thay het chu, nen rieng form nay duoc noi rong ra. */
+#tradeInForm { max-width: 920px; }
 .condition-rows { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
 .condition-row-group { width: 100%; }
-.condition-row { display: grid; grid-template-columns: 1.2fr 1.4fr 1fr auto; gap: var(--space-2); align-items: center; }
+.condition-row { display: grid; grid-template-columns: 1fr 1.7fr 1fr auto; gap: var(--space-2); align-items: center; }
 @media (max-width: 720px) { .condition-row { grid-template-columns: 1fr; } }
 .condition-row input[type="text"] {
   height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px;
