@@ -844,7 +844,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 /* ===== Admin ===== */
 .admin-body { display: flex; min-height: 100vh; background: var(--color-bg-alt); }
-.admin-sidebar { width: 220px; flex-shrink: 0; background: var(--color-ink); color: #c7c7cc; padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.admin-sidebar { width: 220px; flex-shrink: 0; background: var(--color-ink); color: #c7c7cc; padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
 .admin-logo { margin-bottom: var(--space-6); }
 .admin-logo img { height: 28px; filter: brightness(0) invert(1); }
 .admin-nav { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
@@ -879,7 +879,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .btn-logout:hover { background: var(--color-accent-dark); border-color: var(--color-accent-dark); }
 @media (max-width: 768px) {
   .admin-body { flex-direction: column; }
-  .admin-sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; overflow-x: auto; }
+  .admin-sidebar { width: 100%; height: auto; max-height: none; position: static; flex-direction: row; align-items: center; overflow-x: auto; overflow-y: visible; }
   .admin-nav { flex-direction: row; }
   .admin-logo { margin: 0 var(--space-4) 0 0; }
   .admin-logout-form { margin: 0 0 0 auto; }
