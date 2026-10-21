@@ -592,6 +592,9 @@ const SANITIZE_OPTIONS = {
     img: ['src', 'alt', 'width', 'height', 'style', 'class'],
     span: ['style', 'class'],
     p: ['style', 'class'],
+    li: ['data-list', 'class'],
+    ol: ['class'],
+    ul: ['class'],
     '*': ['style']
   },
   allowedSchemes: ['http', 'https']
