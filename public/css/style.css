@@ -1010,8 +1010,15 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
    xuong dong trong o cua no -- day chinh la loi giao dien khi thu nho trang
    (cot ten san pham dai de len ngay thang). overflow-wrap: break-word o
    ".purchases-table td" phia tren chi co tac dung khi white-space cho phep
-   xuong dong, nen phai khai bao rieng o day. */
-.purchase-product-name { color: var(--color-accent); font-weight: 700; white-space: normal; overflow-wrap: break-word; }
+   xuong dong, nen phai khai bao rieng o day.
+   QUAN TRONG ve specificity: phai viet "td.purchase-product-name" (element +
+   class) chu KHONG duoc chi viet ".purchase-product-name" (1 class) -- vi
+   rule ".admin-table td" o tren co specificity (0,1,1) (1 class + 1 element),
+   cao hon ".purchase-product-name" don le (0,1,0) (chi 1 class), nen neu viet
+   thieu "td." thì rule nowrap cu van thang bat ke thu tu khai bao truoc/sau
+   trong file (da test thuc te tren production, bug nay xay ra dung 1 lan truoc
+   khi sua lai cho dung o day -- nho ky de khong lap lai). */
+td.purchase-product-name { color: var(--color-accent); font-weight: 700; white-space: normal; overflow-wrap: break-word; }
 .warranty-history-btn { color: var(--color-accent); border-color: var(--color-accent); }
 .warranty-history-btn:hover { background: var(--color-accent); color: #fff; }
 /* Nut "Chi tiết"/"Sửa"/"Xóa" trong cot cuoi: giu ca 3 tren CUNG 1 dong (bo
