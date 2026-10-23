@@ -1002,8 +1002,16 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .purchases-table th:nth-child(7), .purchases-table td:nth-child(7) { width: 20%; }
 .purchases-table td { overflow-wrap: break-word; }
 /* Ten san pham + nut "Lich su bao hanh" to mau hong thuong hieu cho de nhan
-   biet khi luot bang. */
-.purchase-product-name { color: var(--color-accent); font-weight: 700; }
+   biet khi luot bang. white-space: normal o day la CAN THIET: ".admin-table
+   td" o tren dat white-space: nowrap mac dinh cho MOI bang admin, nhung cot
+   nay (ten san pham) co the rat dai (VD "17 Promax 256Gb blue 99 pin 100")
+   va voi table-layout: fixed + do rong cot co dinh 16% o tren, chu khong
+   wrap duoc se TRAN ra ngoai de len chu cot ke ben ("Ngay mua") thay vi
+   xuong dong trong o cua no -- day chinh la loi giao dien khi thu nho trang
+   (cot ten san pham dai de len ngay thang). overflow-wrap: break-word o
+   ".purchases-table td" phia tren chi co tac dung khi white-space cho phep
+   xuong dong, nen phai khai bao rieng o day. */
+.purchase-product-name { color: var(--color-accent); font-weight: 700; white-space: normal; overflow-wrap: break-word; }
 .warranty-history-btn { color: var(--color-accent); border-color: var(--color-accent); }
 .warranty-history-btn:hover { background: var(--color-accent); color: #fff; }
 /* Nut "Chi tiết"/"Sửa"/"Xóa" trong cot cuoi: giu ca 3 tren CUNG 1 dong (bo
