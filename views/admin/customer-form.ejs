@@ -7,7 +7,7 @@
 <%- include('partials/sidebar') %>
 <main class="admin-main">
   <h1>Thêm khách mua hàng</h1>
-  <p class="admin-hint">Nếu SĐT đã có sẵn trong hệ thống, sản phẩm mới sẽ tự động thêm vào hồ sơ khách hàng đó thay vì tạo mới.</p>
+  <p class="admin-hint">Nếu SĐT đã có sẵn trong hệ thống, sản phẩm mới sẽ tự động thêm vào hồ sơ khách hàng đó thay vì tạo mới. Khách chỉ mang sản phẩm mua ở nơi khác tới bảo hành: chọn "Mang tới bảo hành" ở mục Sản phẩm bên dưới.</p>
 
   <% if (errors.length > 0) { %>
     <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
@@ -34,10 +34,16 @@
       <textarea id="note" name="note" rows="2"><%= formData.note || '' %></textarea>
     </div>
 
-    <h2 class="admin-form-subheading">Sản phẩm đã mua</h2>
+    <h2 class="admin-form-subheading">Sản phẩm</h2>
+    <div class="entry-mode-toggle" role="group" aria-label="Loại sản phẩm">
+      <button type="button" class="entry-mode-btn" data-mode="purchase">Sản phẩm mua mới</button>
+      <button type="button" class="entry-mode-btn" data-mode="warranty">Mang tới bảo hành</button>
+    </div>
+    <input type="hidden" name="mode" id="entryMode" value="purchase" />
+
     <div class="form-row">
       <div class="form-group">
-        <label for="productName">Tên sản phẩm *</label>
+        <label for="productName" id="productNameLabel">Tên sản phẩm *</label>
         <input type="text" id="productName" name="productName" value="<%= formData.productName || '' %>" required placeholder="VD: iPhone 17 Pro Max 256GB" />
       </div>
       <div class="form-group">
@@ -47,36 +53,78 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="purchaseDate">Ngày mua *</label>
+        <label for="purchaseDate" id="purchaseDateLabel">Ngày mua *</label>
         <input type="date" id="purchaseDate" name="purchaseDate" value="<%= formData.purchaseDate || '' %>" required />
       </div>
-      <div class="form-group">
+      <div class="form-group" id="warrantyExpiresGroup">
         <label for="warrantyExpiresAt">Hạn bảo hành</label>
         <input type="date" id="warrantyExpiresAt" name="warrantyExpiresAt" value="<%= formData.warrantyExpiresAt || '' %>" />
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="price">Giá đã bán</label>
+        <label for="price" id="priceLabel">Giá đã bán</label>
         <input type="text" inputmode="numeric" id="price" name="price" class="vnd-input" value="<%= formData.price || '' %>" placeholder="VNĐ" />
       </div>
-      <div class="form-group">
+      <div class="form-group" id="transactionTypeGroup">
         <label for="transactionType">Hình thức giao dịch</label>
         <select id="transactionType" name="transactionType">
-          <% transactionTypes.forEach(function(t) { %>
+          <% transactionTypes.filter(function(t) { return t.key !== 'bao_hanh_ngoai'; }).forEach(function(t) { %>
             <option value="<%= t.key %>" <%= formData.transactionType === t.key ? 'selected' : '' %>><%= t.label %></option>
           <% }); %>
         </select>
       </div>
     </div>
+    <div class="form-group" id="issueGroup" hidden>
+      <label id="issueLabel">Tình trạng / Lỗi mang tới * <span class="admin-hint-inline">(chọn được nhiều mục)</span></label>
+      <div class="issue-options">
+        <% warrantyIssueTypes.forEach(function (t) { %>
+          <label class="issue-option">
+            <input type="checkbox" name="issue" value="<%= t.key %>" <%= (formData.issueKeys || []).includes(t.key) ? 'checked' : '' %> />
+            <span><%= t.label %></span>
+          </label>
+        <% }); %>
+      </div>
+    </div>
     <div class="form-group">
-      <label for="purchaseNote">Ghi chú lần mua này</label>
+      <label for="purchaseNote" id="purchaseNoteLabel">Ghi chú lần mua này</label>
       <textarea id="purchaseNote" name="purchaseNote" rows="2"><%= formData.purchaseNote || '' %></textarea>
     </div>
 
     <button type="submit" class="btn btn-primary">Lưu</button>
     <a href="/admin/khach-hang" class="btn btn-outline">Hủy</a>
   </form>
+
+  <script>
+    (function () {
+      var modeButtons = document.querySelectorAll('.entry-mode-btn');
+      var modeInput = document.getElementById('entryMode');
+      var transactionTypeGroup = document.getElementById('transactionTypeGroup');
+      var issueGroup = document.getElementById('issueGroup');
+      var purchaseDateLabel = document.getElementById('purchaseDateLabel');
+      var priceLabel = document.getElementById('priceLabel');
+      var purchaseNoteLabel = document.getElementById('purchaseNoteLabel');
+
+      function applyMode(mode) {
+        modeInput.value = mode;
+        modeButtons.forEach(function (btn) {
+          btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+        });
+        var isWarranty = mode === 'warranty';
+        if (transactionTypeGroup) transactionTypeGroup.hidden = isWarranty;
+        if (issueGroup) issueGroup.hidden = !isWarranty;
+        if (purchaseDateLabel) purchaseDateLabel.textContent = isWarranty ? 'Ngày mang tới *' : 'Ngày mua *';
+        if (priceLabel) priceLabel.textContent = isWarranty ? 'Chi phí (nếu có)' : 'Giá đã bán';
+        if (purchaseNoteLabel) purchaseNoteLabel.textContent = isWarranty ? 'Ghi chú' : 'Ghi chú lần mua này';
+      }
+
+      modeButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () { applyMode(btn.getAttribute('data-mode')); });
+      });
+
+      applyMode('<%= formData.mode === "warranty" ? "warranty" : "purchase" %>');
+    })();
+  </script>
 </main>
 </body>
 </html>

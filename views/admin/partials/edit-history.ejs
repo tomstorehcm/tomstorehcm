@@ -1,0 +1,32 @@
+<%
+/* Partial dung chung: hien "Lich su chinh sua" cho 1 doi tuong (yeu cau sua
+   chua, yeu cau thu cu doi moi, khach mua hang...). Noi dung cho vao bien
+   `editHistory` (mang, moi nhat truoc, tu auditLog.getEditHistory) truoc khi
+   include partial nay -- xem edit-history.ejs cach dung trong cac trang
+   *-edit.ejs tuong ung. Khong hien gi neu chua co lan sua nao. */
+%>
+<% if (typeof editHistory !== 'undefined' && editHistory.length > 0) { %>
+  <h2 class="admin-category-heading">Lịch sử chỉnh sửa</h2>
+  <div class="admin-table-scroll">
+    <table class="admin-table admin-history-table">
+      <thead><tr><th>Thời gian</th><th>Thay đổi</th></tr></thead>
+      <tbody>
+        <% editHistory.forEach(function(h) { %>
+          <tr>
+            <td class="admin-history-time"><%= new Date(h.created_at).toLocaleString('vi-VN') %></td>
+            <td>
+              <% h.changes.forEach(function(c) { %>
+                <div class="admin-history-field">
+                  <strong><%= c.label %>:</strong>
+                  <span class="admin-history-old"><%= c.old || '(trống)' %></span>
+                  <span class="admin-history-arrow">&rarr;</span>
+                  <span class="admin-history-new"><%= c.new || '(trống)' %></span>
+                </div>
+              <% }); %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+<% } %>

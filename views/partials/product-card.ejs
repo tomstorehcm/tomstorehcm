@@ -24,7 +24,7 @@
       <% } %>
     </div>
     <% if (product.is_contact_price || !product.in_stock) { %>
-      <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-primary btn-block product-card-cta">Liên hệ</a>
+      <a href="/lien-he-bao-gia?productId=<%= product.id %>" class="btn btn-flow btn-block product-card-cta">Liên hệ</a>
     <% } else { %>
       <form action="/gio-hang/them" method="post" class="add-to-cart-form product-card-cta">
         <input type="hidden" name="productId" value="<%= product.id %>" />

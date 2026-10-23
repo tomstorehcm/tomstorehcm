@@ -2,6 +2,7 @@ const TRANSACTION_TYPES = [
   { key: 'mua_moi', label: 'Mua mới' },
   { key: 'thu_cu_doi_moi', label: 'Thu cũ đổi mới' },
   { key: 'bao_hanh_doi_may', label: 'Bảo hành đổi máy' },
+  { key: 'bao_hanh_ngoai', label: 'Bảo hành SP mua nơi khác' },
   { key: 'khac', label: 'Khác' }
 ];
 

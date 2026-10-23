@@ -104,6 +104,16 @@
         Hiển thị trong mục "Sản phẩm Hot" ở trang chủ
       </label>
     </div>
+    <div class="form-group form-group-checkbox">
+      <label class="checkbox-option">
+        <input type="checkbox" id="tradeInEnabled" name="tradeInEnabled" <%= product.trade_in_enabled ? 'checked' : '' %> />
+        Cho phép chọn sản phẩm này ở bước "Chọn máy lên đời" trong trang Thu cũ đổi mới
+      </label>
+      <div class="form-group" id="tradeInSubsidyGroup" <%= product.trade_in_enabled ? '' : 'hidden' %>>
+        <label for="tradeInSubsidy">Trợ giá thêm khi lên đời (tùy chọn)</label>
+        <input type="text" inputmode="numeric" id="tradeInSubsidy" name="tradeInSubsidy" class="vnd-input" value="<%= product.trade_in_subsidy || '' %>" placeholder="VNĐ" />
+      </div>
+    </div>
     <div class="form-group">
       <label for="description">Mô tả</label>
       <textarea id="description" name="description" rows="3"><%= product.description || '' %></textarea>
@@ -294,6 +304,14 @@
 
     checkbox.addEventListener('change', sync);
     sync();
+
+    var tradeInEnabledCheckbox = document.getElementById('tradeInEnabled');
+    var tradeInSubsidyGroup = document.getElementById('tradeInSubsidyGroup');
+    if (tradeInEnabledCheckbox && tradeInSubsidyGroup) {
+      tradeInEnabledCheckbox.addEventListener('change', function () {
+        tradeInSubsidyGroup.hidden = !tradeInEnabledCheckbox.checked;
+      });
+    }
 
     // Chọn nhóm chính sách -> làm mờ (không bắt buộc chọn) danh sách chọn riêng từng mục
     var policyGroupSelect = document.getElementById('policyGroupId');

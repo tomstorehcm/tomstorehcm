@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Chọn sản phẩm từ catalog</h1>
+    <span class="status-badge status-active"><%= enabledCount %> / <%= totalCount %> đang bật</span>
+  </div>
+  <p class="admin-hint">Tích chọn nhanh những sản phẩm đang bán sẽ xuất hiện trong danh sách "Sản phẩm (dòng máy)" của trang Sửa Chữa, thay vì phải thêm từng sản phẩm một. Bỏ tích 1 sản phẩm chỉ tạm ẩn nó đi -- dịch vụ &amp; giá đã gán cho sản phẩm đó vẫn được giữ lại, tích lại là hiện ra như cũ. Sản phẩm máy cũ không còn trong catalog thì dùng "+ Thêm thủ công" ở trang danh sách.</p>
+
+  <% if (totalCount === 0) { %>
+    <p class="empty-state">Chưa có sản phẩm nào trong catalog.</p>
+  <% } else { %>
+    <form action="/admin/sua-chua/san-pham/chon-san-pham" method="post" id="repairCatalogForm">
+      <div class="admin-bulk-toolbar">
+        <button type="button" class="btn btn-outline btn-sm" id="selectAllBtn">Chọn tất cả</button>
+        <button type="button" class="btn btn-outline btn-sm" id="deselectAllBtn">Bỏ chọn tất cả</button>
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+
+      <% sections.forEach(function(sec) { %>
+        <section class="admin-category-section">
+          <h2 class="admin-category-heading"><%= sec.category.name %></h2>
+          <div class="admin-table-scroll">
+            <table class="admin-table">
+              <thead><tr><th></th><th>Sản phẩm</th><th>Giá</th></tr></thead>
+              <tbody>
+                <% sec.products.forEach(function(p) { %>
+                  <% var existing = deviceByProductId[p.id]; %>
+                  <tr>
+                    <td>
+                      <label class="checkbox-option">
+                        <input type="checkbox" class="repair-catalog-checkbox" name="repairEnabled_<%= p.id %>" <%= (existing && existing.is_active) ? 'checked' : '' %> />
+                      </label>
+                    </td>
+                    <td>
+                      <% if (p.image_url) { %><img src="<%= p.image_url %>" alt="" class="admin-thumb-preview" width="40" height="40" style="display:inline-block; vertical-align:middle; margin-right:8px; width:40px; height:40px;" /><% } %>
+                      <%= p.name %>
+                    </td>
+                    <td><%= p.is_contact_price ? 'Liên hệ' : formatVND(p.sale_price && p.sale_price < p.price ? p.sale_price : p.price) %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      <% }); %>
+
+      <div class="admin-bulk-toolbar">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+    </form>
+  <% } %>
+</main>
+<script>
+  (function () {
+    var checkboxes = document.querySelectorAll('.repair-catalog-checkbox');
+    var selectAllBtn = document.getElementById('selectAllBtn');
+    var deselectAllBtn = document.getElementById('deselectAllBtn');
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', function () {
+        checkboxes.forEach(function (cb) { cb.checked = true; });
+      });
+    }
+    if (deselectAllBtn) {
+      deselectAllBtn.addEventListener('click', function () {
+        checkboxes.forEach(function (cb) { cb.checked = false; });
+      });
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1><%= isEdit ? 'Sửa sản phẩm' : 'Thêm thủ công' %></h1>
+    <div class="admin-header-actions">
+      <a href="/admin/sua-chua/san-pham/chon-san-pham" class="btn btn-primary">+ Chọn từ sản phẩm có sẵn</a>
+      <% if (isEdit) { %>
+        <a href="/admin/sua-chua/san-pham/moi" class="btn btn-outline">+ Thêm thủ công</a>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (!isEdit) { %>
+    <p class="admin-hint">Dùng cho máy đời cũ không còn trong danh sách sản phẩm. Với sản phẩm đang bán, dùng "+ Chọn từ sản phẩm có sẵn" ở trên để tích chọn hàng loạt, nhanh hơn.</p>
+  <% } %>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <% if (isEdit && device.product_id) { %>
+    <!-- San pham lien ket catalog: khong can the/form ten+anh+nut Luu/Huy
+         nua -- ten/anh/trang thai hien da quan ly het o trang "Chon tu san
+         pham co san" (tich/bo tich), the nay chi con can cho san pham TU
+         THEM (nhap tay) o duoi. Giu lai 1 dong text ngan de admin biet dang
+         sua dung san pham nao. -->
+    <p class="admin-hint">Sản phẩm: <strong><%= linkedProduct ? linkedProduct.name : '(sản phẩm đã bị xóa khỏi danh sách)' %></strong> — tên/ảnh/trạng thái hiển thị luôn đồng bộ theo sản phẩm, quản lý ở trang "Chọn từ sản phẩm có sẵn". Ở đây chỉ còn chỉnh dịch vụ áp dụng &amp; giá bên dưới.</p>
+  <% } else { %>
+    <form action="<%= isEdit ? '/admin/sua-chua/san-pham/' + device.id + '/sua' : '/admin/sua-chua/san-pham/moi' %>" method="post" enctype="multipart/form-data" class="admin-form" id="repairDeviceForm">
+      <div class="form-group">
+        <label for="name">Tên sản phẩm *</label>
+        <input type="text" id="name" name="name" value="<%= device.name || '' %>" required maxlength="200" placeholder="VD: iPhone 15 Pro Max" />
+      </div>
+
+      <div class="form-group">
+        <label>Ảnh sản phẩm</label>
+        <img src="<%= device.image_url || '' %>" alt="" class="admin-image-preview" id="deviceImagePreviewImg" <%= device.image_url ? '' : 'hidden' %> />
+        <label for="imageFile" class="btn btn-outline gallery-pick-btn">Chọn ảnh</label>
+        <input type="file" id="imageFile" name="imageFile" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
+      </div>
+
+      <div class="form-group form-group-checkbox">
+        <label class="checkbox-option">
+          <input type="checkbox" name="isActive" <%= (typeof device.is_active === 'undefined' || device.is_active) ? 'checked' : '' %> />
+          Đang hiển thị trên trang công khai
+        </label>
+      </div>
+
+      <div class="admin-form-actions">
+        <button type="submit" class="btn btn-primary">Lưu</button>
+        <a href="/admin/sua-chua/san-pham" class="btn btn-outline">Hủy</a>
+      </div>
+    </form>
+  <% } %>
+
+  <% if (isEdit) { %>
+    <h2 class="admin-form-subheading">Dịch vụ áp dụng &amp; giá</h2>
+    <p class="admin-hint">Tích chọn những dịch vụ sửa chữa áp dụng cho sản phẩm này — dịch vụ nào được tích sẽ hiện ngay ô giá theo từng loại ở bên dưới. Nhập xong bấm "Lưu thay đổi" 1 lần duy nhất để lưu cả lựa chọn dịch vụ lẫn giá.</p>
+
+    <% if (services.length === 0) { %>
+      <p class="empty-state">Chưa có dịch vụ sửa chữa nào trong hệ thống. <a href="/admin/sua-chua/moi">Thêm dịch vụ sửa chữa</a> trước đã.</p>
+    <% } else { %>
+      <form action="/admin/sua-chua/san-pham/<%= device.id %>/dich-vu" method="post" enctype="multipart/form-data" id="deviceServicesForm">
+        <div class="repair-service-pick-list">
+          <% services.forEach(function(s) { %>
+            <div class="repair-service-pick-row">
+              <label class="checkbox-option">
+                <input type="checkbox" name="serviceIds" value="<%= s.id %>" class="service-pick-checkbox" <%= s.applied ? 'checked' : '' %> />
+                <%= s.name %>
+              </label>
+              <div class="repair-service-pick-prices" data-service-prices="<%= s.id %>" <%= s.applied ? '' : 'hidden' %>>
+                <% if (s.variants.length === 0) { %>
+                  <p class="empty-state">Dịch vụ này chưa có "Loại" nào.</p>
+                <% } else { %>
+                  <% s.variants.forEach(function(v) { %>
+                    <% var effectiveImage = v.imageUrl || v.defaultImageUrl; %>
+                    <div class="repair-service-device-price-row">
+                      <img src="<%= effectiveImage || '' %>" alt="" class="repair-variant-price-thumb" id="variantThumb_<%= v.id %>" <%= effectiveImage ? '' : 'hidden' %> />
+                      <span class="repair-service-device-price-label"><%= v.label %></span>
+                      <input type="text" inputmode="numeric" class="price-input device-price-input" name="price_<%= v.id %>" value="<%= v.price || '' %>" placeholder="Giá (VNĐ)" />
+                      <label for="variantImageFile_<%= v.id %>" class="btn btn-outline btn-sm gallery-pick-btn">Đổi ảnh</label>
+                      <input type="file" id="variantImageFile_<%= v.id %>" name="variantDeviceImage_<%= v.id %>" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" class="variant-device-image-input" data-thumb-target="variantThumb_<%= v.id %>" hidden />
+                      <% if (v.imageUrl) { %>
+                        <label class="checkbox-option repair-variant-clear-image">
+                          <input type="checkbox" name="clearImage_<%= v.id %>" value="1" />
+                          Dùng lại ảnh mặc định
+                        </label>
+                      <% } %>
+                    </div>
+                  <% }); %>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        <p class="admin-hint">Ảnh riêng (nếu có) chỉ áp dụng cho sản phẩm này -- để trống sẽ dùng ảnh mặc định của "Loại" đó (đặt ở trang Dịch vụ sửa chữa).</p>
+        <div class="admin-form-actions">
+          <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    <% } %>
+  <% } %>
+</main>
+<script>
+  (function () {
+    var imageInput = document.getElementById('imageFile');
+    var preview = document.getElementById('deviceImagePreviewImg');
+    if (imageInput && preview) {
+      imageInput.addEventListener('change', function () {
+        if (imageInput.files && imageInput.files[0]) {
+          preview.src = URL.createObjectURL(imageInput.files[0]);
+          preview.hidden = false;
+        }
+      });
+    }
+
+    // Doi anh rieng cho 1 Loai (ung voi san pham dang sua): xem truoc ngay
+    // tren thumbnail tuong ung, khong doi gi o server cho den khi bam "Luu
+    // thay doi".
+    document.querySelectorAll('.variant-device-image-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (!input.files || !input.files[0]) return;
+        var thumb = document.getElementById(input.getAttribute('data-thumb-target'));
+        if (thumb) {
+          thumb.src = URL.createObjectURL(input.files[0]);
+          thumb.hidden = false;
+        }
+      });
+    });
+
+    // Tich/bo tich 1 dich vu se hien/an ngay khoi gia cac "Loai" tuong ung
+    // cua dich vu do -- khong reload trang, nguoi dung thay ngay o nao can
+    // nhap sau khi tich.
+    var servicesForm = document.getElementById('deviceServicesForm');
+    if (servicesForm) {
+      servicesForm.addEventListener('change', function (e) {
+        if (!e.target.classList.contains('service-pick-checkbox')) return;
+        var pricesWrap = servicesForm.querySelector('[data-service-prices="' + e.target.value + '"]');
+        if (pricesWrap) pricesWrap.hidden = !e.target.checked;
+      });
+    }
+
+    // Format "." ngan cach hang nghin khi go gia.
+    function digitsOnly(str) { return (str || '').replace(/\D/g, ''); }
+    function formatWithDots(str) { return digitsOnly(str).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+    document.querySelectorAll('.price-input').forEach(function (input) { input.value = formatWithDots(input.value); });
+
+    document.addEventListener('input', function (e) {
+      if (e.target.classList.contains('price-input')) {
+        var caretFromEnd = e.target.value.length - e.target.selectionStart;
+        e.target.value = formatWithDots(e.target.value);
+        var pos = e.target.value.length - caretFromEnd;
+        e.target.setSelectionRange(pos, pos);
+      }
+    });
+
+    if (servicesForm) {
+      servicesForm.addEventListener('submit', function () {
+        servicesForm.querySelectorAll('.price-input').forEach(function (input) { input.value = digitsOnly(input.value); });
+      });
+    }
+  })();
+</script>
+</body>
+</html>

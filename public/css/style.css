@@ -128,6 +128,30 @@ table { border-collapse: collapse; width: 100%; }
 .btn-flow:hover::before {
   transform: scaleX(1);
 }
+/* "Flow" outline variant: same dark-fill sweep motion as .btn-flow, but
+   starts from a bordered/transparent look (like .btn-outline) instead of a
+   pink fill, so a secondary action can share the animation without looking
+   like the primary one. */
+.btn-flow-outline {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+.btn-flow-outline::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.btn-flow-outline:hover { color: #fff; border-color: transparent; }
+.btn-flow-outline:hover::before { transform: scaleX(1); }
 .btn-link-danger { background: none; border: none; color: var(--color-sale); font-size: 14px; padding: 0; }
 .btn-remove { background: none; border: none; color: var(--color-text-muted); font-size: 22px; line-height: 1; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); }
 .btn-remove:hover { background: var(--color-bg-alt); color: var(--color-sale); }
@@ -173,77 +197,121 @@ table { border-collapse: collapse; width: 100%; }
   z-index: 100;
 }
 .cart-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
-.menu-toggle { background: none; border: none; padding: var(--space-2); color: var(--color-ink); display: inline-flex; }
-@media (min-width: 900px) { .menu-toggle { display: none; } }
+.menu-toggle { background: none; border: none; padding: var(--space-2); color: var(--color-ink); display: none; }
 
 .category-nav { background: var(--color-ink); }
-.category-nav-inner { display: flex; gap: var(--space-5); height: 48px; align-items: center; overflow-x: auto; }
-.category-nav-backdrop { display: none; }
-.nav-close-btn { display: none; }
-
-@media (max-width: 899px) {
-  body.nav-open { overflow: hidden; }
-
-  .category-nav-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 17, 20, 0.55);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.32s ease, visibility 0s linear 0.32s;
-    z-index: 60;
-  }
-  .category-nav.is-open .category-nav-backdrop {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.32s ease;
-  }
-
-  .category-nav-inner {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    max-width: none;
-    width: min(82vw, 320px);
-    height: 100vh;
-    height: 100dvh;
-    margin: 0;
-    padding: var(--space-5);
-    background: var(--color-ink);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    overflow-x: visible;
-    overflow-y: auto;
-    transform: translateX(100%);
-    visibility: hidden;
-    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.32s;
-    z-index: 61;
-    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.25);
-  }
-  .category-nav.is-open .category-nav-inner {
-    transform: translateX(0);
-    visibility: visible;
-    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-
-  .category-nav-inner a { padding: var(--space-3) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-  .category-nav-inner a.hot-deal-nav-link { border-bottom: none; text-align: center; margin-bottom: var(--space-2); }
-
-  .nav-close-btn {
-    display: inline-flex;
-    align-self: flex-end;
-    background: none;
-    border: none;
-    color: #fff;
-    padding: var(--space-2);
-    margin-bottom: var(--space-3);
-  }
-
-  .category-nav-sep { display: none; }
+/* overflow-x: auto ma khong khai bao overflow-y rieng se bi trinh duyet tu
+   dong doi overflow-y thanh "auto" luon (quy tac CSS: 1 truc non-visible thi
+   truc kia cung thanh auto) -- cong them thanh cuon ngang kieu co dien (vd
+   Windows Chrome) choan mat ~15px chieu cao trong khung 48px, lam chu/nut bi
+   cat nhe va phai cuon doc moi thay het. Khai bao ro overflow-y: hidden de
+   khung luon cao dung 48px, khong bao gio sinh thanh cuon doc; va an han
+   thanh cuon ngang (scrollbar-width/-ms-overflow-style/::-webkit-scrollbar)
+   nhung van keo/cham de cuon ngang binh thuong khi danh muc dai hon man hinh
+   (truong hop nay gio hiem khi xay ra nua vi se tu thu gon thanh hamburger
+   truoc khi kip bi cat, xem ghi chu ".category-nav.is-compact" ben duoi). */
+.category-nav-inner {
+  display: flex; gap: var(--space-5); height: 48px; align-items: center;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.category-nav-inner::-webkit-scrollbar { display: none; }
+
+/* Ban do an hinh (khong hien thi, dat fixed ngoai man hinh), dung chung
+   flex/gap voi .category-nav-inner de luon do dung chieu rong "tu nhien"
+   can co de hien het 1 hang danh muc -- xem script JS ngay sau <nav> trong
+   header.ejs. Tach rieng class de khong bi anh huong boi cac rule
+   ".category-nav.is-compact" ben duoi (clone nay luon phai o dang 1 hang
+   ngang khong gioi han de do cho chinh xac). */
+.category-nav-measure {
+  position: fixed; top: -9999px; left: -9999px; visibility: hidden; pointer-events: none;
+  display: flex; gap: var(--space-5); align-items: center; width: max-content;
+}
+
+.category-nav-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 20, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.32s ease, visibility 0s linear 0.32s;
+  z-index: 60;
+}
+.category-nav.is-open .category-nav-backdrop {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.32s ease;
+}
+
+/* Hang dau drawer mobile: logo TOMSTORE ben trai + nut dong (X) ben phai --
+   mac dinh an, chi hien khi thu gon (xem ".category-nav.is-compact" ben
+   duoi), vi o dang hien thi hang ngang tren desktop da co logo rieng o
+   .header-main roi, khong can lap lai. */
+.category-nav-mobile-head { display: none; }
+/* Chua co file logo rieng mau trang -- dung filter de ep logo (dang mau
+   toi, danh cho nen trang) thanh trang khi dat tren nen toi cua drawer.
+   brightness(0) doi het mau thanh den (giu nguyen vung trong suot), invert(1)
+   lat den thanh trang. */
+.category-nav-mobile-logo { height: 26px; width: auto; filter: brightness(0) invert(1); }
+.nav-close-btn { display: inline-flex; background: none; border: none; color: #fff; padding: var(--space-2); margin: calc(var(--space-2) * -1); }
+
+body.nav-open { overflow: hidden; }
+
+/* Thay vi 1 moc px man hinh co dinh (truoc day @media max-width:899px), JS
+   (header.ejs) tu do chieu rong THAT su can co de hien het 1 hang danh muc
+   roi tu gan class ".is-compact" khi khong du cho -- nen tu dong thu gon ca
+   khi chi resize cua so hoac zoom trinh duyet ra (khong can dung dung may
+   dien thoai), va luon vua khit bat ke sau nay them/bot bao nhieu danh muc. */
+.category-nav.is-compact .category-nav-inner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  max-width: none;
+  width: min(82vw, 320px);
+  height: 100vh;
+  height: 100dvh;
+  margin: 0;
+  padding: var(--space-5);
+  background: var(--color-ink);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: visible;
+  overflow-y: auto;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.32s;
+  z-index: 61;
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.25);
+}
+.category-nav.is-compact.is-open .category-nav-inner {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.category-nav.is-compact .category-nav-mobile-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+
+.category-nav.is-compact .category-nav-inner a { padding: var(--space-3) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+/* TRADE IN / Best Deal van la .hot-deal-nav-link (pill hong) o thanh ngang
+   desktop, nhung trong drawer mobile de dong bo voi cac muc khac ben duoi
+   (chi la 1 dong list, co border-bottom) -- bo nen pill, chi highlight bang
+   mau chu hong accent + chu dam hon, khong con noi bat qua muc khac nua. */
+.category-nav.is-compact .category-nav-inner a.hot-deal-nav-link {
+  background: none;
+  color: var(--color-accent);
+  padding: var(--space-3) 0;
+  border-radius: 0;
+  text-align: left;
+  margin-bottom: 0;
+}
+.category-nav.is-compact .category-nav-inner a.hot-deal-nav-link:hover { filter: none; color: var(--color-accent); }
+
+.category-nav.is-compact .category-nav-sep { display: none; }
+
 .category-nav-sep { color: rgba(255, 255, 255, 0.35); font-size: 20px; font-weight: 700; line-height: 1; }
 .category-nav a { color: #c7c7cc; font-weight: 600; font-size: 14px; padding: var(--space-2) 0; white-space: nowrap; }
 .category-nav a:hover, .category-nav a.active { color: #fff; }
@@ -358,6 +426,13 @@ table { border-collapse: collapse; width: 100%; }
 .hero-slide.is-active { opacity: 1; transform: scale(1); pointer-events: auto; z-index: 1; }
 .hero-slide a, .hero-slide-img, .hero-slide picture { display: block; width: 100%; height: 100%; }
 .hero-slide img { width: 100%; height: 100%; object-fit: cover; }
+/* 2 slider hero doc lap (desktop / mobile) -- chi hien dung 1 cai theo
+   breakpoint, banner thieu anh ben nao thi khong xuat hien o slider ben do. */
+.hero-slider-mobile-only { display: none; }
+@media (max-width: 767px) {
+  .hero-slider-desktop-only { display: none; }
+  .hero-slider-mobile-only { display: block; }
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-anim { animation: none; }
   .hero-slide { transition: opacity 0.4s ease; transform: none !important; }
@@ -588,7 +663,7 @@ table { border-collapse: collapse; width: 100%; }
 .price-original { color: var(--color-text-muted); text-decoration: line-through; font-size: 13px; }
 .product-price-lg { flex-direction: row; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
 .product-price-lg .price-current { font-size: 30px; }
-.add-to-cart-form { margin-top: auto; }
+.product-card-cta { margin-top: auto; }
 
 .hotdeal-timer { display: inline-flex; align-items: center; gap: var(--space-1); background: #fff0f5; color: var(--color-sale); font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: var(--radius-sm); margin-bottom: var(--space-2); width: fit-content; }
 .hotdeal-timer.expired { background: #eee; color: var(--color-text-muted); }
@@ -769,19 +844,42 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 /* ===== Admin ===== */
 .admin-body { display: flex; min-height: 100vh; background: var(--color-bg-alt); }
-.admin-sidebar { width: 220px; flex-shrink: 0; background: var(--color-ink); color: #c7c7cc; padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.admin-sidebar { width: 220px; flex-shrink: 0; background: var(--color-ink); color: #c7c7cc; padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
 .admin-logo { margin-bottom: var(--space-6); }
 .admin-logo img { height: 28px; filter: brightness(0) invert(1); }
 .admin-nav { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
 .admin-nav a { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; }
 .admin-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .admin-nav a.active { background: var(--gradient-brand); color: #fff; }
+
+/* Cum muc lien quan trong sidebar admin (vd "Thu cu doi moi": gom nhieu link
+   con lai gan nhau de de nhan biet la cung 1 tinh nang, thay vi nam roi rac
+   xen giua cac muc khac trong danh sach phang). */
+.admin-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-1);
+  margin: 2px 0;
+}
+.admin-nav-group-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+  padding: 0 var(--space-2) var(--space-1);
+}
+.admin-nav-group a { padding-left: var(--space-3); }
 .admin-logout-form { margin-top: var(--space-4); }
 .btn-logout { background: var(--color-accent); color: #fff; border: 1.5px solid var(--color-accent); }
 .btn-logout:hover { background: var(--color-accent-dark); border-color: var(--color-accent-dark); }
 @media (max-width: 768px) {
   .admin-body { flex-direction: column; }
-  .admin-sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; overflow-x: auto; }
+  .admin-sidebar { width: 100%; height: auto; max-height: none; position: static; flex-direction: row; align-items: center; overflow-x: auto; overflow-y: visible; }
   .admin-nav { flex-direction: row; }
   .admin-logo { margin: 0 var(--space-4) 0 0; }
   .admin-logout-form { margin: 0 0 0 auto; }
@@ -789,6 +887,7 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 .admin-main { flex: 1; padding: var(--space-6); max-width: 100%; overflow-x: auto; }
 .admin-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); flex-wrap: wrap; gap: var(--space-3); }
+.admin-header-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .admin-title-row { display: flex; align-items: center; gap: var(--space-3); }
 .btn-icon-back {
   display: inline-flex;
@@ -806,6 +905,8 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 }
 .btn-icon-back:hover { background: var(--color-bg-alt); }
 .admin-hint { color: var(--color-text-muted); font-size: 14px; margin-bottom: var(--space-4); max-width: 640px; }
+.admin-warning-text { color: #b45309; font-size: 12px; font-weight: 600; }
+.admin-field-readonly { background: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: 14px; line-height: 1.7; max-width: 640px; margin-bottom: var(--space-5); }
 
 .admin-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
 @media (min-width: 768px) { .admin-stats-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -833,14 +934,101 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
    against whatever came before it. */
 .admin-table-scroll + .admin-category-heading,
 .admin-table + .admin-category-heading,
-.empty-state + .admin-category-heading {
+.empty-state + .admin-category-heading,
+.admin-form + .admin-category-heading,
+.admin-form + .admin-field-readonly,
+.admin-field-readonly + .admin-category-heading,
+/* admin.js boc ".admin-table-scroll" vao 1 wrapper moi (".admin-table-scroll-wrap")
+   luc runtime de chen nut cuon ngang -- sau khi boc, phan tu dung ngay SAU
+   bang trong DOM tro thanh "hang xom" cua CAI WRAPPER chu khong phai cua
+   ".admin-table-scroll" nua, nen can khai bao rieng o day de khong bi mat
+   khoang cach nhu truoc. */
+.admin-table-scroll-wrap + .admin-category-heading {
   margin-top: var(--space-6);
 }
+/* "Thong tin may" (trade-in-request-edit.ejs) nam LONG trong .admin-form
+   (de chung 1 nut "Luu thay doi" voi phan thong tin khach), ngay sau 1
+   .form-group -- can rieng mot muc margin-top o day vi .form-group khong
+   nam trong danh sach selector o tren. */
+.form-group + .admin-category-heading { margin-top: var(--space-5); }
 
 .admin-table { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; border-collapse: collapse; min-width: 640px; }
-.admin-table th, .admin-table td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--color-border); font-size: 14px; }
+/* white-space: nowrap o day la CHU DICH: khi man hinh/cua so thu hep, bang
+   KHONG duoc bop cot/xuong dong lam vo bo cuc -- thay vao do bang giu
+   nguyen do rong tu nhien va nguoi dung CUON NGANG de xem (xem
+   .admin-table-scroll-wrap + admin.js, tu dong them nut cuon ngang). Rieng
+   .admin-history-table (lich su chinh sua, van ban dai) duoc tra lai wrap
+   binh thuong o duoi vi ban chat la doc van ban, khong phai bang du lieu. */
+.admin-table th, .admin-table td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--color-border); font-size: 14px; white-space: nowrap; }
 .admin-table thead { background: var(--color-bg-alt); }
 .admin-table tfoot td { font-weight: 700; }
+/* Bang "Lich su chinh sua" (partials/edit-history.ejs) -- dung chung cho
+   yeu cau sua chua / thu cu doi moi / khach mua hang. Gia tri CU gach ngang
+   mau xam, gia tri MOI mau den dam, de phan biet nhanh khong can doc ky. */
+.admin-history-table { min-width: 0; }
+.admin-history-table td { white-space: normal; }
+.admin-history-time { white-space: nowrap; color: var(--color-text-muted); vertical-align: top; width: 160px; }
+/* Nut cuon ngang (trai/phai) tu dong them vao MOI ".admin-table-scroll" boi
+   admin.js -- noi ".admin-table-scroll" vao 1 wrapper co position:relative
+   de dat 2 nut mui ten chong len vien trai/phai, chi hien khi bang thuc su
+   dai hon khung nhin VA con huong do de cuon tiep. */
+.admin-table-scroll-wrap { position: relative; }
+.admin-table-scroll-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--color-border);
+  background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  color: var(--color-ink); z-index: 2; padding: 0; transition: background 0.15s ease;
+}
+.admin-table-scroll-btn:hover { background: var(--color-bg-alt); }
+.admin-table-scroll-btn-prev { left: 6px; }
+.admin-table-scroll-btn-next { right: 6px; }
+.admin-history-field { font-size: 13px; line-height: 1.7; }
+.admin-history-old { color: var(--color-text-muted); text-decoration: line-through; }
+.admin-history-arrow { color: var(--color-text-muted); margin: 0 4px; }
+.admin-history-new { color: var(--color-ink); font-weight: 600; }
+/* Bang "Lich su mua hang" -- do rong cot co dinh (khong tinh theo noi dung)
+   de tranh cot bi "chay"/lech vi tri khi 1 dong co gia (VD "12.000.000₫")
+   con dong khac khong co gia (chi "-"). table-layout: fixed chi ap dung
+   rieng bang nay qua class .purchases-table, khong dung .admin-table chung
+   vi cac bang admin khac (san pham, hotdeal...) co so cot khac nhau. */
+.purchases-table { table-layout: fixed; min-width: 860px; }
+.purchases-table th:nth-child(1), .purchases-table td:nth-child(1) { width: 16%; }
+.purchases-table th:nth-child(2), .purchases-table td:nth-child(2) { width: 11%; }
+.purchases-table th:nth-child(3), .purchases-table td:nth-child(3) { width: 11%; }
+.purchases-table th:nth-child(4), .purchases-table td:nth-child(4) { width: 13%; }
+.purchases-table th:nth-child(5), .purchases-table td:nth-child(5) { width: 12%; }
+.purchases-table th:nth-child(6), .purchases-table td:nth-child(6) { width: 17%; }
+.purchases-table th:nth-child(7), .purchases-table td:nth-child(7) { width: 20%; }
+.purchases-table td { overflow-wrap: break-word; }
+/* Ten san pham + nut "Lich su bao hanh" to mau hong thuong hieu cho de nhan
+   biet khi luot bang. */
+.purchase-product-name { color: var(--color-accent); font-weight: 700; }
+.warranty-history-btn { color: var(--color-accent); border-color: var(--color-accent); }
+.warranty-history-btn:hover { background: var(--color-accent); color: #fff; }
+/* Nut "Chi tiết"/"Sửa"/"Xóa" trong cot cuoi: giu ca 3 tren CUNG 1 dong (bo
+   flex-wrap mac dinh cua .admin-actions rieng cho bang nay), va "Sửa" dùng
+   chung style voi "Chi tiết"/"Xóa" (chu xam, khong vien/nen -- xem .btn-link)
+   thay vi mau link mac dinh cua the <a>. */
+.purchases-table .admin-actions { flex-wrap: nowrap; gap: var(--space-3); }
+.purchases-table .admin-actions a,
+.purchases-table .admin-actions button { white-space: nowrap; }
+/* Modal "Chi tiet" o bang Lich su mua hang -- xem customer-detail.ejs */
+.modal-overlay { position: fixed; inset: 0; background: rgba(17, 17, 17, 0.55); display: flex; align-items: center; justify-content: center; padding: var(--space-4); z-index: 1000; }
+.modal-overlay[hidden] { display: none; }
+.modal-box { background: #fff; border-radius: var(--radius-lg); padding: var(--space-5); max-width: 420px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; }
+.modal-close { position: absolute; top: var(--space-3); right: var(--space-3); background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--color-text-muted); }
+.modal-close:hover { color: var(--color-ink); }
+.modal-box h3 { margin: 0 var(--space-5) var(--space-3) 0; color: var(--color-accent); }
+.modal-field { margin: 0 0 var(--space-2); font-size: 14px; }
+.modal-field strong { display: inline-block; min-width: 130px; }
+/* Danh sach "Lich su bao hanh" nhung trong popup "Chi tiet" -- xem #pdVisits
+   trong customer-detail.ejs, noi dung lay tu <template> an cua tung dong. */
+.modal-subheading { margin: var(--space-4) 0 var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border); font-size: 14px; font-weight: 700; color: var(--color-accent); }
+.modal-visit-item { padding: var(--space-2) 0; border-bottom: 1px dashed var(--color-border); }
+.modal-visit-item:last-child { border-bottom: none; padding-bottom: 0; }
+.modal-visit-item .modal-field strong { min-width: 100px; }
+.modal-visit-empty { color: var(--color-text-muted); }
 .admin-actions { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
 .admin-actions-hotdeal form { display: inline-flex; }
 .hotdeal-enable-form, .hotdeal-time-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
@@ -896,6 +1084,21 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-form { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 640px; }
 .admin-form-subheading { font-size: 15px; font-weight: 700; color: var(--color-ink); margin: var(--space-5) 0 var(--space-3); }
 .admin-form-subheading:first-child { margin-top: 0; }
+/* Toggle "Sản phẩm mua mới" / "Mang tới bảo hành" o dau form them san pham --
+   cung ngon ngu voi .installment-tab, dat ten rieng vi dung o ngu canh khac. */
+.entry-mode-toggle { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.entry-mode-btn { background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px; padding: var(--space-2) var(--space-5); font-size: 14px; font-weight: 700; color: var(--color-text-muted); }
+.entry-mode-btn:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.entry-mode-btn.active { background: var(--gradient-brand); border-color: transparent; color: #fff; }
+/* Nhom checkbox chon nhieu "Tinh trang / Loi mang toi" khi bao hanh -- cung
+   ngon ngu pill voi .entry-mode-btn, nhung la checkbox (chon nhieu) khong
+   phai nut don (chon 1). :has() de highlight khi tick, khong can JS rieng. */
+.admin-hint-inline { font-weight: 400; font-size: 12px; color: var(--color-text-muted); }
+.issue-options { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.issue-option { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--color-border); border-radius: 999px; padding: var(--space-2) var(--space-4); font-size: 14px; font-weight: 600; color: var(--color-text-muted); cursor: pointer; user-select: none; }
+.issue-option:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.issue-option input[type="checkbox"] { accent-color: var(--color-accent); }
+.issue-option:has(input:checked) { background: var(--gradient-brand); border-color: transparent; color: #fff; }
 .admin-search-form { display: flex; gap: var(--space-2); align-items: center; margin-bottom: var(--space-4); flex-wrap: wrap; }
 .admin-search-form input[type="text"] { flex: 1; min-width: 220px; height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
 .btn-link { background: none; border: none; color: var(--color-text-muted); font-size: 14px; padding: 0; text-decoration: underline; }
@@ -922,6 +1125,16 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .installment-content p { margin: 0 0 var(--space-3); }
 .installment-content h1, .installment-content h2, .installment-content h3 { margin: var(--space-5) 0 var(--space-3); }
 .installment-content ul, .installment-content ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+/* Quill luu ca list gach dau dong lan list so thanh the <ol>, chi phan biet
+   nhau qua thuoc tinh data-list tren <li> (khong phai the <ul> that) -- trinh
+   duyet khong hieu thuoc tinh nay nen mac dinh hien tat ca thanh so. Tu ve
+   lai dau gach-dau-dong/so dua theo data-list de hien dung nhu trong trinh
+   soan thao Quill. */
+.installment-content ol, .installment-content ul { list-style: none; }
+.installment-content li[data-list] { position: relative; counter-increment: installment-ordered; }
+.installment-content ol, .installment-content ul { counter-reset: installment-ordered; }
+.installment-content li[data-list="bullet"]::before { content: '\2022'; position: absolute; left: calc(-1 * var(--space-4)); }
+.installment-content li[data-list="ordered"]::before { content: counter(installment-ordered) '.'; position: absolute; left: calc(-1 * var(--space-5)); }
 .installment-content img { max-width: 100%; height: auto; border-radius: var(--radius-md); margin: var(--space-3) 0; }
 .installment-content a { color: var(--color-accent); }
 .product-edit-layout { display: flex; gap: var(--space-5); align-items: flex-start; flex-wrap: wrap; }
@@ -938,10 +1151,11 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 
 .admin-image-preview { width: 96px; height: 96px; object-fit: cover; display: block; border-radius: var(--radius-md); margin-bottom: var(--space-3); border: 1px solid var(--color-border); }
 .banner-upload-form { margin-bottom: var(--space-6); max-width: 480px; }
-.admin-banner-thumb { width: 160px; height: 43px; object-fit: cover; border-radius: var(--radius-sm); }
+.admin-banner-thumb { width: 160px; height: 43px; object-fit: cover; border-radius: var(--radius-sm); display: block; margin-bottom: var(--space-2); }
 .admin-banner-thumb-mobile { width: 64px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); display: block; margin-bottom: var(--space-2); }
-.banner-mobile-form { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
-.banner-mobile-form input[type=file] { font-size: 12px; max-width: 160px; }
+.banner-image-form { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+.banner-image-form input[type=file] { font-size: 12px; max-width: 160px; }
+.banner-remove-image-form { margin-top: var(--space-1); }
 .inline-number-input { width: 60px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; }
 .inline-text-input { width: 160px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
 .admin-actions-center { justify-content: center; }
@@ -1040,3 +1254,323 @@ label.gallery-pick-btn { display: inline-flex; cursor: pointer; width: fit-conte
 .password-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; width: 36px; background: none; border: none; color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
 .password-toggle:hover { color: var(--color-ink); }
 .password-toggle.is-active { color: var(--color-accent); }
+
+/* ===== Trade-in (Thu cu doi moi) ===== */
+.tradein-intro { margin-bottom: var(--space-7); }
+.tradein-price-label { font-size: 12px; color: var(--color-text-muted); font-weight: 600; }
+.tradein-subsidy-line { font-size: 13px; color: var(--color-success); margin: 0 0 var(--space-2); }
+.tradein-card-actions { display: flex; flex-direction: column; gap: var(--space-2); margin-top: auto; }
+.tradein-card-actions .btn { width: 100%; }
+/* Whole card is clickable (page grid + modal "Chon may thu cu" step), not
+   just the "Chon san pham" button -- give it a pointer cursor so it reads
+   as selectable; the lift/shadow on hover already comes from .product-card:hover. */
+.tradein-card { cursor: pointer; }
+/* The upgrade-product cards rendered inside the modal reuse .product-card but
+   are plain, clickable articles rather than links -- give them a pointer and
+   a hover affordance so they read as selectable. */
+#upgradeProductGrid .product-card { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+#upgradeProductGrid .product-card:hover { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(249, 101, 153, 0.12); }
+/* .modal-box h3 (dung chung voi modal canh bao hanh cu) to mau accent cho MOI
+   h3 con trong modal -- nhung the gioi thieu san pham (.product-name) cung la
+   h3, nen bi an theo mau hong khong dung y. Tra lai mau chu thuong o day. */
+#upgradeProductGrid .product-name { color: var(--color-ink); }
+
+.tradein-modal-box { max-width: min(920px, 94vw); text-align: left; }
+.tradein-modal-box h3 { font-size: 19px; margin-bottom: var(--space-3); }
+.tradein-step-product-name { font-weight: 700; color: var(--color-accent); margin-bottom: var(--space-4); }
+.tradein-modal-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.tradein-modal-actions .btn-block { width: 100%; justify-content: center; }
+
+/* Thanh hien thi cac buoc + dang o buoc nao, giong trang mau cellphoneS:
+   day cac vong tron so noi voi nhau bang 1 duong ke, buoc hien tai to mau
+   hong gradient, buoc da qua to mau hong dac, buoc chua toi van mau xam. */
+.tradein-stepper { display: flex; align-items: flex-start; margin-bottom: var(--space-5); overflow-x: auto; }
+.tradein-stepper-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 0 0 auto; width: 84px; text-align: center; }
+.tradein-stepper-circle {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 2px solid var(--color-border);
+  font-weight: 800; font-size: 13px; color: var(--color-text-muted);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.tradein-stepper-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); line-height: 1.25; }
+.tradein-stepper-item.active .tradein-stepper-circle { background: var(--gradient-brand); border-color: transparent; color: #fff; }
+.tradein-stepper-item.active .tradein-stepper-label { color: var(--color-ink); }
+.tradein-stepper-item.done .tradein-stepper-circle { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.tradein-stepper-item.done .tradein-stepper-label { color: var(--color-ink); }
+.tradein-stepper-line { flex: 1 1 auto; height: 2px; background: var(--color-border); margin-top: 13px; min-width: 12px; }
+.tradein-stepper-line.done { background: var(--color-accent); }
+
+/* Danh sach tinh trang may: moi muc la 1 DONG NGANG full-width (nhan + mo ta
+   nam ben trai cung 1 dong, gia nam ben phai) -- giong dung cach hien thi
+   cua ref cellphoneS, khong phai luoi the nhu truoc. */
+.tradein-condition-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 50vh; overflow-y: auto; padding-right: 2px; }
+.tradein-condition-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; text-align: left;
+  background: #fff; border: 1.5px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.tradein-condition-row:hover { border-color: var(--color-accent); }
+.tradein-condition-row.active { border-color: var(--color-accent); background: #fff0f5; }
+.tradein-condition-row-text { flex: 1 1 auto; font-size: 14px; line-height: 1.5; }
+.tradein-condition-row-label { color: var(--color-ink); }
+.tradein-condition-row-desc { color: var(--color-text-muted); }
+.tradein-condition-row-price { font-weight: 800; color: var(--color-accent); font-size: 16px; white-space: nowrap; flex: 0 0 auto; }
+
+#upgradeCategoryTabs, #tradeInProductCategoryTabs { margin-bottom: var(--space-4); }
+/* Cot theo chieu rong THAT cua modal, khong theo breakpoint cua trang (vd
+   .product-grid tu dong 5 cot tu 1700px man hinh, bat ke modal chi rong
+   ~900px) -- dung auto-fill/minmax de luon vua khung, khong bi chen/cat chu. */
+/* padding-top chua chinh cho hieu ung hover cua .product-card (translateY(-4px)
+   + box-shadow) -- khong thi luoi overflow-y:auto se cat phang canh tren cua
+   the san pham o hang dau khi di chuot vao. */
+#upgradeProductGrid, #tradeInProductGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--space-4); max-height: 55vh; overflow-y: auto; padding: var(--space-3) var(--space-1) var(--space-1); }
+
+/* Nut lui "Quay lai buoc 1" nho, gon, nam ngay duoi tieu de buoc. */
+.tradein-step-back-link { margin-bottom: var(--space-3); }
+
+/* 2 nut chon che do o buoc "tinh trang may" phai co cung 1 kieu bo tron
+   (mac dinh .btn-primary la pill con .btn-outline vuong hon) -- ep ca 2
+   dung chung border-radius pill de dong bo nhu ref. */
+.tradein-mode-actions .btn { border-radius: 999px; min-height: 48px; flex: 1 1 220px; }
+
+/* Note nho, in nghieng, duoi cung buoc "tinh trang may" -- canh bao gia co
+   the chenh lech sau khi kiem tra truc tiep tai cua hang. */
+.tradein-condition-note { margin-top: var(--space-3); font-size: 12.5px; font-style: italic; color: var(--color-text-muted); text-align: center; }
+
+/* The tom tat "san pham muon thu cu"/"san pham muon len doi" o buoc xac
+   nhan cuoi cung, kem nut doi san pham khac. */
+.tradein-confirm-label { font-weight: 700; font-size: 13px; color: var(--color-text-muted); margin: var(--space-4) 0 var(--space-2); text-transform: uppercase; letter-spacing: 0.02em; }
+/* :first-of-type la theo TUNG PARENT rieng -- nhan "San pham muon len doi"
+   nam trong 1 div con (#tradeInConfirmUpgradeBlock) nen cung la "first" cua
+   the cha do, vo tinh bi an luon margin-top, dinh sat vao khung thu cu phia
+   tren. Dung class rieng de chi mat dung nhan dau tien that su (ngay sau h3). */
+.tradein-confirm-label-first { margin-top: 0; }
+.tradein-confirm-card { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--color-bg-alt); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); }
+.tradein-confirm-card-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
+.tradein-confirm-card-info { display: flex; flex-direction: column; gap: 2px; }
+.tradein-confirm-card-name { font-weight: 700; font-size: 14px; }
+.tradein-confirm-card-price { font-weight: 800; color: var(--color-accent); font-size: 15px; }
+
+.tradein-summary { background: var(--color-bg-alt); border-radius: var(--radius-md); padding: var(--space-4); margin: var(--space-4) 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.tradein-summary-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; gap: var(--space-3); }
+.tradein-summary-row span { color: var(--color-text-muted); }
+.tradein-summary-row strong { font-weight: 700; text-align: right; }
+.tradein-summary-row-total { border-top: 1px dashed var(--color-border); padding-top: var(--space-2); margin-top: var(--space-1); }
+.tradein-summary-row-total strong { color: var(--color-accent); font-size: 16px; }
+
+/* ===== Trang Repairing cong khai (modal nhieu buoc, dung chung khung
+   .tradein-modal-box/.tradein-stepper voi trade-in -- xem repair.ejs) ===== */
+/* .repair-modal-box bien modal thanh 1 COT FLEX: phan noi dung (stepper + 3
+   buoc, trong .repair-modal-scroll) la vung CUON RIENG, con thanh "Tong
+   tien" la 1 footer flex co dinh luon nam duoi cung -- tach khoi nhau de
+   footer khong bao gio de len noi dung dang cuon ben tren (truoc day dung
+   position:sticky ngay trong vung cuon chung nen bi de len khi danh sach
+   dai). overflow:hidden o ngoai + overflow-y:auto o trong, min-height:0 de
+   flex item co the co nho hon content (khong thi se khong cuon duoc). */
+.repair-modal-box { display: flex; flex-direction: column; overflow: hidden; }
+.repair-modal-scroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-right: 2px; }
+.repair-service-pick-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 50vh; overflow-y: auto; padding-right: 2px; }
+.repair-service-check-row { cursor: pointer; display: flex; align-items: center; gap: var(--space-3); }
+.repair-service-check-row input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--color-accent); }
+/* Rieng cho danh sach dich vu o TRANG CONG KHAI (buoc 1 cua modal) -- dung
+   ID de khong dinh anh huong qua ben trang admin (dang dung chung ten class
+   .repair-service-pick-list). Truoc day gioi han 50vh nen tren man hinh nho
+   chi thay duoc ~3 dong, gio cho cao hon de thay duoc nhieu dong hon ngay,
+   kem 1 nut "Xem them" (JS bat/an theo .repair-service-scroll-btn ben duoi)
+   hien ra khi co tren 5 dich vu VA van con noi dung ben duoi de cuon tiep. */
+#repairServiceCheckList { max-height: min(56vh, 420px); }
+.repair-service-list-wrap { position: relative; }
+.repair-service-scroll-btn {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px;
+  background: var(--color-accent); color: #fff; border: none; border-radius: 999px;
+  padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  animation: repairScrollHint 1.4s ease-in-out infinite;
+}
+.repair-service-scroll-btn svg { flex: 0 0 auto; }
+@keyframes repairScrollHint {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(3px); }
+}
+/* The chon "Loai" dung lai .product-card/.product-card-image (anh vuong to,
+   xep doc) giong luoi chon san pham o buoc 1 -- xem renderVariantCard. */
+.repair-variant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.repair-variant-grid .empty-state { grid-column: 1 / -1; }
+.repair-variant-grid .product-card { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.repair-variant-grid .product-card:hover { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(249, 101, 153, 0.12); }
+.repair-variant-grid .product-card.active { border-color: var(--color-accent); background: #fff0f5; }
+.repair-variant-grid .product-name { color: var(--color-ink); min-height: 0; }
+.repair-variant-card-desc { font-size: 12.5px; color: var(--color-text-muted); margin: 0; }
+.repair-total-bar {
+  flex: 0 0 auto;
+  background: #fff;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-4) calc(-1 * var(--space-5)) calc(-1 * var(--space-5));
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 15px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.repair-total-bar strong { color: var(--color-accent); font-size: 18px; }
+
+/* ===== Admin: trade-in condition rows (vd san pham-form) ===== */
+/* Form them/sua san pham thu cu rong hon .admin-form mac dinh (640px) --
+   ban thiet ke ban dau hep qua lam o "Mo ta ngan" bi cham, go vao khong
+   thay het chu, nen rieng form nay duoc noi rong ra. */
+#tradeInForm { max-width: 920px; }
+.condition-rows { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
+.condition-row-group { width: 100%; }
+.condition-row { display: grid; grid-template-columns: 1fr 1.7fr 1fr auto; gap: var(--space-2); align-items: center; }
+@media (max-width: 720px) { .condition-row { grid-template-columns: 1fr; } }
+.condition-row input[type="text"] {
+  height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px;
+}
+/* Nut "+ Them muc tinh trang"/"+ Them loai" dang dinh sat vao khoi nut
+   Luu/Huy phia duoi vi .admin-form-actions chua co margin-top rieng -- them
+   khoang cach duoi nut nay cho thoang. */
+#addConditionRowBtn { margin-bottom: var(--space-4); }
+#addOptionRowBtn { margin-bottom: var(--space-4); }
+#addVariantRowBtn { margin-bottom: var(--space-4); }
+
+/* Form dich vu sua chua (co anh + nhan + mo ta + gia tren 1 dong "Loai") cung
+   rong hon .admin-form mac dinh (640px), giong ly do #tradeInForm o tren --
+   640px qua hep khien dong "Loai" bi don, nut "+ Them loai" nhin nhu dinh
+   lien vao nut Luu. */
+#repairServiceForm { max-width: 920px; }
+
+/* ===== Trang cong khai "Sua Chua" -- moi dich vu (Thay pin, Thay man
+   hinh...) la 1 khoi rieng, ben trong la luoi the "Loai" (checkbox-the) dang
+   RADIO de chi chon duoc 1 loai/dich vu, moi the co anh+gia rieng. Khach co
+   the chon nhieu dich vu cung luc (nhieu khoi), khong can modal/wizard. */
+.repair-service-block { margin-bottom: var(--space-6); }
+.repair-variant-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+@media (min-width: 640px) { .repair-variant-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .repair-variant-grid { grid-template-columns: repeat(4, 1fr); } }
+.repair-variant-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  background: #fff;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.repair-variant-card:hover { border-color: var(--color-accent); }
+.repair-variant-card:has(input:checked) { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(249, 101, 153, 0.18); }
+.repair-variant-card input[type="radio"] { position: absolute; top: var(--space-2); right: var(--space-2); accent-color: var(--color-accent); }
+.repair-variant-card-image { width: 72px; height: 72px; border-radius: var(--radius-sm); background: var(--color-bg-alt); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.repair-variant-card-image img { width: 100%; height: 100%; object-fit: cover; }
+.repair-variant-card-image .product-icon-placeholder { width: 40%; color: #c7c7cc; }
+.repair-variant-card-label { font-weight: 700; font-size: 14px; }
+.repair-variant-card-desc { font-size: 12px; color: var(--color-text-muted); }
+.repair-variant-card-price { font-weight: 800; color: var(--color-sale); font-size: 14px; }
+.repair-variant-card-none { justify-content: center; min-height: 100%; color: var(--color-text-muted); font-size: 13px; }
+.repair-customer-section { margin-top: var(--space-6); max-width: 640px; }
+.repair-total-row { margin-top: var(--space-3); font-size: 15px; }
+.repair-total-row strong { color: var(--color-sale); font-size: 18px; }
+
+/* ===== Admin: form dich vu sua chua -- moi dong "Loai" co them 1 o anh nho
+   ben trai (khong dung chung template cot voi .condition-row vi them cot
+   anh). */
+.repair-variant-row-group { width: 100%; margin-bottom: var(--space-2); }
+.repair-variant-row { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2); align-items: center; }
+@media (max-width: 720px) { .repair-variant-row { grid-template-columns: 1fr; } }
+.repair-variant-row-image { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+.repair-variant-row-thumb { width: 96px; height: 96px; border-radius: var(--radius-sm); object-fit: cover; display: block; border: 1px solid var(--color-border); }
+.repair-variant-image-pick-btn { cursor: pointer; display: inline-flex; width: fit-content; }
+.repair-variant-row-fields { display: grid; grid-template-columns: 1fr 1.7fr; gap: var(--space-2); }
+@media (max-width: 900px) { .repair-variant-row-fields { grid-template-columns: 1fr; } }
+.repair-variant-row-fields input[type="text"] {
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  font-size: 14px;
+}
+
+/* ===== Trang cong khai Sua Chua: buoc 1 chon San pham (truoc Loai) ===== */
+.repair-step-label { font-weight: 700; font-size: 13px; color: var(--color-text-muted); margin: var(--space-3) 0 var(--space-2); text-transform: uppercase; letter-spacing: 0.02em; }
+.repair-device-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+@media (min-width: 640px) { .repair-device-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .repair-device-grid { grid-template-columns: repeat(4, 1fr); } }
+.repair-device-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  background: #fff;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.repair-device-card:hover { border-color: var(--color-accent); }
+.repair-device-card:has(input:checked) { border-color: var(--color-accent); box-shadow: 0 6px 16px rgba(249, 101, 153, 0.18); }
+.repair-device-card input[type="radio"] { position: absolute; top: var(--space-2); right: var(--space-2); accent-color: var(--color-accent); }
+.repair-device-card-image { width: 72px; height: 72px; border-radius: var(--radius-sm); background: var(--color-bg-alt); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.repair-device-card-image img { width: 100%; height: 100%; object-fit: cover; }
+.repair-device-card-image .product-icon-placeholder { width: 40%; color: #c7c7cc; }
+.repair-device-card-label { font-weight: 700; font-size: 14px; }
+.repair-device-card-none { justify-content: center; min-height: 100%; color: var(--color-text-muted); font-size: 13px; }
+.repair-variant-block { margin-top: var(--space-2); }
+
+/* ===== Admin: form sua 1 san pham sua chua -- "Dich vu ap dung & gia"
+   (1 form duy nhat #deviceServicesForm: tich/bo tich dich vu bang checkbox,
+   dich vu nao tich thi hien khoi gia cac Loai ngay ben duoi no, luu het
+   bang 1 nut "Luu thay doi"). */
+.repair-service-pick-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-3); max-width: 760px; }
+.repair-service-pick-row { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: #fff; }
+.repair-service-pick-prices { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--color-border); }
+.repair-service-device-price-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.repair-service-device-price-label { flex: 1 1 130px; font-size: 13px; color: var(--color-text-muted); }
+.repair-service-device-price-row input[type="text"] { flex: 0 1 140px; height: 38px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 14px; }
+.repair-variant-price-thumb { width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover; flex: 0 0 auto; background: var(--color-bg-alt); }
+.repair-variant-clear-image { font-size: 12px; color: var(--color-text-muted); flex: 0 0 auto; }
+
+/* Hang chon san pham nguon + nut "Copy muc tinh trang" o form them/sua san
+   pham thu cu. */
+.tradein-copy-conditions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.tradein-copy-conditions select { flex: 1 1 260px; height: 38px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 14px; }
+
+/* ===== Admin: trade-in "co nhieu Dung luong / Mau" (has_variants) ===== */
+/* 1 khoi Dung luong: dong tieu de (ten + nut xoa) + danh sach Mau long ben
+   trong -- giong het cach trang Them san pham lam voi Dung luong/Mau. */
+.storage-group-row { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-3); margin-bottom: var(--space-3); background: var(--color-bg-alt); }
+.storage-group-header { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: center; margin-bottom: var(--space-3); }
+.storage-group-header input[type="text"] { height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px; font-weight: 600; background: #fff; }
+.storage-group-colors { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+
+/* 1 dong Mau: swatch chon mau (giong trang San pham) + ten mau + 1 o gia cho
+   moi Muc tinh trang + nut xoa, bao boc trong the trang de phan biet voi nen
+   xam cua khoi Dung luong cha. */
+.color-option-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
+.color-option-row .color-row-label { height: 40px; width: 160px; flex: 0 0 160px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); font-size: 14px; }
+.color-option-row .color-remove-btn { margin-left: auto; }
+
+.color-condition-prices { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: 1 1 260px; }
+.color-condition-price { display: flex; align-items: center; gap: var(--space-1); background: var(--color-bg-alt); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
+.color-condition-price-label { font-size: 12px; color: var(--color-text-muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Nut "+ Them dung luong" la phan tu cuoi cung cua khoi "co nhieu Dung
+   luong/Mau" (dinh ngay truoc khoi nut Luu/Huy), dinh sat vao nhau vi
+   .admin-form-actions chua co margin-top rieng -- them khoang cach duoi nut
+   nay cho thoang, giong dung cach da xu ly cho #addConditionRowBtn. */
+#addStorageGroupBtn { margin-bottom: var(--space-4); }
+.color-condition-price .variant-price-cell { width: 100px; height: 34px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
+
+/* ===== Admin: bulk-select toolbar (vd "San pham duoc len doi") ===== */
+.admin-bulk-toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.admin-bulk-toolbar .btn-primary { margin-left: auto; }

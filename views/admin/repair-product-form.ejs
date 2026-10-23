@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1><%= isEdit ? 'Sửa dịch vụ sửa chữa' : 'Thêm dịch vụ sửa chữa' %></h1>
+    <% if (isEdit) { %>
+      <a href="/admin/sua-chua/moi" class="btn btn-primary">+ Thêm dịch vụ sửa chữa</a>
+    <% } %>
+  </div>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <form action="<%= isEdit ? '/admin/sua-chua/' + service.id + '/sua' : '/admin/sua-chua/moi' %>" method="post" enctype="multipart/form-data" class="admin-form" id="repairServiceForm">
+    <div class="form-group">
+      <label for="name">Tên dịch vụ sửa chữa *</label>
+      <input type="text" id="name" name="name" value="<%= service.name || '' %>" required maxlength="200" placeholder="VD: Thay pin" />
+    </div>
+
+    <div class="form-group form-group-checkbox">
+      <label class="checkbox-option">
+        <input type="checkbox" name="isActive" <%= (typeof service.is_active === 'undefined' || service.is_active) ? 'checked' : '' %> />
+        Đang hiển thị trên trang công khai
+      </label>
+    </div>
+
+    <h2 class="admin-form-subheading">Các loại</h2>
+    <p class="admin-hint">Mỗi loại (vd "Zin bóc máy", "Dỏm", "Chính hãng"...) có ảnh riêng, dùng chung cho mọi sản phẩm. Giá cụ thể theo từng sản phẩm được cấu hình ở trang <a href="/admin/sua-chua/san-pham">Sản phẩm (dòng máy)</a> (sau khi đã lưu dịch vụ này).</p>
+
+    <div id="variantRows" class="repair-variant-rows">
+      <% variants.forEach(function(v) { %>
+        <div class="repair-variant-row-group">
+          <div class="repair-variant-row">
+            <input type="hidden" name="variantId" value="<%= v.id || '' %>" />
+            <div class="repair-variant-row-image">
+              <img src="<%= v.imageUrl || '' %>" alt="" class="repair-variant-row-thumb" <%= v.imageUrl ? '' : 'hidden' %> />
+              <input type="hidden" name="variantImageUrl" value="<%= v.imageUrl || '' %>" />
+              <label class="btn btn-outline btn-sm repair-variant-image-pick-btn">
+                <span class="repair-variant-image-pick-btn-text"><%= v.imageUrl ? 'Thay hình' : 'Chọn ảnh' %></span>
+                <input type="file" class="repair-variant-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />
+              </label>
+            </div>
+            <div class="repair-variant-row-fields">
+              <input type="text" name="variantLabel" value="<%= v.label || '' %>" placeholder="VD: Chính hãng" />
+              <input type="text" name="variantDescription" value="<%= v.description || '' %>" placeholder="Mô tả ngắn (tùy chọn)" />
+            </div>
+            <button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+    <button type="button" id="addVariantRowBtn" class="btn btn-outline btn-sm">+ Thêm loại</button>
+
+    <div class="admin-form-actions">
+      <button type="submit" class="btn btn-primary">Lưu</button>
+      <a href="/admin/sua-chua" class="btn btn-outline">Hủy</a>
+    </div>
+  </form>
+</main>
+<script>
+  (function () {
+    var variantRows = document.getElementById('variantRows');
+    var addBtn = document.getElementById('addVariantRowBtn');
+    var form = document.getElementById('repairServiceForm');
+
+    function buildVariantRowGroup() {
+      var group = document.createElement('div');
+      group.className = 'repair-variant-row-group';
+      group.innerHTML =
+        '<div class="repair-variant-row">' +
+        '<input type="hidden" name="variantId" value="" />' +
+        '<div class="repair-variant-row-image">' +
+        '<img class="repair-variant-row-thumb" alt="" hidden />' +
+        '<input type="hidden" name="variantImageUrl" value="" />' +
+        '<label class="btn btn-outline btn-sm repair-variant-image-pick-btn">' +
+        '<span class="repair-variant-image-pick-btn-text">Chọn ảnh</span>' +
+        '<input type="file" class="repair-variant-image-input" accept="image/png,image/jpeg,image/gif,image/webp,.heic,.heif" hidden />' +
+        '</label>' +
+        '</div>' +
+        '<div class="repair-variant-row-fields">' +
+        '<input type="text" name="variantLabel" placeholder="VD: Chính hãng" />' +
+        '<input type="text" name="variantDescription" placeholder="Mô tả ngắn (tùy chọn)" />' +
+        '</div>' +
+        '<button type="button" class="btn-remove variant-remove-btn" aria-label="Xóa dòng">&times;</button>' +
+        '</div>';
+      return group;
+    }
+
+    if (addBtn && variantRows) {
+      addBtn.addEventListener('click', function () {
+        variantRows.appendChild(buildVariantRowGroup());
+      });
+    }
+
+    form.addEventListener('click', function (e) {
+      if (e.target.classList.contains('variant-remove-btn')) {
+        e.target.closest('.repair-variant-row-group').remove();
+      }
+    });
+
+    // Xem truoc anh ngay khi chon file -- giong pattern color-image-input
+    // da dung o trang San pham (product-form.ejs). Doi chu nut tu "Chon anh"
+    // thanh "Thay hinh" ngay khi da co anh (moi chon hoac da luu san).
+    form.addEventListener('change', function (e) {
+      if (!e.target.classList.contains('repair-variant-image-input')) return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var row = e.target.closest('.repair-variant-row');
+      var preview = row.querySelector('.repair-variant-row-thumb');
+      if (preview) {
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+      }
+      var btnText = row.querySelector('.repair-variant-image-pick-btn-text');
+      if (btnText) btnText.textContent = 'Thay hình';
+    });
+
+    // Moi dong "Loai" co the bi them/xoa dong trong luc dang sua -- vi tri
+    // cuoi cung cua 1 dong trong form (luc bam Luu) moi la thu tu thuc su
+    // duoc server dung de doc lai mang variantId/variantLabel/... Vi vay CHI
+    // gan ten "variantImage_<i>" cho o chon file ngay truoc luc submit, dung
+    // dung vi tri hien tai -- giong het pattern colorImage_<i> da dung o
+    // trang Them/Sua san pham (xem product-form.ejs).
+    form.addEventListener('submit', function () {
+      document.querySelectorAll('.repair-variant-row').forEach(function (row, i) {
+        var fileInput = row.querySelector('.repair-variant-image-input');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          fileInput.name = 'variantImage_' + i;
+        }
+      });
+    });
+
+  })();
+</script>
+</body>
+</html>

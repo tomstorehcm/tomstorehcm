@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Yêu cầu sửa chữa</h1>
+  <p class="admin-hint">Danh sách yêu cầu khách gửi từ trang công khai "Sửa Chữa" -- mỗi yêu cầu có thể gồm nhiều dịch vụ, mỗi dịch vụ 1 loại đã chọn. Đổi "Trạng thái" để cập nhật tiến độ xử lý; dữ liệu dịch vụ/loại/giá được lưu cố định tại thời điểm khách gửi nên vẫn chính xác dù sau này sửa/xóa dịch vụ hoặc loại liên quan.</p>
+
+  <form action="/admin/sua-chua/yeu-cau" method="get" class="sort-form order-filter-form">
+    <label for="status">Trạng thái</label>
+    <select id="status" name="status" onchange="this.form.submit()">
+      <option value="">Tất cả</option>
+      <% statuses.forEach(function(s) { %>
+        <option value="<%= s.key %>" <%= statusFilter === s.key ? 'selected' : '' %>><%= s.label %></option>
+      <% }); %>
+    </select>
+    <% if (statusFilter) { %>
+      <a href="/admin/sua-chua/yeu-cau" class="btn btn-outline btn-sm">Bỏ lọc</a>
+    <% } %>
+  </form>
+
+  <% if (requests.length === 0) { %>
+    <p class="empty-state">Chưa có yêu cầu nào<%= statusFilter ? ' với trạng thái này.' : '.' %></p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Mã yêu cầu</th>
+            <th>Khách hàng</th>
+            <th>Dịch vụ đã chọn</th>
+            <th>Tổng giá</th>
+            <th>Ngày gửi</th>
+            <th>Trạng thái</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% requests.forEach(function(r) { %>
+            <tr>
+              <td><%= r.request_code %></td>
+              <td><%= r.customer_name %><br /><small><%= r.phone %></small><% if (r.imei) { %><br /><small>IMEI: <%= r.imei %></small><% } %></td>
+              <td><%= r.items.map(function(it) { return it.service_name + ' - ' + it.device_name + ' (' + it.variant_label + ')'; }).join(', ') %></td>
+              <td><%= formatVND(r.total_price) %></td>
+              <td><%= new Date(r.created_at).toLocaleString('vi-VN') %></td>
+              <td>
+                <form action="/admin/sua-chua/yeu-cau/<%= r.id %>/trang-thai" method="post" class="status-select-form">
+                  <input type="hidden" name="redirectTo" value="/admin/sua-chua/yeu-cau<%= statusFilter ? '?status=' + statusFilter : '' %>" />
+                  <select name="status" class="status-select status-<%= r.status %>" onchange="this.className = 'status-select status-' + this.value; this.form.submit()">
+                    <% statuses.forEach(function(s) { %>
+                      <option value="<%= s.key %>" <%= r.status === s.key ? 'selected' : '' %>><%= s.label %></option>
+                    <% }); %>
+                  </select>
+                </form>
+              </td>
+              <td class="admin-actions">
+                <button
+                  type="button"
+                  class="btn-link repair-detail-btn"
+                  data-code="<%= r.request_code %>"
+                  data-customer="<%= r.customer_name %>"
+                  data-phone="<%= r.phone %>"
+                  data-imei="<%= r.imei || '' %>"
+                  data-items="<%= r.items.map(function(it) { return it.service_name + ' - ' + it.device_name + ' - ' + it.variant_label + ' (' + formatVND(it.price) + ')'; }).join('; ') %>"
+                  data-total="<%= formatVND(r.total_price) %>"
+                  data-note="<%= r.note || '-' %>"
+                  data-date="<%= new Date(r.created_at).toLocaleString('vi-VN') %>"
+                >Chi tiết</button>
+                <a href="/admin/sua-chua/yeu-cau/<%= r.id %>/sua" class="btn-link">Sửa</a>
+                <form action="/admin/sua-chua/yeu-cau/<%= r.id %>/xoa" method="post" onsubmit="return confirm('Xóa yêu cầu &quot;' + <%- JSON.stringify(r.request_code) %> + '&quot;?');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <div class="modal-overlay" id="repairDetailModal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="rdCode">
+      <button type="button" class="modal-close" id="repairDetailClose" aria-label="Đóng">&times;</button>
+      <h3 id="rdCode"></h3>
+      <p class="modal-field"><strong>Khách hàng:</strong> <span id="rdCustomer"></span></p>
+      <p class="modal-field"><strong>IMEI:</strong> <span id="rdImei"></span></p>
+      <p class="modal-field"><strong>Dịch vụ đã chọn:</strong> <span id="rdItems"></span></p>
+      <p class="modal-field"><strong>Tổng giá:</strong> <span id="rdTotal"></span></p>
+      <p class="modal-field"><strong>Ghi chú:</strong> <span id="rdNote"></span></p>
+      <p class="modal-field"><strong>Ngày gửi:</strong> <span id="rdDate"></span></p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var modal = document.getElementById('repairDetailModal');
+      if (!modal) return;
+      var closeBtn = document.getElementById('repairDetailClose');
+      var fields = {
+        code: document.getElementById('rdCode'),
+        customer: document.getElementById('rdCustomer'),
+        imei: document.getElementById('rdImei'),
+        items: document.getElementById('rdItems'),
+        total: document.getElementById('rdTotal'),
+        note: document.getElementById('rdNote'),
+        date: document.getElementById('rdDate')
+      };
+
+      document.querySelectorAll('.repair-detail-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          fields.code.textContent = btn.getAttribute('data-code') || '';
+          fields.customer.textContent = (btn.getAttribute('data-customer') || '') + ' - ' + (btn.getAttribute('data-phone') || '');
+          fields.imei.textContent = btn.getAttribute('data-imei') || '(chưa có)';
+          fields.items.textContent = btn.getAttribute('data-items') || '-';
+          fields.total.textContent = btn.getAttribute('data-total') || '-';
+          fields.note.textContent = btn.getAttribute('data-note') || '-';
+          fields.date.textContent = btn.getAttribute('data-date') || '-';
+          modal.hidden = false;
+        });
+      });
+
+      closeBtn.addEventListener('click', function () { modal.hidden = true; });
+      modal.addEventListener('click', function (e) { if (e.target === modal) modal.hidden = true; });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) modal.hidden = true;
+      });
+    })();
+  </script>
+</main>
+</body>
+</html>

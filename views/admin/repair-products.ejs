@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Dịch vụ sửa chữa</h1>
+    <a href="/admin/sua-chua/moi" class="btn btn-primary">+ Thêm dịch vụ sửa chữa</a>
+  </div>
+  <p class="admin-hint">Danh sách dịch vụ sửa chữa (Thay pin, Thay màn hình...), áp dụng chung cho mọi thiết bị, hiện ở trang công khai "Sửa Chữa". Mỗi dịch vụ tự có bộ "Loại" riêng (vd Chính hãng, Hãng ABC...), mỗi loại 1 ảnh + 1 giá -- bấm "Sửa" để chỉnh. Tắt "Đang hiển thị" để tạm ẩn khỏi trang công khai mà không cần xóa.</p>
+
+  <% if (rows.length === 0) { %>
+    <p class="empty-state">Chưa có dịch vụ sửa chữa nào. Thêm dịch vụ đầu tiên ở trên.</p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead><tr><th>Dịch vụ</th><th>Số loại</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          <% rows.forEach(function(s) { %>
+            <tr>
+              <td><%= s.name %></td>
+              <td><%= s.variant_count %></td>
+              <td><span class="status-badge <%= s.is_active ? 'status-active' : 'status-inactive' %>"><%= s.is_active ? 'Đang hiển thị' : 'Đã ẩn' %></span></td>
+              <td class="admin-actions">
+                <a href="/admin/sua-chua/<%= s.id %>/sua" class="btn-link">Sửa dịch vụ</a>
+                <form action="/admin/sua-chua/<%= s.id %>/xoa" method="post" onsubmit="return confirm('Xóa dịch vụ sửa chữa &quot;' + <%- JSON.stringify(s.name) %> + '&quot;?');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</main>
+</body>
+</html>

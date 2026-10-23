@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <div class="admin-header-row">
+    <h1>Sản phẩm (dòng máy)</h1>
+    <div class="admin-header-actions">
+      <a href="/admin/sua-chua/san-pham/chon-san-pham" class="btn btn-primary">+ Chọn từ sản phẩm có sẵn</a>
+      <a href="/admin/sua-chua/san-pham/moi" class="btn btn-outline">+ Thêm thủ công</a>
+    </div>
+  </div>
+  <p class="admin-hint">Danh sách sản phẩm (dòng máy, vd iPhone 15, Samsung S24...) dùng chung cho mọi dịch vụ sửa chữa. Vào sửa từng sản phẩm để chọn dịch vụ nào áp dụng và đặt giá riêng cho từng loại.</p>
+
+  <% if (devices.length === 0) { %>
+    <p class="empty-state">Chưa có sản phẩm nào. Thêm sản phẩm đầu tiên ở trên.</p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead><tr><th>Ảnh</th><th>Sản phẩm</th><th>Dịch vụ đang áp dụng</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+          <% devices.forEach(function(d) { %>
+            <tr>
+              <td>
+                <% if (d.image_url) { %>
+                  <img src="<%= d.image_url %>" alt="" class="admin-banner-thumb" />
+                <% } %>
+              </td>
+              <td><%= d.name %></td>
+              <td>
+                <% if (d.appliedServiceNames.length === 0) { %>
+                  <span class="empty-state">Chưa áp dụng dịch vụ nào</span>
+                <% } else { %>
+                  <%= d.appliedServiceNames.join(', ') %>
+                <% } %>
+              </td>
+              <td>
+                <span class="status-badge <%= d.is_active ? 'status-active' : 'status-inactive' %>"><%= d.is_active ? 'Đang hiển thị' : 'Đã ẩn' %></span>
+                <% if (d.is_active && d.appliedServiceNames.length > 0 && !d.hasPrice) { %>
+                  <br /><small class="admin-warning-text">⚠ Chưa nhập giá — máy này KHÔNG hiện ở trang công khai</small>
+                <% } %>
+              </td>
+              <td class="admin-actions">
+                <a href="/admin/sua-chua/san-pham/<%= d.id %>/sua" class="btn-link">Sửa dịch vụ</a>
+                <form action="/admin/sua-chua/san-pham/<%= d.id %>/xoa" method="post" onsubmit="return confirm('Xóa sản phẩm &quot;' + <%- JSON.stringify(d.name) %> + '&quot;? Sản phẩm sẽ bị gỡ khỏi mọi dịch vụ đang áp dụng.');">
+                  <button type="submit" class="btn-link-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</main>
+</body>
+</html>

@@ -14,15 +14,27 @@ const policyController = require('../controllers/admin/policyController');
 const installmentAdminController = require('../controllers/admin/installmentAdminController');
 const warrantyPolicyAdminController = require('../controllers/admin/warrantyPolicyAdminController');
 const customerController = require('../controllers/admin/customerController');
+const tradeInAdminController = require('../controllers/admin/tradeInAdminController');
+const repairAdminController = require('../controllers/admin/repairAdminController');
 
 const uploadProductImage = makeUploader('products');
 const uploadBannerImage = makeUploader('banners');
 const uploadCategoryImage = makeUploader('categories');
 const uploadInstallmentImage = makeUploader('installment');
 const uploadWarrantyImage = makeUploader('bao-hanh');
+const uploadTradeInImage = makeUploader('trade-in');
+const uploadTradeInContentImage = makeUploader('thu-cu');
+const uploadRepairImage = makeUploader('repair');
 
 const MAX_COLOR_ROWS = 20;
 const colorImageFields = Array.from({ length: MAX_COLOR_ROWS }, (_, i) => ({ name: `colorImage_${i}`, maxCount: 1 }));
+
+// Moi dong "Loai" trong form dich vu sua chua co anh rieng, ten file duoc JS
+// danh lai theo VI TRI ngay truoc luc submit (xem repair-product-form.ejs) --
+// giong het colorImageFields o tren, can khai bao san toan bo ten field co
+// the co de multer chap nhan.
+const MAX_REPAIR_VARIANT_ROWS = 20;
+const repairVariantImageFields = Array.from({ length: MAX_REPAIR_VARIANT_ROWS }, (_, i) => ({ name: `variantImage_${i}`, maxCount: 1 }));
 const uploadProductWithColors = uploadProductImage.fields([{ name: 'imageFile', maxCount: 1 }, { name: 'images', maxCount: 8 }, ...colorImageFields]);
 
 router.get('/login', redirectIfAdmin, authController.showLogin);
@@ -92,7 +104,10 @@ router.post(
   handleUploadErrors(uploadBannerImage.fields([{ name: 'image', maxCount: 1 }, { name: 'imageMobile', maxCount: 1 }])),
   bannerController.createHeroBanner
 );
+router.post('/banner/chinh/:id/anh', handleUploadErrors(uploadBannerImage.single('image')), bannerController.updateHeroBannerImage);
+router.post('/banner/chinh/:id/anh/xoa', bannerController.removeHeroBannerDesktopImage);
 router.post('/banner/chinh/:id/anh-mobile', handleUploadErrors(uploadBannerImage.single('image')), bannerController.updateHeroBannerMobileImage);
+router.post('/banner/chinh/:id/anh-mobile/xoa', bannerController.removeHeroBannerMobileImage);
 router.post('/banner/chinh/:id/an-hien', bannerController.toggleHeroBanner);
 router.post('/banner/chinh/luu-hang-loat', bannerController.bulkUpdateHeroBanners);
 router.post('/banner/chinh/:id/xoa', bannerController.deleteHeroBanner);
@@ -129,6 +144,12 @@ router.get('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.editPu
 router.post('/khach-hang/:id/san-pham/:purchaseId/sua', customerController.purchaseValidators, customerController.updatePurchase);
 router.post('/khach-hang/:id/san-pham/:purchaseId/xoa', customerController.deletePurchase);
 
+router.get('/khach-hang/:id/san-pham/:purchaseId/bao-hanh', customerController.listWarrantyVisits);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh', customerController.warrantyVisitValidators, customerController.addWarrantyVisit);
+router.get('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/sua', customerController.editWarrantyVisitForm);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/sua', customerController.warrantyVisitValidators, customerController.updateWarrantyVisit);
+router.post('/khach-hang/:id/san-pham/:purchaseId/bao-hanh/:visitId/xoa', customerController.deleteWarrantyVisit);
+
 router.get('/tra-gop', installmentAdminController.listInstallmentSections);
 router.post(
   '/tra-gop/anh',
@@ -146,5 +167,106 @@ router.post(
 );
 router.post('/bao-hanh/:id/sua', warrantyPolicyAdminController.updateWarrantySection);
 router.post('/bao-hanh/:id/xoa', warrantyPolicyAdminController.deleteWarrantySection);
+
+router.get('/thu-cu', tradeInAdminController.listTradeInProducts);
+router.get('/thu-cu/moi', tradeInAdminController.newTradeInProductForm);
+router.post(
+  '/thu-cu/moi',
+  handleUploadErrors(uploadTradeInImage.fields([{ name: 'imageFile', maxCount: 1 }])),
+  tradeInAdminController.createTradeInProduct
+);
+router.get('/thu-cu/:id/sua', tradeInAdminController.editTradeInProductForm);
+router.post(
+  '/thu-cu/:id/sua',
+  handleUploadErrors(uploadTradeInImage.fields([{ name: 'imageFile', maxCount: 1 }])),
+  tradeInAdminController.updateTradeInProduct
+);
+router.post('/thu-cu/:id/xoa', tradeInAdminController.deleteTradeInProduct);
+
+router.get('/thu-cu/san-pham-len-doi', tradeInAdminController.listUpgradeEligibleProducts);
+router.post('/thu-cu/san-pham-len-doi', tradeInAdminController.updateUpgradeEligibleProducts);
+
+router.get('/thu-cu/yeu-cau', tradeInAdminController.listTradeInRequests);
+router.get('/thu-cu/yeu-cau/:id/sua', tradeInAdminController.editTradeInRequestForm);
+router.post(
+  '/thu-cu/yeu-cau/:id/sua',
+  tradeInAdminController.tradeInRequestValidators,
+  tradeInAdminController.updateTradeInRequest
+);
+router.post('/thu-cu/yeu-cau/:id/trang-thai', tradeInAdminController.updateTradeInRequestStatus);
+router.post('/thu-cu/yeu-cau/:id/xoa', tradeInAdminController.deleteTradeInRequest);
+
+router.get('/thu-cu/gioi-thieu', tradeInAdminController.listTradeInPolicySections);
+router.post('/thu-cu/gioi-thieu', tradeInAdminController.createTradeInPolicySection);
+router.post(
+  '/thu-cu/gioi-thieu/anh',
+  handleUploadErrors(uploadTradeInContentImage.single('image')),
+  tradeInAdminController.uploadTradeInPolicyImage
+);
+router.post('/thu-cu/gioi-thieu/:id/sua', tradeInAdminController.updateTradeInPolicySection);
+router.post('/thu-cu/gioi-thieu/:id/xoa', tradeInAdminController.deleteTradeInPolicySection);
+
+// Danh sach "San pham" (dong may) DUNG CHUNG cho moi dich vu -- phai khai
+// bao TRUOC /sua-chua/:id/sua de "san-pham" khong bi hieu nham la 1 :id.
+router.get('/sua-chua/san-pham', repairAdminController.listRepairDevices);
+router.get('/sua-chua/san-pham/moi', repairAdminController.newRepairDeviceForm);
+router.post(
+  '/sua-chua/san-pham/moi',
+  handleUploadErrors(uploadRepairImage.single('imageFile')),
+  repairAdminController.createRepairDevice
+);
+// Chon hang loat san pham catalog lam "dong may" sua chua (tich chon +
+// "Luu thay doi" 1 lan, giong trang San pham Trade In) -- phai khai bao
+// TRUOC /sua-chua/san-pham/:id/sua de "chon-san-pham" khong bi hieu nham la
+// 1 :id.
+router.get('/sua-chua/san-pham/chon-san-pham', repairAdminController.listCatalogRepairDevices);
+router.post('/sua-chua/san-pham/chon-san-pham', repairAdminController.updateCatalogRepairDevices);
+router.get('/sua-chua/san-pham/:id/sua', repairAdminController.editRepairDeviceForm);
+router.post(
+  '/sua-chua/san-pham/:id/sua',
+  handleUploadErrors(uploadRepairImage.single('imageFile')),
+  repairAdminController.updateRepairDevice
+);
+router.post('/sua-chua/san-pham/:id/xoa', repairAdminController.deleteRepairDevice);
+
+// Dich vu ap dung cho 1 san pham cu the + gia theo tung Loai cua dich vu do
+// (quan ly tu trang San pham, khong phai tu trang Dich vu) -- 1 form/nut
+// "Luu thay doi" duy nhat, luu ca tich/bo tich dich vu lan gia cac Loai.
+router.post(
+  '/sua-chua/san-pham/:id/dich-vu',
+  handleUploadErrors(uploadRepairImage.any()),
+  repairAdminController.saveDeviceServices
+);
+
+router.get('/sua-chua', repairAdminController.listRepairServices);
+router.get('/sua-chua/moi', repairAdminController.newRepairServiceForm);
+router.post(
+  '/sua-chua/moi',
+  handleUploadErrors(uploadRepairImage.fields(repairVariantImageFields)),
+  repairAdminController.createRepairService
+);
+router.get('/sua-chua/:id/sua', repairAdminController.editRepairServiceForm);
+router.post(
+  '/sua-chua/:id/sua',
+  handleUploadErrors(uploadRepairImage.fields(repairVariantImageFields)),
+  repairAdminController.updateRepairService
+);
+router.post('/sua-chua/:id/xoa', repairAdminController.deleteRepairService);
+
+router.get('/sua-chua/yeu-cau', repairAdminController.listRepairRequests);
+router.get('/sua-chua/yeu-cau/:id/sua', repairAdminController.editRepairRequestForm);
+router.post(
+  '/sua-chua/yeu-cau/:id/sua',
+  repairAdminController.repairRequestValidators,
+  repairAdminController.updateRepairRequest
+);
+router.post('/sua-chua/yeu-cau/:id/trang-thai', repairAdminController.updateRepairRequestStatus);
+router.post('/sua-chua/yeu-cau/:id/xoa', repairAdminController.deleteRepairRequest);
+
+router.get('/sua-chua/lich-su', repairAdminController.listRepairHistory);
+router.post('/sua-chua/lich-su', repairAdminController.repairHistoryValidators, repairAdminController.createRepairHistory);
+router.get('/sua-chua/lich-su/:id/sua', repairAdminController.editRepairHistoryForm);
+router.post('/sua-chua/lich-su/:id/sua', repairAdminController.repairHistoryValidators, repairAdminController.updateRepairHistory);
+router.post('/sua-chua/lich-su/:id/xoa', repairAdminController.deleteRepairHistory);
 
 module.exports = router;

@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body>
+<%- include('partials/header') %>
+
+<main>
+  <div class="container page-container">
+    <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span>REPAIRING</span></nav>
+    <div class="section-heading"><h1>REPAIRING</h1></div>
+    <p class="admin-hint">Chọn sản phẩm bạn muốn sửa chữa, rồi chọn dịch vụ và loại phù hợp — TOMSTORE sẽ gọi lại báo giá chính xác và hẹn lịch nhận máy.</p>
+
+    <% if (repairDevices.length === 0) { %>
+      <p class="empty-state">Hiện chưa có sản phẩm nào nhận sửa chữa, vui lòng liên hệ hotline để được hỗ trợ.</p>
+    <% } else { %>
+      <div class="product-grid tradein-grid" id="repairDeviceGrid">
+        <% repairDevices.forEach(function(d) { %>
+          <article class="product-card tradein-card" data-repair-device-id="<%= d.id %>">
+            <div class="product-card-image">
+              <% if (d.imageUrl) { %>
+                <img src="<%= d.imageUrl %>" alt="<%= d.name %>" loading="lazy" width="300" height="300" />
+              <% } else { %>
+                <svg class="product-icon-placeholder" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <% } %>
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-name"><%= d.name %></h3>
+              <div class="tradein-card-actions">
+                <button type="button" class="btn btn-flow btn-block repair-start-btn" data-repair-device-id="<%= d.id %>">Chọn sản phẩm</button>
+              </div>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</main>
+
+<!-- Modal: quy trinh sua chua nhieu buoc, giong het khung cua trade-in (modal-overlay + tradein-stepper).
+     repair-modal-box la 1 cot flex RIENG cho modal nay (xem CSS): phan cuon
+     (stepper + 3 buoc) nam trong .repair-modal-scroll, con thanh "Tong tien"
+     la 1 footer CO DINH luon nam duoi cung, khong con dung position:sticky
+     nua -- truoc day sticky bi de len noi dung cuon ben tren khi danh sach
+     dai, gio footer luon o ngoai vung cuon nen khong the de len duoc nua. -->
+<div class="modal-overlay tradein-modal-overlay" id="repairModal" hidden>
+  <div class="modal-box tradein-modal-box repair-modal-box">
+    <button type="button" class="modal-close" id="repairModalClose" aria-label="Đóng">&times;</button>
+
+    <div class="repair-modal-scroll" id="repairModalScroll">
+      <div class="tradein-stepper" id="repairStepper"></div>
+
+      <div class="tradein-step" data-step="services">
+        <h3>Chọn dịch vụ sửa chữa</h3>
+        <p class="tradein-step-product-name" id="repairStepDeviceName"></p>
+        <div class="repair-service-list-wrap">
+          <div class="repair-service-pick-list" id="repairServiceCheckList"></div>
+          <button type="button" class="repair-service-scroll-btn" id="repairServiceScrollBtn" hidden aria-label="Cuộn xuống xem thêm dịch vụ">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Xem thêm
+          </button>
+        </div>
+        <div class="tradein-modal-actions">
+          <button type="button" class="btn btn-flow" id="repairServicesNextBtn" disabled>Tiếp tục</button>
+        </div>
+      </div>
+
+      <div class="tradein-step" data-step="variant" hidden>
+        <h3 id="repairVariantStepTitle">Chọn loại</h3>
+        <button type="button" class="btn btn-outline btn-sm tradein-step-back-link" id="repairVariantBackBtn">&lsaquo; Quay lại</button>
+        <!-- Luoi the san pham (anh to) thay vi danh sach hang ngang, dung
+             chung giao dien voi luoi "chon san pham" o buoc 1 / tren trang
+             chinh, xem renderVariantCard. -->
+        <div class="product-grid repair-variant-grid" id="repairVariantList"></div>
+      </div>
+
+      <div class="tradein-step" data-step="contact" hidden>
+        <h3>Thông tin liên hệ</h3>
+        <button type="button" class="btn btn-outline btn-sm tradein-step-back-link" id="repairContactBackBtn">&lsaquo; Quay lại</button>
+
+        <div class="tradein-summary" id="repairFinalSummary"></div>
+
+        <form id="repairContactForm">
+          <div class="form-group">
+            <label for="repairCustomerName">Họ và tên *</label>
+            <input type="text" id="repairCustomerName" name="customerName" required maxlength="150" />
+          </div>
+          <div class="form-group">
+            <label for="repairPhone">Số điện thoại *</label>
+            <input type="tel" id="repairPhone" name="phone" placeholder="09xxxxxxxx" required />
+          </div>
+          <div class="form-group">
+            <label for="repairNote">Ghi chú (không bắt buộc)</label>
+            <textarea id="repairNote" name="note" rows="2" placeholder="Mô tả thêm tình trạng máy nếu cần..."></textarea>
+          </div>
+          <div class="form-errors" id="repairFormErrors" hidden></div>
+          <div class="tradein-modal-actions">
+            <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="repair-total-bar" id="repairTotalBar" hidden>
+      <span>Tổng tiền</span>
+      <strong id="repairTotalBarValue">0₫</strong>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="repairFlowData"><%- JSON.stringify({
+  devices: repairDevices,
+  services: repairServices,
+  prices: repairPrices
+}) %></script>
+
+<%- include('partials/footer') %>
+<script src="/js/main.js"></script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('repairFlowData').textContent);
+  var devices = data.devices;
+  var services = data.services;
+  var prices = data.prices; // [{deviceId, variantId, price}]
+
+  var modal = document.getElementById('repairModal');
+  var modalScroll = document.getElementById('repairModalScroll');
+  var closeBtn = document.getElementById('repairModalClose');
+  var steps = document.querySelectorAll('#repairModal .tradein-step');
+
+  function formatVND(n) { return new Intl.NumberFormat('vi-VN').format(n) + '₫'; }
+
+  function priceRowFor(deviceId, variantId) {
+    return prices.find(function (p) { return p.deviceId === deviceId && p.variantId === variantId; }) || null;
+  }
+
+  function priceFor(deviceId, variantId) {
+    var row = priceRowFor(deviceId, variantId);
+    return row ? row.price : null;
+  }
+
+  // state.flowServiceIds: thu tu cac dich vu se di qua o cac buoc "chon
+  // loai" (chot lai ngay khi bam "Tiep tuc" o buoc 1, khong doi giua chung).
+  // state.flowIndex: dang o dich vu thu may trong flowServiceIds (chi co y
+  // nghia khi state.currentStep === 'variant'). state.selections: map
+  // serviceId -> { variantId, label, price, serviceName }.
+  var state = {
+    device: null,
+    selectedServiceIds: [],
+    flowServiceIds: [],
+    flowIndex: -1,
+    selections: {},
+    currentStep: 'services'
+  };
+
+  function currentTotal() {
+    var total = 0;
+    Object.keys(state.selections).forEach(function (sid) { total += state.selections[sid].price; });
+    return total;
+  }
+
+  // An thanh "Tong tien" o buoc "Thong tin lien he" -- buoc do da co dong
+  // "Tong cong" ngay trong khung tom tat phia tren roi, hien them o day la
+  // thua/trung.
+  function updateTotalBar() {
+    var bar = document.getElementById('repairTotalBar');
+    bar.hidden = !state.device || state.currentStep === 'contact';
+    document.getElementById('repairTotalBarValue').textContent = formatVND(currentTotal());
+  }
+
+  function showStep(name) {
+    steps.forEach(function (el) { el.hidden = el.getAttribute('data-step') !== name; });
+    state.currentStep = name;
+    updateStepper();
+    updateTotalBar();
+    if (modalScroll) modalScroll.scrollTop = 0;
+  }
+
+  // Stepper CO DINH 3 buoc (Chon dich vu / Chon chi tiet / Thong tin lien
+  // he) -- truoc day moi dich vu da chon la 1 buoc rieng tren stepper (vd
+  // chon 3 dich vu la thanh 5 buoc), ten dich vu dai lam stepper vo chu/de
+  // bi tran. Gio buoc 2 "Chon chi tiet" DUNG CHUNG cho moi dich vu, ben
+  // trong van di tung dich vu 1 (xem state.flowIndex/enterVariantStep) --
+  // tieu de h3 trong buoc da ghi ro dang chon "Loai" cua dich vu nao roi,
+  // khong can the hien tren stepper nua.
+  function stepFlowList() {
+    return [
+      { key: 'services', label: 'Chọn dịch vụ' },
+      { key: 'variant', label: 'Chọn chi tiết' },
+      { key: 'contact', label: 'Thông tin liên hệ' }
+    ];
+  }
+
+  function logicalStepKey() {
+    return state.currentStep;
+  }
+
+  function renderStepper() {
+    var flow = stepFlowList();
+    var wrap = document.getElementById('repairStepper');
+    wrap.innerHTML = '';
+    flow.forEach(function (step, i) {
+      var item = document.createElement('div');
+      item.className = 'tradein-stepper-item';
+      item.setAttribute('data-step-key', step.key);
+
+      var circle = document.createElement('span');
+      circle.className = 'tradein-stepper-circle';
+      circle.textContent = i + 1;
+      item.appendChild(circle);
+
+      var label = document.createElement('span');
+      label.className = 'tradein-stepper-label';
+      label.textContent = step.label;
+      item.appendChild(label);
+
+      wrap.appendChild(item);
+
+      if (i < flow.length - 1) {
+        var line = document.createElement('span');
+        line.className = 'tradein-stepper-line';
+        wrap.appendChild(line);
+      }
+    });
+    updateStepper();
+  }
+
+  function updateStepper() {
+    var flow = stepFlowList();
+    var currentKey = logicalStepKey();
+    var currentIndex = -1;
+    flow.forEach(function (s, i) { if (s.key === currentKey) currentIndex = i; });
+
+    var items = document.querySelectorAll('#repairStepper .tradein-stepper-item');
+    items.forEach(function (item, i) {
+      item.classList.remove('active', 'done');
+      if (i === currentIndex) item.classList.add('active');
+      else if (currentIndex >= 0 && i < currentIndex) item.classList.add('done');
+    });
+
+    var lines = document.querySelectorAll('#repairStepper .tradein-stepper-line');
+    lines.forEach(function (line, i) {
+      line.classList.toggle('done', currentIndex >= 0 && i < currentIndex);
+    });
+  }
+
+  function closeModal() { modal.hidden = true; }
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+  // ----- Bước 1 (ngoài trang): chọn sản phẩm, mở modal thẳng vào bước "chọn dịch vụ" -----
+  function renderServiceCheckList() {
+    var wrap = document.getElementById('repairServiceCheckList');
+    wrap.innerHTML = '';
+    var nextBtn = document.getElementById('repairServicesNextBtn');
+
+    // Chi hien dich vu ap dung duoc cho san pham DA CHON, va phai co it
+    // nhat 1 loai da duoc nhap gia cho dung san pham nay.
+    var applicable = services.filter(function (s) {
+      return state.device.serviceIds.indexOf(s.id) !== -1 &&
+        s.variants.some(function (v) { return priceFor(state.device.id, v.id) != null; });
+    });
+
+    if (applicable.length === 0) {
+      wrap.innerHTML = '<p class="empty-state">Sản phẩm này hiện chưa có dịch vụ nào khả dụng, vui lòng liên hệ hotline.</p>';
+      nextBtn.hidden = true;
+      return;
+    }
+    nextBtn.hidden = false;
+
+    applicable.forEach(function (s) {
+      var row = document.createElement('label');
+      row.className = 'tradein-condition-row repair-service-check-row';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = s.id;
+      cb.className = 'repair-service-checkbox';
+      cb.checked = state.selectedServiceIds.indexOf(s.id) !== -1;
+      cb.addEventListener('change', function () {
+        if (cb.checked) {
+          if (state.selectedServiceIds.indexOf(s.id) === -1) state.selectedServiceIds.push(s.id);
+        } else {
+          state.selectedServiceIds = state.selectedServiceIds.filter(function (id) { return id !== s.id; });
+        }
+        nextBtn.disabled = state.selectedServiceIds.length === 0;
+      });
+
+      var text = document.createElement('span');
+      text.className = 'tradein-condition-row-text';
+      text.textContent = s.name;
+
+      row.appendChild(cb);
+      row.appendChild(text);
+      wrap.appendChild(row);
+    });
+
+    nextBtn.disabled = state.selectedServiceIds.length === 0;
+    updateServiceScrollAffordance(wrap, applicable.length);
+  }
+
+  // Nut "Xem them" chi hien khi co TREN 5 dich vu VA danh sach van con doan
+  // chua cuon toi (goi y cho khach biet con dich vu o duoi, vi khung chi
+  // cao gioi han). An lai ngay khi da cuon gan toi day.
+  var repairServiceScrollBtn = document.getElementById('repairServiceScrollBtn');
+  function updateServiceScrollAffordance(wrap, count) {
+    if (!repairServiceScrollBtn) return;
+    function refresh() {
+      var hasMoreBelow = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight > 4;
+      repairServiceScrollBtn.hidden = !(count > 5 && hasMoreBelow);
+    }
+    // Chi gan listener 1 lan duy nhat cho moi phan tu wrap (luu lai tren
+    // chinh no), tranh cong them listener trung nhau mỗi lan mo modal lai.
+    if (wrap._repairScrollRefresh) wrap.removeEventListener('scroll', wrap._repairScrollRefresh);
+    wrap._repairScrollRefresh = refresh;
+    wrap.addEventListener('scroll', refresh);
+    // Doi layout on dinh roi moi kiem tra (vua render xong scrollHeight co
+    // the chua cap nhat ngay).
+    setTimeout(refresh, 50);
+  }
+  if (repairServiceScrollBtn) {
+    repairServiceScrollBtn.addEventListener('click', function () {
+      var wrap = document.getElementById('repairServiceCheckList');
+      wrap.scrollBy({ top: wrap.clientHeight * 0.7, behavior: 'smooth' });
+    });
+  }
+
+  function openModal(deviceId) {
+    var device = devices.find(function (d) { return d.id === deviceId; });
+    if (!device) return;
+
+    state.device = device;
+    state.selectedServiceIds = [];
+    state.flowServiceIds = [];
+    state.flowIndex = -1;
+    state.selections = {};
+
+    document.getElementById('repairStepDeviceName').textContent = device.name;
+    renderServiceCheckList();
+
+    modal.hidden = false;
+    renderStepper();
+    showStep('services');
+  }
+
+  document.querySelectorAll('[data-repair-device-id]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      openModal(Number(el.getAttribute('data-repair-device-id')));
+    });
+  });
+
+  document.getElementById('repairServicesNextBtn').addEventListener('click', function () {
+    state.flowServiceIds = state.selectedServiceIds.slice();
+    state.flowIndex = 0;
+    renderStepper();
+    enterVariantStep();
+  });
+
+  // ----- Bước "chọn loại" (gộp chung thành 1 bước "Chọn chi tiết" trên
+  // stepper cho mọi dịch vụ đã chọn, xem stepFlowList) -----
+  // The dang luoi (anh to, xep doc: anh - ten - gia), dung chung giao dien
+  // voi the san pham o buoc chon may (.product-card/.product-card-image) --
+  // thay cho danh sach hang ngang truoc day, anh hien ro hon nhieu.
+  function renderVariantCard(label, description, priceText, imageUrl, active, onSelect) {
+    var card = document.createElement('article');
+    card.className = 'product-card tradein-card' + (active ? ' active' : '');
+
+    var imageWrap = document.createElement('div');
+    imageWrap.className = 'product-card-image';
+    if (imageUrl) {
+      var img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = label;
+      img.loading = 'lazy';
+      img.width = 300;
+      img.height = 300;
+      imageWrap.appendChild(img);
+    } else {
+      imageWrap.innerHTML = '<svg class="product-icon-placeholder" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    }
+    card.appendChild(imageWrap);
+
+    var body = document.createElement('div');
+    body.className = 'product-card-body';
+
+    var nameEl = document.createElement('h3');
+    nameEl.className = 'product-name';
+    nameEl.textContent = label;
+    body.appendChild(nameEl);
+
+    if (description) {
+      var descEl = document.createElement('p');
+      descEl.className = 'repair-variant-card-desc';
+      descEl.textContent = description;
+      body.appendChild(descEl);
+    }
+
+    var priceWrap = document.createElement('div');
+    priceWrap.className = 'product-price';
+    var priceEl = document.createElement('span');
+    priceEl.className = 'price-current';
+    priceEl.textContent = priceText;
+    priceWrap.appendChild(priceEl);
+    body.appendChild(priceWrap);
+
+    card.appendChild(body);
+    card.addEventListener('click', onSelect);
+    return card;
+  }
+
+  function enterVariantStep() {
+    var serviceId = state.flowServiceIds[state.flowIndex];
+    var service = services.find(function (s) { return s.id === serviceId; });
+    document.getElementById('repairVariantStepTitle').textContent = 'Chọn loại: ' + (service ? service.name : '');
+
+    var wrap = document.getElementById('repairVariantList');
+    wrap.innerHTML = '';
+
+    var options = (service ? service.variants : [])
+      .map(function (v) {
+        var row = priceRowFor(state.device.id, v.id);
+        // Anh rieng cho dung san pham nay (neu admin da upload) -- khong co
+        // thi fallback ve anh mac dinh cua chinh "Loai" do.
+        var imageUrl = (row && row.imageUrl) ? row.imageUrl : v.imageUrl;
+        return { v: v, price: row ? row.price : null, imageUrl: imageUrl };
+      })
+      .filter(function (o) { return o.price != null; });
+
+    if (options.length === 0) {
+      wrap.innerHTML = '<p class="empty-state">Chưa có giá cho dịch vụ này ứng với sản phẩm đã chọn, vui lòng chọn lại.</p>';
+    }
+
+    var existing = state.selections[serviceId];
+    options.forEach(function (o) {
+      var card = renderVariantCard(
+        o.v.label,
+        o.v.description,
+        formatVND(o.price),
+        o.imageUrl,
+        !!(existing && existing.variantId === o.v.id),
+        function () {
+          state.selections[serviceId] = {
+            variantId: o.v.id,
+            label: o.v.label,
+            price: o.price,
+            serviceName: service ? service.name : ''
+          };
+          updateTotalBar();
+          goToNextVariantOrContact();
+        }
+      );
+      wrap.appendChild(card);
+    });
+
+    showStep('variant');
+  }
+
+  function goToNextVariantOrContact() {
+    if (state.flowIndex < state.flowServiceIds.length - 1) {
+      state.flowIndex += 1;
+      enterVariantStep();
+    } else {
+      renderFinalSummary();
+      showStep('contact');
+    }
+  }
+
+  document.getElementById('repairVariantBackBtn').addEventListener('click', function () {
+    if (state.flowIndex > 0) {
+      state.flowIndex -= 1;
+      enterVariantStep();
+    } else {
+      renderServiceCheckList();
+      showStep('services');
+    }
+  });
+
+  document.getElementById('repairContactBackBtn').addEventListener('click', function () {
+    state.flowIndex = state.flowServiceIds.length - 1;
+    enterVariantStep();
+  });
+
+  // ----- Bước cuối: tóm tắt + thông tin liên hệ -----
+  function summaryRow(label, value, emphasize) {
+    var row = document.createElement('div');
+    row.className = 'tradein-summary-row' + (emphasize ? ' tradein-summary-row-total' : '');
+    var labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+    var valueStrong = document.createElement('strong');
+    valueStrong.textContent = value;
+    row.appendChild(labelSpan);
+    row.appendChild(valueStrong);
+    return row;
+  }
+
+  function renderFinalSummary() {
+    var el = document.getElementById('repairFinalSummary');
+    el.innerHTML = '';
+    state.flowServiceIds.forEach(function (sid) {
+      var sel = state.selections[sid];
+      if (!sel) return;
+      el.appendChild(summaryRow(sel.serviceName + ' - ' + sel.label, formatVND(sel.price)));
+    });
+    el.appendChild(summaryRow('Tổng cộng', formatVND(currentTotal()), true));
+  }
+
+  var contactForm = document.getElementById('repairContactForm');
+  contactForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var errorsEl = document.getElementById('repairFormErrors');
+    errorsEl.hidden = true;
+    errorsEl.innerHTML = '';
+
+    var selections = state.flowServiceIds
+      .map(function (sid) {
+        var sel = state.selections[sid];
+        return sel ? { serviceId: sid, variantId: sel.variantId } : null;
+      })
+      .filter(Boolean);
+
+    var params = new URLSearchParams();
+    params.append('deviceId', state.device.id);
+    params.append('selections', JSON.stringify(selections));
+    params.append('customerName', document.getElementById('repairCustomerName').value);
+    params.append('phone', document.getElementById('repairPhone').value);
+    params.append('note', document.getElementById('repairNote').value);
+
+    var submitBtn = contactForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    fetch('/sua-chua', {
+      method: 'POST',
+      body: params,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        submitBtn.disabled = false;
+        if (result.ok) {
+          window.location.href = result.redirectUrl;
+          return;
+        }
+        var ul = document.createElement('ul');
+        (result.errors || []).forEach(function (err) {
+          var li = document.createElement('li');
+          li.textContent = err.msg;
+          ul.appendChild(li);
+        });
+        errorsEl.appendChild(ul);
+        errorsEl.hidden = false;
+      })
+      .catch(function () {
+        submitBtn.disabled = false;
+        errorsEl.textContent = 'Có lỗi xảy ra, vui lòng thử lại.';
+        errorsEl.hidden = false;
+      });
+  });
+})();
+</script>
+</body>
+</html>

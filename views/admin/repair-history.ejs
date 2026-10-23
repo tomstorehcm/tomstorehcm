@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Lịch sử sửa chữa (<%= history.length %>)</h1>
+  <p class="admin-hint">Sổ ghi lại các lần sửa chữa, gồm cả lần admin tự ghi nhận VÀ yêu cầu khách gửi từ trang công khai "Sửa Chữa" -- độc lập hoàn toàn với danh sách "Khách mua hàng", không cần khách có trong hệ thống mới ghi được. Tìm theo IMEI hoặc số điện thoại để tra lại lịch sử của 1 khách/máy. Yêu cầu gửi từ trang web (đánh dấu "Website") được quản lý trạng thái/xóa ở trang "Khách sửa chữa", ở đây chỉ để xem.</p>
+
+  <form action="/admin/sua-chua/lich-su" method="get" class="admin-search-form">
+    <input type="text" name="q" value="<%= q %>" placeholder="Tìm theo IMEI hoặc số điện thoại..." />
+    <button type="submit" class="btn btn-outline">Tìm</button>
+    <% if (q) { %><a href="/admin/sua-chua/lich-su" class="btn-link">Xóa tìm kiếm</a><% } %>
+  </form>
+
+  <% if (errors.length > 0) { %>
+    <div class="form-errors"><ul><% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %></ul></div>
+  <% } %>
+
+  <% if (history.length === 0) { %>
+    <p class="empty-state">Chưa có lịch sử sửa chữa nào<%= q ? ' khớp với tìm kiếm.' : '.' %></p>
+  <% } else { %>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead><tr><th>Ngày</th><th>Nguồn</th><th>Khách hàng</th><th>IMEI</th><th>Thiết bị</th><th>Nội dung / Tình trạng</th><th>Đã xử lý</th><th>Chi phí</th><th></th></tr></thead>
+        <tbody>
+          <% history.forEach(function(h) { %>
+            <tr>
+              <td><%= new Date(h.repair_date).toLocaleDateString('vi-VN') %></td>
+              <td>
+                <% if (h.source === 'website') { %>
+                  <span class="status-badge status-active">Website</span><br /><small><%= h.requestCode %></small>
+                <% } else { %>
+                  <span class="status-badge">Thủ công</span>
+                <% } %>
+              </td>
+              <td><%= h.customer_name %><br /><small><a href="tel:<%= h.phone.replace(/\s/g, '') %>"><%= h.phone %></a></small></td>
+              <td><%= h.imei || '-' %></td>
+              <td><%= h.device_name %></td>
+              <td class="admin-note-cell" title="<%= h.issue || '' %>"><%= h.issue %></td>
+              <td><%= h.resolution || '-' %></td>
+              <td><%= h.cost ? formatVND(h.cost) : '-' %></td>
+              <td class="admin-actions">
+                <% if (h.source === 'website') { %>
+                  <a href="/admin/sua-chua/yeu-cau">Xem ở Khách sửa chữa</a>
+                <% } else { %>
+                  <a href="/admin/sua-chua/lich-su/<%= h.id %>/sua">Sửa</a>
+                  <form action="/admin/sua-chua/lich-su/<%= h.id %>/xoa" method="post" onsubmit="return confirm('Xóa lịch sử sửa chữa này?');">
+                    <button type="submit" class="btn-link-danger">Xóa</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <h2 class="admin-category-heading">+ Ghi nhận lần sửa chữa mới</h2>
+  <form action="/admin/sua-chua/lich-su" method="post" class="admin-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="repairDate">Ngày sửa chữa *</label>
+        <input type="date" id="repairDate" name="repairDate" value="<%= historyForm.repairDate || '' %>" required />
+      </div>
+      <div class="form-group">
+        <label for="cost">Chi phí (nếu có)</label>
+        <input type="text" inputmode="numeric" id="cost" name="cost" class="vnd-input" value="<%= historyForm.cost || '' %>" placeholder="VNĐ" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="customerName">Tên khách *</label>
+        <input type="text" id="customerName" name="customerName" value="<%= historyForm.customerName || '' %>" required maxlength="150" />
+      </div>
+      <div class="form-group">
+        <label for="phone">Số điện thoại *</label>
+        <input type="tel" id="phone" name="phone" value="<%= historyForm.phone || '' %>" placeholder="09xxxxxxxx" required />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="deviceName">Thiết bị *</label>
+        <input type="text" id="deviceName" name="deviceName" value="<%= historyForm.deviceName || '' %>" required maxlength="200" placeholder="VD: iPhone 13 Pro Max" />
+      </div>
+      <div class="form-group">
+        <label for="imei">IMEI / Serial (nếu có)</label>
+        <input type="text" id="imei" name="imei" value="<%= historyForm.imei || '' %>" maxlength="50" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="issue">Nội dung sửa chữa / Tình trạng *</label>
+      <textarea id="issue" name="issue" rows="2" required><%= historyForm.issue || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="resolution">Đã xử lý</label>
+      <textarea id="resolution" name="resolution" rows="2"><%= historyForm.resolution || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="note">Ghi chú</label>
+      <textarea id="note" name="note" rows="2"><%= historyForm.note || '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Ghi nhận</button>
+  </form>
+</main>
+</body>
+</html>

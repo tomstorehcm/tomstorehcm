@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<%- include('partials/head') %>
+<link rel="stylesheet" href="/vendor/quill/quill.snow.css" />
+</head>
+<body class="admin-body">
+<%- include('partials/sidebar') %>
+<main class="admin-main">
+  <h1>Giới thiệu Thu cũ đổi mới (trang)</h1>
+  <p class="admin-hint">Đây là nội dung giới thiệu/chính sách hiện trên trang công khai "Thu Cũ Đổi Mới" (phía trên danh sách máy thu lại). Tự thêm/xóa/sửa mục tùy ý -- mỗi mục gõ nội dung tự do và chèn ảnh xen kẽ ngay trong bài viết.</p>
+
+  <% if (error) { %><div class="form-errors"><ul><li><%= error %></li></ul></div><% } %>
+
+  <section class="admin-category-section">
+    <h2 class="admin-category-heading">+ Thêm mục mới</h2>
+    <form action="/admin/thu-cu/gioi-thieu" method="post" class="admin-inline-form">
+      <input type="text" name="title" placeholder="Tên mục, ví dụ: Điều kiện thu cũ đổi mới" required maxlength="100" />
+      <button type="submit" class="btn btn-primary btn-sm">Thêm mục</button>
+    </form>
+  </section>
+
+  <% if (sections.length === 0) { %>
+    <p class="empty-state">Chưa có mục nào. Thêm mục đầu tiên ở trên.</p>
+  <% } %>
+
+  <% sections.forEach(function(s) { %>
+    <section class="admin-category-section">
+      <div class="admin-header-row">
+        <h2 class="admin-category-heading">Mục: <%= s.title %></h2>
+        <form action="/admin/thu-cu/gioi-thieu/<%= s.id %>/xoa" method="post" onsubmit="return confirm('Xóa mục &quot;' + <%- JSON.stringify(s.title) %> + '&quot;? Nội dung mục này sẽ mất.');">
+          <button type="submit" class="btn-link-danger">Xóa mục</button>
+        </form>
+      </div>
+      <form action="/admin/thu-cu/gioi-thieu/<%= s.id %>/sua" method="post" class="admin-form installment-section-form" data-key="<%= s.id %>">
+        <div class="form-group">
+          <label for="title-<%= s.id %>">Tiêu đề mục</label>
+          <input type="text" id="title-<%= s.id %>" name="title" value="<%= s.title %>" maxlength="100" required />
+        </div>
+        <div class="form-group">
+          <label>Nội dung</label>
+          <div class="installment-editor-wrap">
+            <div class="installment-editor" id="editor-<%= s.id %>" spellcheck="false"><%- s.content_html %></div>
+          </div>
+          <input type="hidden" name="contentHtml" class="installment-content-input" />
+        </div>
+        <button type="submit" class="btn btn-primary">Lưu mục <%= s.title %></button>
+      </form>
+    </section>
+  <% }); %>
+</main>
+<script src="/vendor/quill/quill.js"></script>
+<script>
+  (function () {
+    var toolbarOptions = [
+      [{ header: [2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ background: [] }, { align: [] }],
+      ['link', 'image'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['clean']
+    ];
+
+    document.querySelectorAll('.installment-section-form').forEach(function (form) {
+      var key = form.getAttribute('data-key');
+      var editorEl = document.getElementById('editor-' + key);
+      var hiddenInput = form.querySelector('.installment-content-input');
+
+      var quill = new Quill(editorEl, {
+        theme: 'snow',
+        modules: {
+          toolbar: {
+            container: toolbarOptions,
+            handlers: {
+              image: function () {
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/png,image/jpeg,image/gif,image/webp';
+                input.click();
+                input.addEventListener('change', function () {
+                  var file = input.files && input.files[0];
+                  if (!file) return;
+                  var formData = new FormData();
+                  formData.append('image', file);
+                  fetch('/admin/thu-cu/gioi-thieu/anh', { method: 'POST', body: formData })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                      if (data.url) {
+                        var range = quill.getSelection(true);
+                        quill.insertEmbed(range.index, 'image', data.url, 'user');
+                        quill.setSelection(range.index + 1);
+                      } else {
+                        alert(data.error || 'Lỗi tải ảnh lên.');
+                      }
+                    })
+                    .catch(function () {
+                      alert('Lỗi tải ảnh lên.');
+                    });
+                });
+              }
+            }
+          }
+        }
+      });
+
+      form.addEventListener('submit', function () {
+        hiddenInput.value = quill.root.innerHTML;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

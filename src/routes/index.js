@@ -9,6 +9,8 @@ const checkoutController = require('../controllers/checkoutController');
 const contactRequestController = require('../controllers/contactRequestController');
 const installmentController = require('../controllers/installmentController');
 const warrantyPolicyController = require('../controllers/warrantyPolicyController');
+const tradeInController = require('../controllers/tradeInController');
+const repairController = require('../controllers/repairController');
 
 router.get('/', homeController.showHome);
 
@@ -33,5 +35,13 @@ router.get('/lien-he-bao-gia/:code', contactRequestController.showContactRequest
 
 router.get('/tra-gop', installmentController.showInstallmentPage);
 router.get('/chinh-sach-bao-hanh', warrantyPolicyController.showWarrantyPolicyPage);
+
+router.get('/thu-cu-doi-moi', tradeInController.showTradeInPage);
+router.post('/thu-cu-doi-moi', tradeInController.tradeInRequestValidators, tradeInController.submitTradeInRequest);
+router.get('/thu-cu-doi-moi/xac-nhan/:code', tradeInController.showTradeInConfirmation);
+
+router.get('/sua-chua', repairController.showRepairPage);
+router.post('/sua-chua', repairController.repairRequestValidators, repairController.submitRepairRequest);
+router.get('/sua-chua/xac-nhan/:code', repairController.showRepairConfirmation);
 
 module.exports = router;
