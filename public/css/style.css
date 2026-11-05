@@ -845,8 +845,12 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 /* ===== Admin ===== */
 .admin-body { display: flex; min-height: 100vh; background: var(--color-bg-alt); }
 .admin-sidebar { width: 220px; flex-shrink: 0; background: var(--color-ink); color: #c7c7cc; padding: var(--space-5) var(--space-4); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
-.admin-logo { margin-bottom: var(--space-6); }
+/* Hang dau sidebar: logo + nut dong (X) -- nut dong chi hien khi sidebar o
+   dang drawer di dong (xem ".admin-sidebar-close" trong @media ben duoi),
+   tren desktop chi thay logo nhu truoc. */
+.admin-sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
 .admin-logo img { height: 28px; filter: brightness(0) invert(1); }
+.admin-sidebar-close { display: none; background: none; border: none; color: #fff; padding: var(--space-2); margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0; }
 .admin-nav { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
 .admin-nav a { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; }
 .admin-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
@@ -877,12 +881,103 @@ small { color: var(--color-text-muted); font-size: 12px; display: block; margin-
 .admin-logout-form { margin-top: var(--space-4); }
 .btn-logout { background: var(--color-accent); color: #fff; border: 1.5px solid var(--color-accent); }
 .btn-logout:hover { background: var(--color-accent-dark); border-color: var(--color-accent-dark); }
+/* Sidebar admin tren man hinh hep (dien thoai, 2026-10-23 doi lai theo yeu
+   cau nguoi dung): TRUOC DAY sidebar tu doi huong thanh 1 thanh ngang tren
+   cung, bop chu/xuong dong xau khi khong du cho (loi nguoi dung bao). GIO
+   sidebar giu NGUYEN kich thuoc/ty le nhu desktop (width: 220px o tren) o
+   MOI do rong man hinh tren muc mobile -- chi rieng tren mobile (<=768px,
+   cung moc da dung o day truoc gio) moi chuyen thanh "drawer" an/hien qua
+   nut hamburger, truot vao tu ben trai (dung vi tri goc cua no, khac drawer
+   public truot tu ben phai) khi bam mo -- cung 1 ngon ngu voi drawer danh
+   muc cong khai (category-nav, header.ejs/main.js) nhung tach rieng class
+   (admin-menu-toggle/admin-nav-open/admin-sidebar-backdrop) vi admin dung
+   admin.js rieng, khong load main.js. Nut hamburger (".admin-menu-toggle")
+   duoc sidebar.ejs render lam ANH EM voi ".admin-sidebar" (khong nam trong
+   no), roi admin.js chuyen vao dau ".admin-main" luc runtime de nam trong
+   dong chay noi dung trang -- KHONG dat nut o dang position:fixed ben trong
+   .admin-sidebar, vi .admin-sidebar o mobile dung "transform" de truot
+   an/hien, ma transform tren 1 phan tu cha se bien no thanh containing
+   block moi cho moi phan tu con position:fixed, khien nut bi "keo" theo
+   sidebar an di thay vi dung yen tren man hinh nhu mong muon. */
+.admin-menu-toggle {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  background: #fff;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-bottom: var(--space-4);
+}
+.admin-menu-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.admin-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 20, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.32s ease, visibility 0s linear 0.32s;
+  z-index: 69;
+}
+body.admin-nav-open { overflow: hidden; }
+body.admin-nav-open .admin-sidebar-backdrop { opacity: 1; visibility: visible; transition: opacity 0.32s ease; }
 @media (max-width: 768px) {
-  .admin-body { flex-direction: column; }
-  .admin-sidebar { width: 100%; height: auto; max-height: none; position: static; flex-direction: row; align-items: center; overflow-x: auto; overflow-y: visible; }
-  .admin-nav { flex-direction: row; }
-  .admin-logo { margin: 0 var(--space-4) 0 0; }
-  .admin-logout-form { margin: 0 0 0 auto; }
+  .admin-menu-toggle {
+    /* Thanh nut hamburger la 1 THANH NGANG day du chieu rong, ghim co
+       dinh tren cung man hinh nhu 1 thanh nav rieng (2026-10-23, yeu cau
+       nguoi dung sau khi thay nut dang "noi" o goc de bi de len tieu de
+       trang tren mot so trang co noi dung dai nhu "San pham"). Dung
+       position:fixed day du chieu cao co dinh (56px) thay vi 1 nut tron
+       noi, de .admin-main chi can padding-top dung bang chieu cao nay,
+       khong con can doan truoc do khi nao se bi che nua.
+       Van an toan dung position:fixed vi nut nam trong .admin-main
+       (khong phai .admin-sidebar, xem ghi chu o tren ve van de transform
+       tao containing block moi). z-index thap hon backdrop/sidebar
+       (69/70) de khi mo menu, thanh nay bi lop boi lop toi va nut dong
+       (X) trong sidebar thay the vai tro dong menu. */
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 56px;
+    z-index: 55;
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    padding: 0 var(--space-4);
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(17, 17, 20, 0.1);
+  }
+  /* Chua cho o tren cho noi dung .admin-main dung bang chieu cao thanh
+     hamburger (56px) + 1 khoang cach nho, de khong trang nao bi tieu de
+     de len nua. Phai dung !important vi rule ".admin-main { padding:
+     var(--space-6) }" (shorthand, cung dinh dang 0,1,0) nam SAU block
+     media nay trong file (o duoi, ngoai media query) -- shorthand
+     "padding" luon ghi de ca 4 canh bao gom padding-top, nen neu khong co
+     !important no se "an" padding-top rieng o day, khien tieu de trang bi
+     thanh hamburger de len (loi thuc te tren may nguoi dung 2026-10-23). */
+  .admin-main { padding-top: calc(56px + var(--space-5)) !important; }
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 70;
+    box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  body.admin-nav-open .admin-sidebar { transform: translateX(0); }
+  .admin-sidebar-close { display: inline-flex; }
 }
 
 .admin-main { flex: 1; padding: var(--space-6); max-width: 100%; overflow-x: auto; }
