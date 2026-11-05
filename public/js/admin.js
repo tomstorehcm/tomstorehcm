@@ -60,4 +60,42 @@
     window.addEventListener('resize', refresh);
     setTimeout(refresh, 50);
   });
+
+  // Drawer sidebar admin tren mobile (nut hamburger) -- cung ngon ngu voi
+  // drawer danh muc cong khai (category-nav, xem header.ejs + main.js) nhung
+  // viet rieng o day vi main.js khong duoc load o trang admin. Nut
+  // "#adminMenuToggle" duoc sidebar.ejs render lam anh em cua ".admin-sidebar"
+  // (khong nam ben trong no) roi CHUYEN vao dau ".admin-main" o day -- xem
+  // ghi chu chi tiet tai sao trong style.css (".admin-menu-toggle"): dat nut
+  // ben trong .admin-sidebar se bi "transform" cua chinh no (dung de truot
+  // an/hien tren mobile) keo theo, khong con dung yen tren man hinh duoc.
+  (function () {
+    var toggle = document.getElementById('adminMenuToggle');
+    var sidebar = document.querySelector('.admin-sidebar');
+    var closeBtn = document.getElementById('adminSidebarClose');
+    var backdrop = document.getElementById('adminSidebarBackdrop');
+    var main = document.querySelector('.admin-main');
+    if (!toggle || !sidebar) return;
+
+    if (main) main.insertBefore(toggle, main.firstChild);
+
+    function openMenu() {
+      document.body.classList.add('admin-nav-open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu() {
+      document.body.classList.remove('admin-nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function () {
+      if (document.body.classList.contains('admin-nav-open')) closeMenu();
+      else openMenu();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (backdrop) backdrop.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+  })();
 })();
