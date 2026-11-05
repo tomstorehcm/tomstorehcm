@@ -1,5 +1,14 @@
+<button type="button" class="admin-menu-toggle" id="adminMenuToggle" aria-label="Mở menu" aria-expanded="false">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  Menu
+</button>
 <aside class="admin-sidebar">
-  <div class="logo admin-logo"><img src="/images/logo/tom-logo.png" alt="TOMSTORE" /></div>
+  <div class="admin-sidebar-head">
+    <div class="logo admin-logo"><img src="/images/logo/tom-logo.png" alt="TOMSTORE" /></div>
+    <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Đóng menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
   <nav class="admin-nav">
     <a href="/admin" class="<%= currentPath === '/admin' || currentPath.startsWith('/admin/don-hang') ? 'active' : '' %>">Quản lý đơn hàng</a>
     <a href="/admin/san-pham" class="<%= currentPath.startsWith('/admin/san-pham') ? 'active' : '' %>">Sản phẩm</a>
@@ -30,3 +39,4 @@
     <button type="submit" class="btn btn-logout btn-block">Đăng xuất</button>
   </form>
 </aside>
+<div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
